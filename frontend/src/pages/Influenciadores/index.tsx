@@ -20,6 +20,7 @@ import DeleteDialog from '../../components/DeleteDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificacoes } from '../../contexts/WebSocketContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
+import ImportacaoDialog from './components/ImportacaoDialog';
 import { influenciadorService, InfluenciadorDTO, InfluenciadorForm, InfluenciadorFiltros } from './service';
 import './styles.scss';
 
@@ -53,6 +54,7 @@ function Influenciadores() {
   const [mostrarInativos, setMostrarInativos] = useState(false);
   const [deactivateTarget, setDeactivateTarget] = useState<InfluenciadorDTO | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<InfluenciadorDTO | null>(null);
+  const [importVisible, setImportVisible] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryFiltros: InfluenciadorFiltros = { ...filtros, textoDeBusca: debouncedBusca || undefined, mostrarInativos };
@@ -186,7 +188,9 @@ function Influenciadores() {
             <CrudHeader searchValue={filtroGlobal} onSearchChange={setFiltroGlobal} searchPlaceholder="Buscar por nome, e-mail, instagram..."
               onFilterClick={() => setFilterVisible(true)} newLabel="Novo Influenciador" onNewClick={abrirNovo} showNew={podeAdicionar}
               showInactive onToggleInactive={(v) => { setMostrarInativos(v); setCurrentPage(0); }} inactiveActive={mostrarInativos}
-            />
+            >
+              {podeAdicionar && <button type="button" className="btn-importar" onClick={() => setImportVisible(true)}><i className="pi pi-file-import" /> Importar CSV</button>}
+            </CrudHeader>
           }
           paginator rowsPerPageOptions={[5, 10, 25]} emptyMessage={mostrarInativos ? 'Nenhum registro desativado' : 'Nenhum influenciador encontrado'} stripedRows removableSort
         >
@@ -251,6 +255,8 @@ function Influenciadores() {
         loading={excluirMutation.isPending} entityName={deleteTarget?.nome} />
 
       <HistoryDialog visible={historyVisible} onHide={() => setHistoryVisible(false)} entityId={historyId} servicePath="/influenciadores" />
+
+      <ImportacaoDialog visible={importVisible} onHide={() => setImportVisible(false)} onComplete={invalidate} />
 
       <FilterSidebar visible={filterVisible} onHide={() => setFilterVisible(false)} onClear={() => { setFiltros({ status: [] }); setCurrentPage(0); }} clearDisabled={!temFiltroAtivo}>
         <div className="form-field">

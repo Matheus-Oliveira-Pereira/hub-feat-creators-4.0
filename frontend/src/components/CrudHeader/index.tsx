@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Tooltip } from 'primereact/tooltip';
@@ -14,12 +15,13 @@ interface CrudHeaderProps {
   showInactive?: boolean;
   onToggleInactive?: (value: boolean) => void;
   inactiveActive?: boolean;
+  children?: ReactNode;
 }
 
 function CrudHeader({
   searchValue, onSearchChange, searchPlaceholder = 'Buscar...',
   onFilterClick, newLabel, onNewClick, showNew = true,
-  showInactive = false, onToggleInactive, inactiveActive = false,
+  showInactive = false, onToggleInactive, inactiveActive = false, children,
 }: CrudHeaderProps) {
   return (
     <div className="table-header">
@@ -41,6 +43,7 @@ function CrudHeader({
         </>
       )}
       <Button icon="pi pi-filter" label="Filtros" className="btn-filtros" onClick={onFilterClick} />
+      {children}
       {showNew && newLabel && onNewClick && (
         <Button label={newLabel} icon="pi pi-plus" className="btn-novo" onClick={onNewClick} />
       )}

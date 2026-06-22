@@ -33,6 +33,27 @@
   }
 }
 
+.btn-importar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-md;
+  background: transparent;
+  color: $gray-700;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $primary-color;
+    color: $primary-color;
+    background: rgba($primary-color, 0.04);
+  }
+}
+
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -1,0 +1,223 @@
+@use '../../../../styles/variables' as *;
+
+.importacao-dialog {
+  .importacao-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .upload-instructions {
+    text-align: center;
+    padding: 1rem 0;
+
+    .upload-icon {
+      font-size: 2.5rem;
+      color: $primary-color;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    p {
+      color: $gray-500;
+      margin: 0 0 1rem;
+    }
+
+    .btn-template {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      border: 1px dashed $primary-color;
+      border-radius: $border-radius-md;
+      background: transparent;
+      color: $primary-color;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: background 0.2s;
+
+      &:hover {
+        background: rgba($primary-color, 0.06);
+      }
+    }
+  }
+
+  .upload-area {
+    .file-input {
+      display: none;
+    }
+
+    .file-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1rem;
+      border: 2px dashed $gray-300;
+      border-radius: $border-radius-md;
+      cursor: pointer;
+      color: $gray-600;
+      transition: border-color 0.2s;
+
+      &:hover {
+        border-color: $primary-color;
+      }
+
+      i {
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  .importacao-erro {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #fef2f2;
+    color: #dc2626;
+    border-radius: $border-radius-md;
+    font-size: 0.85rem;
+
+    i {
+      font-size: 1rem;
+    }
+  }
+
+  .importacao-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+  }
+
+  .importacao-processando {
+    text-align: center;
+    padding: 2rem 0;
+
+    .processando-icon {
+      font-size: 2.5rem;
+      color: $primary-color;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    p {
+      color: $gray-500;
+      margin: 0 0 1.5rem;
+    }
+  }
+
+  .resultado-resumo {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+
+    .resumo-item {
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: $border-radius-md;
+
+      .resumo-numero {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+
+      .resumo-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      &.total {
+        background: #f0f4ff;
+        color: $primary-color;
+      }
+
+      &.sucesso {
+        background: #ecfdf5;
+        color: #059669;
+      }
+
+      &.duplicado {
+        background: #fffbeb;
+        color: #d97706;
+      }
+
+      &.erro {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+    }
+  }
+
+  .resultado-detalhes {
+    h4 {
+      margin: 0 0 0.75rem;
+      font-size: 0.85rem;
+      color: $gray-600;
+      font-weight: 600;
+    }
+
+    .detalhes-lista {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid $gray-200;
+      border-radius: $border-radius-md;
+    }
+
+    .detalhe-linha {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      border-bottom: 1px solid $gray-100;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .detalhe-num {
+        color: $gray-400;
+        font-size: 0.7rem;
+        min-width: 28px;
+      }
+
+      .detalhe-nome {
+        font-weight: 500;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .detalhe-status {
+        font-size: 0.75rem;
+        color: $gray-500;
+        text-align: right;
+        flex-shrink: 0;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .status-sucesso { color: #059669; }
+      .status-duplicado { color: #d97706; }
+      .status-erro { color: #dc2626; }
+
+      &.erro {
+        background: #fef2f2;
+
+        .detalhe-status {
+          color: #dc2626;
+        }
+      }
+    }
+  }
+}

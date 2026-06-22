@@ -1,4 +1,5 @@
 import BaseService, { PaginatedResponse } from '../../services/baseService';
+import api from '../../services/api';
 
 export interface InfluenciadorDTO {
   id: string;
@@ -32,6 +33,21 @@ export interface InfluenciadorForm {
   youtube: string;
   foto: string;
   status: string;
+}
+
+export interface ImportacaoLinhaDTO {
+  linha: number;
+  nome: string;
+  status: 'SUCESSO' | 'DUPLICADO' | 'ERRO';
+  erro: string | null;
+}
+
+export interface ImportacaoResultadoDTO {
+  totalLinhas: number;
+  sucesso: number;
+  duplicados: number;
+  erros: number;
+  detalhes: ImportacaoLinhaDTO[];
 }
 
 export interface InfluenciadorFiltros {
@@ -89,4 +105,23 @@ export const influenciadorService = {
 
   historico: (id: string) =>
     baseService.getHistorico(id),
+
+  importarCSV: async (arquivo: File): Promise<ImportacaoResultadoDTO> => {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    const response = await api.post<ImportacaoResultadoDTO>('/influenciadores/importacao', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  downloadTemplate: async () => {
+    const response = await api.get('/influenciadores/importacao/template', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'influenciadores_template.csv';
+    link.click();
+    window.URL.revokeObjectURL(url);
+  },
 };
