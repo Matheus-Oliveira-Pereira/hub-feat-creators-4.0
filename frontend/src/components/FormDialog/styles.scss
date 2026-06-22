@@ -1,0 +1,65 @@
+@use '../../styles/variables' as *;
+
+.p-dialog {
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18) !important;
+
+  .p-dialog-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: none;
+    gap: 0.65rem;
+
+    .p-dialog-title {
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .p-dialog-header-icon {
+      color: rgba(255, 255, 255, 0.7);
+      width: 2rem;
+      height: 2rem;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+      }
+    }
+  }
+
+  .p-dialog-content {
+    padding: 1.5rem !important;
+  }
+
+  .p-dialog-footer {
+    background: linear-gradient(180deg, $gray-50, #e8ecf1);
+    border-top: 1px solid $gray-200;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+}
+
+.p-confirm-dialog {
+  .p-dialog-header {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  }
+}
+
+.logout-dialog {
+  .p-dialog-header {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  }
+}
+
+.deactivate-dialog {
+  .p-dialog-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+}

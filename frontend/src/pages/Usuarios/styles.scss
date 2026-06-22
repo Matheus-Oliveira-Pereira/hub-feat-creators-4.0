@@ -1,0 +1,26 @@
+@use '../../styles/variables' as *;
+
+.crud-page {
+  .perfis-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .perfil-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: #f0f4ff;
+    color: #3b5998;
+    border: 1px solid #c7d2fe;
+
+    i {
+      font-size: 0.65rem;
+    }
+  }
+}

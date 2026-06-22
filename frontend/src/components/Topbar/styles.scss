@@ -1,0 +1,144 @@
+@use '../../styles/variables' as *;
+
+.layout-topbar {
+  height: 60px;
+  background: white;
+  border-bottom: 1px solid $gray-200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .topbar-breadcrumb {
+      font-size: 0.95rem;
+      color: $gray-500;
+      font-weight: 450;
+
+      span {
+        color: $text-color;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .topbar-icon-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: none;
+      background: transparent;
+      border-radius: 50%;
+      color: $gray-500;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+
+      &:hover {
+        background: $gray-100;
+        color: $gray-700;
+      }
+    }
+
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      text-align: left;
+
+      &:hover {
+        background: $gray-100;
+        .edit-icon { color: $primary-color; }
+      }
+
+      .user-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, $primary-color, #818cf8);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+      }
+
+      .user-info {
+        .user-name {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: $text-color;
+          line-height: 1.2;
+        }
+        .user-email {
+          font-size: 0.7rem;
+          color: $gray-400;
+          line-height: 1.2;
+        }
+      }
+
+      .edit-icon {
+        color: $gray-300;
+        font-size: 0.75rem;
+        margin-left: 0.25rem;
+        transition: color 0.15s;
+      }
+    }
+
+    .topbar-divider {
+      width: 1px;
+      height: 28px;
+      background: $gray-200;
+    }
+
+    .topbar-logout {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      color: $gray-500;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      background: transparent;
+      border: 1px solid transparent;
+      font-family: inherit;
+
+      &:hover {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fecaca;
+      }
+
+      i { font-size: 0.9rem; }
+    }
+  }
+}

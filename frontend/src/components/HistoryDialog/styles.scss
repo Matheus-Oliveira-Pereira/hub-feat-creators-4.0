@@ -1,0 +1,114 @@
+@use '../../styles/variables' as *;
+
+.history-timeline {
+  padding: 0.5rem 0;
+
+  .p-timeline-event-opposite { display: none; }
+
+  .p-timeline-event-content {
+    padding: 0 0 1.5rem 0.75rem;
+  }
+
+  .p-timeline-event-connector {
+    background: $gray-200;
+  }
+}
+
+.history-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    color: white;
+    font-size: 0.7rem;
+  }
+}
+
+.history-item {
+  .history-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.4rem;
+
+    .history-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border: 1px solid;
+      text-transform: uppercase;
+
+      i { font-size: 0.7rem; }
+    }
+
+    .history-date {
+      font-size: 0.75rem;
+      color: $gray-400;
+    }
+  }
+
+  .history-user {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: $gray-500;
+    margin-bottom: 0.5rem;
+
+    i { font-size: 0.75rem; }
+  }
+
+  .history-data {
+    background: $gray-50;
+    border: 1px solid $gray-200;
+    border-radius: 8px;
+    padding: 0.6rem 0.85rem;
+
+    .history-field {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.3rem 0;
+      font-size: 0.8rem;
+      border-bottom: 1px solid $gray-100;
+
+      &:last-child { border-bottom: none; }
+
+      .field-name {
+        color: $gray-500;
+        font-weight: 500;
+        text-transform: capitalize;
+      }
+
+      .field-value {
+        color: $gray-700;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+[data-theme="dark"] {
+  .history-item .history-data {
+    background: #172032;
+    border-color: #334155;
+
+    .history-field {
+      border-color: #253348;
+      .field-name { color: #94a3b8; }
+      .field-value { color: #e2e8f0; }
+    }
+  }
+
+  .history-timeline .p-timeline-event-connector {
+    background: #334155;
+  }
+}

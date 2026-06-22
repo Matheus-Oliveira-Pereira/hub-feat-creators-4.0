@@ -1,0 +1,796 @@
+@use './styles/variables' as *;
+
+@import 'primereact/resources/themes/lara-light-blue/theme.css';
+@import 'primereact/resources/primereact.min.css';
+@import 'primeicons/primeicons.css';
+@import 'primeflex/primeflex.css';
+
+// ─── Reset ───
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: $gray-100;
+  color: $text-color;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100%;
+}
+
+// ─── Focus (consistent, only keyboard) ───
+button,
+a,
+input,
+select,
+textarea {
+  &:focus { outline: none; }
+}
+
+button:focus-visible,
+a:focus-visible,
+.p-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35) !important;
+  border-radius: 8px;
+}
+
+// Tame PrimeReact's default heavy focus ring (mouse click)
+.p-button:focus {
+  box-shadow: none;
+}
+.p-button.btn-salvar:focus { box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25); }
+.p-button.btn-novo:focus { box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25); }
+
+// ─── Layout ───
+.layout-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.layout-main {
+  margin-left: 64px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-content {
+  flex: 1;
+  padding: 1.75rem;
+  background-color: $gray-100;
+  background-image:
+    radial-gradient(at 20% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(129, 140, 248, 0.03) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(0, 0, 0, 0.01) 0%, transparent 80%);
+  background-attachment: fixed;
+}
+
+// ─── Content card ───
+.content-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid $gray-200;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+// When content-card is a PrimeReact Card, avoid double padding/shadow
+.p-card.content-card {
+  padding: 0;
+  .p-card-body { padding: 1.5rem; }
+  .p-card-content { padding: 0; }
+}
+
+// ─── PrimeReact DataTable overrides ───
+.p-datatable {
+  .p-datatable-header {
+    background: transparent;
+    border: none;
+    padding: 0 0 1rem 0;
+  }
+
+  .p-datatable-thead > tr > th {
+    background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+    color: $gray-700;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border: 1px solid #cbd5e1;
+    padding: 0.75rem 1rem;
+
+    .p-sortable-column-icon {
+      color: $gray-400;
+      font-size: 0.65rem;
+      margin-left: 0.3rem;
+    }
+
+    &:hover {
+      background: linear-gradient(180deg, #e2e8f0 0%, #d6dde6 100%) !important;
+    }
+  }
+
+  .p-datatable-tbody > tr {
+    transition: background 0.1s;
+
+    > td {
+      border: 1px solid #eef1f5;
+      font-size: 0.875rem;
+      padding: 0.7rem 1rem;
+    }
+
+    &:nth-child(even) { background: #fafbfc; }
+    &:hover { background: #f0f4ff !important; }
+  }
+
+  .p-paginator {
+    background: linear-gradient(180deg, $gray-50 0%, #e8ecf1 100%);
+    border: 1px solid #cbd5e1;
+    border-top: none;
+    padding: 0.6rem 1rem;
+    border-radius: 0 0 10px 10px;
+    gap: 0.25rem;
+
+    .p-paginator-page {
+      min-width: 2rem;
+      height: 2rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin: 0 0.1rem;
+      color: $gray-600;
+
+      &.p-highlight {
+        background: $primary-color;
+        color: white;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      }
+    }
+
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last {
+      min-width: 2rem;
+      height: 2rem;
+      border-radius: 6px;
+      color: $gray-500;
+      &:hover { background: $gray-200; }
+    }
+
+    .p-dropdown {
+      height: 2rem;
+      border-radius: 6px;
+      margin-left: 0.5rem;
+      .p-dropdown-label {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.8rem;
+      }
+    }
+  }
+}
+
+// ─── PrimeReact Dropdown Panel ───
+.p-dropdown-panel {
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid $gray-200;
+  overflow: hidden;
+
+  .p-dropdown-items {
+    padding: 0.35rem;
+
+    .p-dropdown-item {
+      padding: 0.55rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      margin: 0.1rem 0;
+      &:hover { background: $gray-100; }
+      &.p-highlight { background: #eff6ff; color: $primary-color; }
+    }
+  }
+}
+
+// ─── PrimeReact MultiSelect Panel ───
+.p-multiselect-panel {
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid $gray-200;
+  overflow: hidden;
+
+  .p-multiselect-header {
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid $gray-200;
+    background: $gray-50;
+    .p-checkbox { margin-right: 0.5rem; }
+  }
+
+  .p-multiselect-items {
+    padding: 0.35rem;
+
+    .p-multiselect-item {
+      padding: 0.55rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      margin: 0.1rem 0;
+      gap: 0.6rem;
+      &:hover { background: $gray-100; }
+      &.p-highlight { background: #eff6ff; color: $primary-color; }
+
+      .p-checkbox {
+        width: 1.15rem;
+        height: 1.15rem;
+        .p-checkbox-box {
+          width: 1.15rem;
+          height: 1.15rem;
+          border-radius: 4px;
+          border: 1.5px solid $gray-300;
+          &.p-highlight { background: $primary-color; border-color: $primary-color; }
+        }
+      }
+    }
+  }
+
+  .p-multiselect-close {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 6px;
+    color: $gray-500;
+    &:hover { background: $gray-200; }
+  }
+}
+
+// ─── PrimeReact Buttons ───
+.p-button {
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  padding: 0.55rem 1.15rem;
+  .p-button-icon { font-size: 0.85rem; }
+  &.p-button-rounded { width: 2.25rem; height: 2.25rem; }
+}
+
+.btn-salvar {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  &:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+    transform: translateY(-1px);
+  }
+  &:active { transform: translateY(0); }
+}
+
+.btn-cancelar {
+  background: white !important;
+  color: $gray-600 !important;
+  border: 1px solid $gray-300 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  &:hover {
+    background: $gray-50 !important;
+    color: $gray-800 !important;
+    border-color: $gray-400 !important;
+  }
+}
+
+.btn-novo {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+  flex-shrink: 0;
+  &:hover {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+    transform: translateY(-1px);
+  }
+  &:active { transform: translateY(0); }
+}
+
+.btn-filtros {
+  background: white !important;
+  color: $gray-600 !important;
+  border: 1.5px solid $gray-300 !important;
+  flex-shrink: 0;
+  &:hover {
+    background: $gray-50 !important;
+    border-color: $primary-color !important;
+    color: $primary-color !important;
+  }
+}
+
+// ─── PrimeReact Inputs ───
+.p-inputtext {
+  border: 1.5px solid $gray-300;
+  border-radius: 8px !important;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.875rem;
+  color: $text-color;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: white;
+
+  &:enabled:hover { border-color: #94a3b8; }
+  &:enabled:focus {
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    outline: none;
+  }
+  &::placeholder { color: $gray-400; font-weight: 400; }
+}
+
+.p-dropdown,
+.p-multiselect {
+  border: 1.5px solid $gray-300 !important;
+  border-radius: 8px !important;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: none !important;
+  &:not(.p-disabled):hover { border-color: #94a3b8 !important; }
+  &:not(.p-disabled).p-focus { border-color: $primary-color !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important; }
+  .p-dropdown-trigger,
+  .p-multiselect-trigger { width: 2.5rem; color: $gray-400; }
+}
+
+.p-dropdown .p-dropdown-label { padding: 0.6rem 0.85rem; font-size: 0.875rem; color: $text-color; }
+.p-multiselect .p-multiselect-label { padding: 0.6rem 0.85rem; font-size: 0.875rem; }
+
+.p-multiselect .p-multiselect-token {
+  background: #eff6ff;
+  color: $primary-color;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid #bfdbfe;
+}
+
+.p-password {
+  .p-inputtext { width: 100%; }
+}
+
+// ─── PrimeReact InputSwitch ───
+.p-inputswitch {
+  width: 2.75rem !important;
+  height: 1.5rem !important;
+
+  .p-inputswitch-slider {
+    border-radius: 1rem !important;
+    &::before {
+      width: 1.1rem !important;
+      height: 1.1rem !important;
+      margin-top: -0.55rem !important;
+      left: 0.2rem !important;
+      border-radius: 50% !important;
+      transition: transform 0.2s !important;
+    }
+  }
+
+  &.p-inputswitch-checked .p-inputswitch-slider::before {
+    transform: translateX(1.15rem) !important;
+  }
+}
+
+// ─── Toast ───
+.p-toast {
+  .p-toast-message {
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border: none;
+    backdrop-filter: blur(8px);
+
+    .p-toast-message-content {
+      padding: 0.85rem 1rem;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .p-toast-message-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .p-toast-message-text {
+      .p-toast-summary {
+        font-weight: 700;
+        font-size: 0.85rem;
+      }
+      .p-toast-detail {
+        font-size: 0.8rem;
+        margin-top: 0.15rem;
+        opacity: 0.85;
+      }
+    }
+
+    .p-toast-icon-close {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 6px;
+    }
+
+    &.p-toast-message-success {
+      background: linear-gradient(135deg, #065f46, #047857);
+      color: white;
+      .p-toast-icon-close { color: rgba(255, 255, 255, 0.7); &:hover { background: rgba(255, 255, 255, 0.15); } }
+      .p-toast-message-icon { color: #6ee7b7; }
+    }
+
+    &.p-toast-message-error {
+      background: linear-gradient(135deg, #991b1b, #dc2626);
+      color: white;
+      .p-toast-icon-close { color: rgba(255, 255, 255, 0.7); &:hover { background: rgba(255, 255, 255, 0.15); } }
+      .p-toast-message-icon { color: #fca5a5; }
+    }
+
+    &.p-toast-message-warn {
+      background: linear-gradient(135deg, #92400e, #d97706);
+      color: white;
+      .p-toast-icon-close { color: rgba(255, 255, 255, 0.7); &:hover { background: rgba(255, 255, 255, 0.15); } }
+      .p-toast-message-icon { color: #fde68a; }
+    }
+
+    &.p-toast-message-info {
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      color: white;
+      .p-toast-icon-close { color: rgba(255, 255, 255, 0.7); &:hover { background: rgba(255, 255, 255, 0.15); } }
+      .p-toast-message-icon { color: #93c5fd; }
+    }
+  }
+}
+
+// ─── Tooltip ───
+.p-tooltip {
+  .p-tooltip-text {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.72rem;
+    border-radius: 6px;
+    background: #1e293b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .p-tooltip-arrow {
+    border-top-color: #1e293b;
+  }
+
+  &.p-tooltip-top .p-tooltip-arrow { border-top-color: #1e293b; }
+  &.p-tooltip-bottom .p-tooltip-arrow { border-bottom-color: #1e293b; }
+  &.p-tooltip-left .p-tooltip-arrow { border-left-color: #1e293b; }
+  &.p-tooltip-right .p-tooltip-arrow { border-right-color: #1e293b; }
+}
+
+// ─── Form fields ───
+.form-field {
+  margin-bottom: 1.35rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: $gray-600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    .required {
+      color: #dc2626;
+      margin-left: 0.2rem;
+    }
+  }
+
+  small {
+    text-transform: none;
+    font-weight: 400;
+    letter-spacing: normal;
+    color: $gray-400;
+    font-size: 0.75rem;
+  }
+
+  small.p-error {
+    margin-top: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  &.field-error {
+    .p-inputtext,
+    .p-dropdown,
+    .p-multiselect {
+      border-color: #dc2626 !important;
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.12);
+
+      &:enabled:focus,
+      &:not(.p-disabled).p-focus {
+        border-color: #dc2626 !important;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+      }
+    }
+
+    label {
+      color: #dc2626;
+    }
+  }
+}
+
+// ─── Responsive ───
+@media (max-width: 768px) {
+  .layout-main {
+    margin-left: 0;
+  }
+}
+
+// ─── Dark Theme ───
+[data-theme="dark"] {
+  // Base
+  body, html {
+    background-color: #0f172a;
+    color: #e2e8f0;
+  }
+
+  .layout-content {
+    background-color: #0f172a;
+    background-image:
+      radial-gradient(at 20% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+      radial-gradient(at 80% 80%, rgba(129, 140, 248, 0.05) 0%, transparent 50%);
+  }
+
+  // Cards
+  .content-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  // Page header
+  .page-header {
+    h1 { color: #f1f5f9; }
+    p { color: #94a3b8; }
+  }
+
+  // DataTable
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background: linear-gradient(180deg, #1e293b 0%, #172032 100%);
+      color: #94a3b8;
+      border-color: #334155;
+
+      &:hover {
+        background: linear-gradient(180deg, #253348 0%, #1e293b 100%) !important;
+      }
+    }
+
+    .p-datatable-tbody > tr {
+      background: #1e293b;
+      color: #e2e8f0;
+
+      > td {
+        border-color: #334155;
+      }
+
+      &:nth-child(even) {
+        background: #172032;
+      }
+
+      &:hover {
+        background: #253348 !important;
+      }
+    }
+
+    .p-paginator {
+      background: linear-gradient(180deg, #1e293b 0%, #172032 100%);
+      border-color: #334155;
+
+      .p-paginator-page {
+        color: #94a3b8;
+      }
+
+      .p-paginator-first,
+      .p-paginator-prev,
+      .p-paginator-next,
+      .p-paginator-last {
+        color: #94a3b8;
+        &:hover { background: #334155; }
+      }
+    }
+  }
+
+  // Inputs
+  .p-inputtext {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+
+    &::placeholder { color: #64748b; }
+    &:enabled:hover { border-color: #475569 !important; }
+    &:enabled:focus { border-color: $primary-color !important; }
+  }
+
+  .p-dropdown,
+  .p-multiselect {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    .p-dropdown-label,
+    .p-multiselect-label { color: #e2e8f0; }
+    &:not(.p-disabled):hover { border-color: #475569 !important; }
+    .p-dropdown-trigger,
+    .p-multiselect-trigger { color: #64748b; }
+  }
+
+  .p-multiselect .p-multiselect-token {
+    background: #253348;
+    color: #93c5fd;
+    border-color: #334155;
+  }
+
+  // Dropdown/MultiSelect panels
+  .p-dropdown-panel {
+    background: #1e293b;
+    border-color: #334155;
+    .p-dropdown-items .p-dropdown-item {
+      color: #e2e8f0;
+      &:hover { background: #253348; }
+      &.p-highlight { background: #1e3a5f; color: #93c5fd; }
+    }
+  }
+
+  .p-multiselect-panel {
+    background: #1e293b;
+    border-color: #334155;
+    .p-multiselect-header { background: #172032; border-color: #334155; }
+    .p-multiselect-items .p-multiselect-item {
+      color: #e2e8f0;
+      &:hover { background: #253348; }
+      &.p-highlight { background: #1e3a5f; color: #93c5fd; }
+    }
+  }
+
+  // Dialog content/footer (header stays dark gradient)
+  .p-dialog {
+    .p-dialog-content { background: #1e293b; color: #e2e8f0; }
+    .p-dialog-footer {
+      background: linear-gradient(180deg, #1e293b, #172032);
+      border-color: #334155;
+    }
+  }
+
+  // Form fields
+  .form-field {
+    label { color: #94a3b8; }
+    small { color: #64748b; }
+  }
+
+  // Buttons (outline variants)
+  .btn-cancelar {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border-color: #475569 !important;
+    &:hover {
+      background: #253348 !important;
+      color: #e2e8f0 !important;
+      border-color: #64748b !important;
+    }
+  }
+
+  .btn-filtros {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border-color: #475569 !important;
+    &:hover {
+      background: #253348 !important;
+    }
+  }
+
+  .btn-toggle-inativos {
+    background: #1e293b !important;
+    color: #64748b !important;
+    border-color: #475569 !important;
+
+    &:hover {
+      background: #253348 !important;
+      color: #94a3b8 !important;
+      border-color: #64748b !important;
+    }
+
+    &.active {
+      color: #f59e0b !important;
+      border-color: #f59e0b !important;
+      background: rgba(245, 158, 11, 0.1) !important;
+
+      &:hover {
+        background: rgba(245, 158, 11, 0.2) !important;
+      }
+    }
+  }
+
+  // Topbar
+  .layout-topbar {
+    background: #1e293b;
+    border-color: #334155;
+
+    .topbar-breadcrumb span { color: #f1f5f9; }
+    .topbar-user {
+      &:hover { background: #253348; }
+      .user-info .user-name { color: #f1f5f9; }
+      .user-info .user-email { color: #64748b; }
+    }
+    .topbar-divider { background: #334155; }
+    .topbar-logout {
+      color: #94a3b8;
+      &:hover { background: rgba(220, 38, 38, 0.15); }
+    }
+  }
+
+  // Dashboard stat cards
+  .stat-card {
+    background: #1e293b;
+    border-color: #334155;
+    .stat-info .stat-value { color: #f1f5f9; }
+    .stat-info .stat-label { color: #94a3b8; }
+  }
+
+  // Quick links
+  .quick-link {
+    background: #172032;
+    border-color: #334155;
+    color: #94a3b8;
+    &:hover {
+      background: #253348;
+      border-color: rgba(96, 165, 250, 0.4);
+      color: #60a5fa;
+    }
+    i { color: #60a5fa; }
+  }
+
+  // System info
+  .info-row {
+    border-color: #334155;
+    .info-label { color: #64748b; }
+    .info-value { color: #e2e8f0; }
+  }
+
+  // Perfil chips
+  .perfil-chip {
+    background: #253348;
+    color: #93c5fd;
+    border-color: #334155;
+  }
+
+  .role-chip {
+    background: #253348;
+    color: #a5b4fc;
+    border-color: #334155;
+  }
+
+  // Access denied page
+  .acesso-negado-card {
+    h1 { color: #f1f5f9; }
+    p { color: #94a3b8; }
+    p.sub { color: #64748b; }
+  }
+
+  // PrimeReact Card
+  .p-card {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+  }
+}
+
+// Utility classes
+.w-full { width: 100%; }
+.text-muted { color: $gray-400; }

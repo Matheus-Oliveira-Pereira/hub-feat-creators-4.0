@@ -1,0 +1,66 @@
+@use '../../styles/variables' as *;
+
+.table-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  // Align all controls to same height
+  .btn-filtros,
+  .btn-novo {
+    height: 2.5rem;
+  }
+
+  .search-wrapper {
+    flex: 1;
+    position: relative;
+
+    i {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $gray-400;
+      font-size: 0.85rem;
+    }
+
+    input {
+      width: 100%;
+      padding-left: 2.5rem;
+      height: 2.5rem;
+    }
+  }
+
+  .btn-toggle-inativos {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1.5px solid $gray-300;
+    border-radius: $border-radius-md;
+    background: white;
+    color: $gray-400;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+
+    &:hover {
+      color: $gray-600;
+      border-color: $gray-400;
+      background: $gray-50;
+    }
+
+    &.active {
+      color: #f59e0b;
+      border-color: #f59e0b;
+      background: #fffbeb;
+
+      &:hover {
+        background: #fef3c7;
+      }
+    }
+  }
+}

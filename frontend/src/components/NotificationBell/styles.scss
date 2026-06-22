@@ -1,0 +1,126 @@
+@use '../../styles/variables' as *;
+
+.notification-bell {
+  position: relative;
+
+  .notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 0.6rem;
+    line-height: 16px;
+    padding: 0 4px;
+  }
+}
+
+.notification-panel {
+  width: 340px;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid $gray-200;
+  overflow: hidden;
+
+  .notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid $gray-200;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: $gray-800;
+
+    .clear-btn {
+      background: none;
+      border: none;
+      color: $primary-color;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+
+      &:hover { background: #eff6ff; }
+    }
+  }
+
+  .notification-list {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .notification-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: $gray-400;
+    font-size: 0.85rem;
+  }
+
+  .notification-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid $gray-100;
+    transition: background 0.1s;
+
+    &:last-child { border-bottom: none; }
+    &:hover { background: $gray-50; }
+
+    .notification-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: $gray-100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+    }
+
+    .notification-content {
+      flex: 1;
+      min-width: 0;
+
+      .notification-message {
+        display: block;
+        font-size: 0.82rem;
+        color: $gray-700;
+        line-height: 1.3;
+      }
+
+      .notification-meta {
+        display: block;
+        font-size: 0.7rem;
+        color: $gray-400;
+        margin-top: 0.2rem;
+      }
+    }
+  }
+}
+
+[data-theme="dark"] {
+  .notification-panel {
+    background: #1e293b;
+    border-color: #334155;
+
+    .notification-header {
+      color: #f1f5f9;
+      border-color: #334155;
+    }
+
+    .notification-item {
+      border-color: #253348;
+      &:hover { background: #253348; }
+
+      .notification-icon { background: #253348; }
+      .notification-content .notification-message { color: #e2e8f0; }
+      .notification-content .notification-meta { color: #64748b; }
+    }
+
+    .notification-empty { color: #64748b; }
+  }
+}
