@@ -1,0 +1,21 @@
+@use '../../styles/variables' as *;
+
+.config-card {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .config-hint {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: $gray-500;
+  }
+
+  .config-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+  }
+}

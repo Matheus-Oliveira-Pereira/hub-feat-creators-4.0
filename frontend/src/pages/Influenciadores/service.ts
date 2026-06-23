@@ -19,6 +19,9 @@ export interface Influenciador {
   tiktok: string | null;
   linkedin: string | null;
   youtube: string | null;
+  discord: string | null;
+  nicho: string | null;
+  subnicho: string | null;
   foto: string | null;
   status: string;
 }
@@ -31,6 +34,9 @@ export interface InfluenciadorForm {
   tiktok: string;
   linkedin: string;
   youtube: string;
+  discord: string;
+  nicho: string;
+  subnicho: string;
   foto: string;
   status: string;
 }

@@ -27,7 +27,8 @@ import './styles.scss';
 interface FormErrors { nome?: string; email?: string; }
 
 const FORM_VAZIO: InfluenciadorForm = {
-  nome: '', email: '', telefone: '', instagram: '', tiktok: '', linkedin: '', youtube: '', foto: '', status: 'ATIVO',
+  nome: '', email: '', telefone: '', instagram: '', tiktok: '', linkedin: '', youtube: '', discord: '',
+  nicho: '', subnicho: '', foto: '', status: 'ATIVO',
 };
 
 function Influenciadores() {
@@ -127,7 +128,8 @@ function Influenciadores() {
       setForm({
         nome: data.nome, email: data.email,
         telefone: data.telefone ?? '', instagram: data.instagram ?? '', tiktok: data.tiktok ?? '',
-        linkedin: data.linkedin ?? '', youtube: data.youtube ?? '', foto: data.foto ?? '', status: data.status,
+        linkedin: data.linkedin ?? '', youtube: data.youtube ?? '', discord: data.discord ?? '',
+        nicho: data.nicho ?? '', subnicho: data.subnicho ?? '', foto: data.foto ?? '', status: data.status,
       });
       setFormId(row.id); setEditando(true); setErrors({}); setSubmitted(false); setDialogVisible(true);
     } catch { toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar influenciador' }); }
@@ -234,6 +236,20 @@ function Influenciadores() {
           <div className="form-field">
             <label htmlFor="youtube"><i className="pi pi-youtube" /> YouTube</label>
             <InputText id="youtube" value={form.youtube} onChange={(e) => setForm({ ...form, youtube: e.target.value })} className="w-full" />
+          </div>
+          <div className="form-field">
+            <label htmlFor="discord"><i className="pi pi-discord" /> Discord</label>
+            <InputText id="discord" value={form.discord} onChange={(e) => setForm({ ...form, discord: e.target.value })} className="w-full" placeholder="Servidor / convite" />
+          </div>
+        </div>
+        <div className="form-grid-2">
+          <div className="form-field">
+            <label htmlFor="nicho">Nicho</label>
+            <InputText id="nicho" value={form.nicho} onChange={(e) => setForm({ ...form, nicho: e.target.value })} className="w-full" placeholder="Ex: Tecnologia" />
+          </div>
+          <div className="form-field">
+            <label htmlFor="subnicho">Subnicho</label>
+            <InputText id="subnicho" value={form.subnicho} onChange={(e) => setForm({ ...form, subnicho: e.target.value })} className="w-full" placeholder="Ex: Programação & IA" />
           </div>
         </div>
         <div className="form-field">

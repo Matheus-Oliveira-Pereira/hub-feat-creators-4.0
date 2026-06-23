@@ -16,6 +16,9 @@ const menuItems: MenuItem[] = [
   { label: 'Usuários', icon: 'pi pi-users', path: '/usuarios' },
   { label: 'Perfis', icon: 'pi pi-shield', path: '/perfis' },
   { label: 'Influenciadores', icon: 'pi pi-star', path: '/influenciadores' },
+  { label: 'Mídia Kits', icon: 'pi pi-id-card', path: '/midia-kits' },
+  { section: 'Sistema' },
+  { label: 'Configurações', icon: 'pi pi-cog', path: '/configuracoes' },
 ];
 
 function Sidebar() {

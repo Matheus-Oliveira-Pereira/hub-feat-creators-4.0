@@ -9,6 +9,8 @@ export const MODULES = {
   USUARIOS: { prefix: 'USR', path: '/usuarios' },
   PERFIS: { prefix: 'PRF', path: '/perfis' },
   INFLUENCIADORES: { prefix: 'INF', path: '/influenciadores' },
+  MIDIA_KIT: { prefix: 'MDK', path: '/midia-kits' },
+  CONFIGURACOES: { prefix: 'CFG', path: '/configuracoes' },
 } as const;
 
 export function hasRole(userRoles: string[], modulePrefix: string, action: string): boolean {

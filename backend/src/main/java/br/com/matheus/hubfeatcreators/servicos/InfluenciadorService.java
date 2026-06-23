@@ -1,6 +1,7 @@
 package br.com.matheus.hubfeatcreators.servicos;
 
 import br.com.matheus.hubfeatcreators.entidades.Influenciador;
+import br.com.matheus.hubfeatcreators.enums.StatusInfluenciador;
 import br.com.matheus.hubfeatcreators.repositorios.InfluenciadorRepository;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.InfluenciadorDTORepository;
@@ -8,6 +9,7 @@ import br.com.matheus.hubfeatcreators.visoes.telas.influenciador.InfluenciadorDT
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -20,6 +22,10 @@ public class InfluenciadorService extends EntidadeService<Influenciador, Influen
         return dtoRepository.listar(requestParams);
     }
 
+    public List<Influenciador> listarAtivos() {
+        return repository.findByStatus(StatusInfluenciador.ATIVO);
+    }
+
     @Override
     public Influenciador salvar(Influenciador entidade) {
         // Campos de rede social são únicos: normaliza vazio para null
@@ -29,6 +35,7 @@ public class InfluenciadorService extends EntidadeService<Influenciador, Influen
         entidade.setTiktok(normalizar(entidade.getTiktok()));
         entidade.setLinkedin(normalizar(entidade.getLinkedin()));
         entidade.setYoutube(normalizar(entidade.getYoutube()));
+        entidade.setDiscord(normalizar(entidade.getDiscord()));
         return super.salvar(entidade);
     }
 

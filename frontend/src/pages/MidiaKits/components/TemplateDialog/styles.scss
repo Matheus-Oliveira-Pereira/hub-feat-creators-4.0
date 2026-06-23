@@ -1,0 +1,20 @@
+@use '../../../../styles/variables' as *;
+
+.template-dialog {
+  .template-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+
+    .footer-spacer { flex: 1; }
+
+    .btn-pdf {
+      background: #fff;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+
+      &:hover { background: #fef2f2; border-color: #dc2626; }
+    }
+  }
+}

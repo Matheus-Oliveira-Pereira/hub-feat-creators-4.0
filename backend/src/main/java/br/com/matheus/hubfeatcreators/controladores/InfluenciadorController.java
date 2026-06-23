@@ -32,6 +32,11 @@ public class InfluenciadorController extends EntidadeController<Influenciador, I
         return ResponseEntity.ok(service.listarDTO(request.getParameterMap()));
     }
 
+    @GetMapping("/ativos")
+    public ResponseEntity<java.util.List<Influenciador>> listarAtivos() {
+        return ResponseEntity.ok(service.listarAtivos());
+    }
+
     @PostMapping(value = "/importacao", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ImportacaoResultadoDTO> importar(@RequestParam("arquivo") MultipartFile arquivo) {
         return ResponseEntity.ok(importacaoService.importar(arquivo));

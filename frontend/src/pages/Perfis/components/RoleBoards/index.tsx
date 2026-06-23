@@ -52,6 +52,26 @@ const ROLE_BOARDS: RoleBoard[] = [
       { value: 'INFD', label: 'Excluir' },
     ],
   },
+  {
+    module: 'Mídia Kits',
+    icon: 'pi pi-id-card',
+    color: '#0ea5e9',
+    roles: [
+      { value: 'MDKA', label: 'Adicionar' },
+      { value: 'MDKB', label: 'Visualizar' },
+      { value: 'MDKC', label: 'Alterar' },
+      { value: 'MDKD', label: 'Excluir' },
+    ],
+  },
+  {
+    module: 'Configurações',
+    icon: 'pi pi-cog',
+    color: '#64748b',
+    roles: [
+      { value: 'CFGB', label: 'Visualizar' },
+      { value: 'CFGC', label: 'Alterar' },
+    ],
+  },
 ];
 
 const ALL_ROLE_VALUES = ROLE_BOARDS.flatMap((b) => b.roles.map((r) => r.value));

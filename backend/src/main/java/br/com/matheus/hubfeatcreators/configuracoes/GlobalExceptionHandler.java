@@ -1,6 +1,8 @@
 package br.com.matheus.hubfeatcreators.configuracoes;
 
+import br.com.matheus.hubfeatcreators.exceptions.ConfiguracaoInvalidaException;
 import br.com.matheus.hubfeatcreators.exceptions.EntidadeNaoEncontradaException;
+import com.anthropic.errors.AnthropicServiceException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,11 +74,33 @@ public class GlobalExceptionHandler {
             body.put("message", "Já existe um influenciador com este LinkedIn");
         } else if (lower.contains("youtube")) {
             body.put("message", "Já existe um influenciador com este YouTube");
+        } else if (lower.contains("discord")) {
+            body.put("message", "Já existe um influenciador com este Discord");
         } else {
             body.put("message", "Registro duplicado. Já existe um registro com os mesmos dados únicos");
         }
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(ConfiguracaoInvalidaException.class)
+    public ResponseEntity<Map<String, Object>> handleConfiguracaoInvalida(ConfiguracaoInvalidaException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Configuração Inválida");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(AnthropicServiceException.class)
+    public ResponseEntity<Map<String, Object>> handleAnthropic(AnthropicServiceException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_GATEWAY.value());
+        body.put("error", "Erro na API do Claude");
+        body.put("message", "Falha ao chamar o Claude: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body);
     }
 
     @ExceptionHandler(Exception.class)

@@ -27,12 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (usuarioRepository.findByEmail("admin@mop.com").isPresent()) {
-            return;
-        }
-
-        log.info("Criando usuário administrador padrão...");
-
+        // Garante o perfil ADMINISTRADOR com TODAS as roles (inclui novas a cada boot).
         Perfil perfilAdmin = perfilRepository.findByDescricao("ADMINISTRADOR")
                 .orElseGet(() -> {
                     Perfil perfil = new Perfil();
@@ -41,6 +36,20 @@ public class DataInitializer implements CommandLineRunner {
                     perfil.setRoles(EnumSet.allOf(Role.class));
                     return perfilRepository.save(perfil);
                 });
+
+        // Sincroniza roles do admin com o enum atual (ex: MDK/CFG adicionadas depois).
+        Set<Role> todasRoles = EnumSet.allOf(Role.class);
+        if (!perfilAdmin.getRoles().containsAll(todasRoles)) {
+            perfilAdmin.getRoles().addAll(todasRoles);
+            perfilRepository.save(perfilAdmin);
+            log.info("Roles do perfil ADMINISTRADOR sincronizadas ({} roles).", todasRoles.size());
+        }
+
+        if (usuarioRepository.findByEmail("admin@mop.com").isPresent()) {
+            return;
+        }
+
+        log.info("Criando usuário administrador padrão...");
 
         Usuario admin = new Usuario();
         admin.setNome("Administrador");

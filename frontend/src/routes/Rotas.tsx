@@ -4,6 +4,8 @@ import Dashboard from '../pages/Dashboard';
 import Usuarios from '../pages/Usuarios';
 import Perfis from '../pages/Perfis';
 import Influenciadores from '../pages/Influenciadores';
+import MidiaKits from '../pages/MidiaKits';
+import Configuracoes from '../pages/Configuracoes';
 import AcessoNegado from '../pages/AcessoNegado';
 import Template from './Template';
 import RequireAuth from './Requisitos/RequireAuth';
@@ -19,6 +21,8 @@ function Rotas() {
           <Route path="usuarios" element={<RequireRole role="USRB"><Usuarios /></RequireRole>} />
           <Route path="perfis" element={<RequireRole role="PRFB"><Perfis /></RequireRole>} />
           <Route path="influenciadores" element={<RequireRole role="INFB"><Influenciadores /></RequireRole>} />
+          <Route path="midia-kits" element={<RequireRole role="MDKB"><MidiaKits /></RequireRole>} />
+          <Route path="configuracoes" element={<RequireRole role="CFGB"><Configuracoes /></RequireRole>} />
           <Route path="acesso-negado" element={<AcessoNegado />} />
         </Route>
       </Routes>

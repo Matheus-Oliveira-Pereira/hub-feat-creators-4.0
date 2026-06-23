@@ -45,6 +45,13 @@ public class Influenciador extends Entidade implements br.com.matheus.hubfeatcre
     @Column(unique = true)
     private String youtube;
 
+    @Column(unique = true)
+    private String discord;
+
+    private String nicho;
+
+    private String subnicho;
+
     @Column(columnDefinition = "TEXT")
     private String foto;
 

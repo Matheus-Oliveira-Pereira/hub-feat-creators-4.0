@@ -14,7 +14,13 @@ public enum Role implements GrantedAuthority {
     INFA,
     INFB,
     INFC,
-    INFD;
+    INFD,
+    MDKA,
+    MDKB,
+    MDKC,
+    MDKD,
+    CFGB,
+    CFGC;
 
     @Override
     public String getAuthority() {

@@ -1,0 +1,35 @@
+@use '../../styles/variables' as *;
+
+.crud-page {
+  .midiakit-acoes {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    .acao-copiar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      color: $gray-500;
+
+      &:hover:not(:disabled) { background: rgba($primary-color, 0.1); color: $primary-color; }
+      &:disabled { opacity: 0.4; cursor: not-allowed; }
+    }
+  }
+
+  .qtd-badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+}
