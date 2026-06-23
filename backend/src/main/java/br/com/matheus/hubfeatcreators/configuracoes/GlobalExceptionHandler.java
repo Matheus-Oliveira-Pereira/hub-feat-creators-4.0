@@ -2,6 +2,7 @@ package br.com.matheus.hubfeatcreators.configuracoes;
 
 import br.com.matheus.hubfeatcreators.exceptions.ConfiguracaoInvalidaException;
 import br.com.matheus.hubfeatcreators.exceptions.EntidadeNaoEncontradaException;
+import br.com.matheus.hubfeatcreators.exceptions.RegraNegocioException;
 import com.anthropic.errors.AnthropicServiceException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -89,6 +90,16 @@ public class GlobalExceptionHandler {
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.BAD_REQUEST.value());
         body.put("error", "Configuração Inválida");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(RegraNegocioException.class)
+    public ResponseEntity<Map<String, Object>> handleRegraNegocio(RegraNegocioException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Requisição Inválida");
         body.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }

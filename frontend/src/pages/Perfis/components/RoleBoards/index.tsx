@@ -53,6 +53,17 @@ const ROLE_BOARDS: RoleBoard[] = [
     ],
   },
   {
+    module: 'Marcas',
+    icon: 'pi pi-bookmark',
+    color: '#f59e0b',
+    roles: [
+      { value: 'MRCA', label: 'Adicionar' },
+      { value: 'MRCB', label: 'Visualizar' },
+      { value: 'MRCC', label: 'Alterar' },
+      { value: 'MRCD', label: 'Excluir' },
+    ],
+  },
+  {
     module: 'Mídia Kits',
     icon: 'pi pi-id-card',
     color: '#0ea5e9',

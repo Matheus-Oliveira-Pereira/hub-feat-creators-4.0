@@ -7,6 +7,7 @@ import br.com.matheus.hubfeatcreators.enums.StatusPerfil;
 import br.com.matheus.hubfeatcreators.enums.StatusUsuario;
 import br.com.matheus.hubfeatcreators.repositorios.PerfilRepository;
 import br.com.matheus.hubfeatcreators.repositorios.UsuarioRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -23,10 +24,16 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UsuarioRepository usuarioRepository;
     private final PerfilRepository perfilRepository;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
     public void run(String... args) {
+        // ddl-auto:update não atualiza CHECK constraints de colunas enum no PostgreSQL.
+        entityManager.createNativeQuery(
+                "ALTER TABLE perfil_roles DROP CONSTRAINT IF EXISTS perfil_roles_role_check"
+        ).executeUpdate();
+
         // Garante o perfil ADMINISTRADOR com TODAS as roles (inclui novas a cada boot).
         Perfil perfilAdmin = perfilRepository.findByDescricao("ADMINISTRADOR")
                 .orElseGet(() -> {

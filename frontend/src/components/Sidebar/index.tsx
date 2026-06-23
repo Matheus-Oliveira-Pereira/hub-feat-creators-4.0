@@ -16,6 +16,7 @@ const menuItems: MenuItem[] = [
   { label: 'Usuários', icon: 'pi pi-users', path: '/usuarios' },
   { label: 'Perfis', icon: 'pi pi-shield', path: '/perfis' },
   { label: 'Influenciadores', icon: 'pi pi-star', path: '/influenciadores' },
+  { label: 'Marcas', icon: 'pi pi-bookmark', path: '/marcas' },
   { label: 'Mídia Kits', icon: 'pi pi-id-card', path: '/midia-kits' },
   { section: 'Sistema' },
   { label: 'Configurações', icon: 'pi pi-cog', path: '/configuracoes' },

@@ -9,6 +9,7 @@ export const MODULES = {
   USUARIOS: { prefix: 'USR', path: '/usuarios' },
   PERFIS: { prefix: 'PRF', path: '/perfis' },
   INFLUENCIADORES: { prefix: 'INF', path: '/influenciadores' },
+  MARCAS: { prefix: 'MRC', path: '/marcas' },
   MIDIA_KIT: { prefix: 'MDK', path: '/midia-kits' },
   CONFIGURACOES: { prefix: 'CFG', path: '/configuracoes' },
 } as const;

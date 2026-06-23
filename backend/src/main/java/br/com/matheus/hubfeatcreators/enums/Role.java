@@ -19,6 +19,10 @@ public enum Role implements GrantedAuthority {
     MDKB,
     MDKC,
     MDKD,
+    MRCA,
+    MRCB,
+    MRCC,
+    MRCD,
     CFGB,
     CFGC;
 

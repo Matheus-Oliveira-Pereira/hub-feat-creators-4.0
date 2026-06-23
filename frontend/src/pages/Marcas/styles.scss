@@ -1,0 +1,13 @@
+@use '../../styles/variables' as *;
+
+.crud-page {
+  .qtd-badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: #fef3c7;
+    color: #b45309;
+  }
+}
