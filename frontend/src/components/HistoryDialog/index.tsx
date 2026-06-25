@@ -122,7 +122,7 @@ function HistoryDialog({ visible, onHide, entityId, servicePath, title = 'Histó
     >
       {loading ? (
         <div className="flex justify-content-center p-4">
-          <i className="pi pi-spin pi-spinner" style={{ fontSize: '2rem', color: '#3b82f6' }} />
+          <i className="pi pi-spin pi-spinner" style={{ fontSize: '2rem', color: '#A6C400' }} />
         </div>
       ) : historico.length === 0 ? (
         <div className="text-center p-4" style={{ color: '#94a3b8' }}>

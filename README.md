@@ -1,16 +1,26 @@
 # Hub Feat Creators
 
-Boilerplate full stack pronto para servir de ponto de partida em projetos pessoais e profissionais. A ideia é não começar do zero toda vez. O projeto já vem com autenticação, controle de permissões, auditoria, paginação, notificações em tempo real e uma interface profissional com tema claro e escuro.
+Sistema de assessoria de influenciadores. A plataforma centraliza o cadastro de influenciadores e marcas, gera mídia kits profissionais em PDF de forma automática e lê os insights das redes sociais a partir de prints, usando inteligência artificial.
 
-O backend é feito em Java com Spring Boot e PostgreSQL. O frontend é feito em React com Vite, TypeScript e PrimeReact.
+O backend é feito em Java com Spring Boot e PostgreSQL. O frontend é feito em React com Vite, TypeScript e PrimeReact, com identidade visual própria (verde-limão sobre preto) e tema claro e escuro.
 
-## O que já vem pronto
+## O que a plataforma faz
+
+Gestão de influenciadores com todos os canais de cada criador (Instagram, TikTok, YouTube, LinkedIn, Discord), nicho e subnicho, foto e dados de contato. Os influenciadores podem ser importados em massa por um arquivo CSV, com relatório de linhas importadas, duplicadas e com erro.
+
+Cadastro de marcas com seus contatos, para organizar com quem a assessoria negocia.
+
+Mídia kits automáticos. Cada mídia kit é montado por seções (capa, sobre o influenciador, conteúdos, insights de cada rede, marcas, exemplos de publis e contato) e exportado como um PDF profissional em A4 paisagem, com a identidade da marca e ícones por seção.
+
+Insights com IA. Em vez de digitar métricas na mão, o usuário envia os prints dos insights das redes e o sistema usa a API de visão do Claude para extrair os números e devolver tudo estruturado em JSON, que vira os cards de métricas do mídia kit.
+
+## Recursos de plataforma
 
 Autenticação completa com JWT e refresh token, incluindo proteção contra excesso de requisições no login.
 
 Sistema de permissões granular onde cada módulo tem quatro ações possíveis: adicionar, visualizar, alterar e excluir. Se o usuário não tem a permissão de visualizar um módulo, ele nem aparece no menu.
 
-Auditoria automática com Hibernate Envers. Toda alteração em usuários e perfis fica registrada, com data, tipo de operação e o e-mail de quem fez a mudança. O histórico pode ser consultado direto pela tela.
+Auditoria automática com Hibernate Envers. Toda alteração relevante fica registrada, com data, tipo de operação e o e-mail de quem fez a mudança. O histórico pode ser consultado direto pela tela.
 
 Exclusão lógica em vez de exclusão direta. Registros são desativados e podem ser restaurados depois. A exclusão permanente existe, mas exige confirmação explícita.
 
@@ -22,9 +32,9 @@ Interface com tema claro e escuro, componentes reutilizáveis, validação de fo
 
 ## Tecnologias
 
-No backend você encontra Spring Boot 3.3.5, Java 17, Spring Security, Spring Data JPA, Hibernate Envers, PostgreSQL, Bucket4j para rate limiting e Lombok.
+No backend você encontra Spring Boot 3.3.5, Java 17, Spring Security, Spring Data JPA, Hibernate Envers, PostgreSQL, Bucket4j para rate limiting, Lombok e o SDK Java da Anthropic para os insights com IA.
 
-No frontend você encontra React 18, Vite 6, TypeScript 5, PrimeReact 10, SCSS, TanStack Query 5, Axios, React Router 6 e STOMP sobre SockJS para o WebSocket.
+No frontend você encontra React 18, Vite 6, TypeScript 5, PrimeReact 10, SCSS, TanStack Query 5, Axios, React Router 6, `@react-pdf/renderer` para gerar os mídia kits e STOMP sobre SockJS para o WebSocket.
 
 ## Como rodar
 
@@ -73,6 +83,10 @@ npm run dev
 
 A aplicação sobe na porta 5173. Abra no navegador e faça login com o usuário administrador.
 
+### Insights com IA
+
+A chave da API do Claude não é uma variável de ambiente. Ela é cadastrada dentro do próprio sistema, na tela de Configurações, e fica criptografada em repouso no banco. Lá também é possível escolher o modelo do Claude. Sem a chave configurada, todo o resto da plataforma funciona normalmente; apenas a leitura automática dos prints de insights fica indisponível.
+
 ## Estrutura do projeto
 
 ```
@@ -81,13 +95,14 @@ hub-feat-creators/
     src/main/java/br/com/matheus/hubfeatcreators/
       entidades/         entidades JPA e superclasse genérica
       repositorios/      repositórios de escrita
-      servicos/          regras de negócio
+      servicos/          regras de negócio (inclui o ClaudeVisionService)
       controladores/     endpoints REST
       configuracoes/     security, JWT, websocket, rate limit
       visoes/            camada de leitura (DTOs e queries de listagem)
-      enums/             status e roles
+      enums/             status, roles e modelos do Claude
   frontend/
     src/
+      assets/            logo e ícones da marca
       components/        componentes reutilizáveis
       pages/             telas, cada uma com seu service próprio
       services/          cliente HTTP e service base
@@ -104,6 +119,12 @@ A leitura de dados fica separada da escrita. As listagens usam DTOs específicos
 
 No frontend, cada página tem seu próprio service que envolve o service base e define os tipos e filtros daquela tela. As páginas nunca falam direto com a API, sempre passam pelo service. O carregamento de dados usa TanStack Query, então cache, refetch e estados de loading são tratados de forma automática.
 
+## Mídia kits
+
+Um mídia kit é um template ligado a um influenciador, formado por seções ordenáveis e ativáveis. Cada tipo de seção sabe se desenhar no PDF: a capa mostra nome, nicho, foto e as redes; as seções de insights viram cards de métricas; as galerias mostram marcas e exemplos de publis. O PDF é gerado no próprio navegador com `@react-pdf/renderer` e segue a identidade da marca, com um ícone temático no cabeçalho de cada seção.
+
+Quando o usuário sobe os prints de insights de uma seção, o backend envia as imagens para a API de visão do Claude, recebe os números já estruturados em JSON e guarda esse JSON na seção. Na hora de exportar, esse JSON vira os cards de métricas.
+
 ## Permissões
 
 As permissões seguem o padrão de prefixo do módulo somado à ação. As ações são A para adicionar, B para visualizar, C para alterar e D para excluir.
@@ -112,7 +133,7 @@ Por exemplo, USRB dá acesso de visualizar usuários e PRFC dá acesso de altera
 
 ## Auditoria
 
-Cada alteração relevante gera uma revisão registrada pelo Hibernate Envers em tabelas separadas com sufixo _AUD. O sistema guarda quem fez, quando fez e o que mudou. Na listagem de usuários e perfis existe um botão de histórico que abre uma linha do tempo com todas as revisões daquele registro.
+Cada alteração relevante gera uma revisão registrada pelo Hibernate Envers em tabelas separadas com sufixo _AUD. O sistema guarda quem fez, quando fez e o que mudou. Nas listagens existe um botão de histórico que abre uma linha do tempo com todas as revisões daquele registro.
 
 ## Testes
 
@@ -132,4 +153,4 @@ cd backend
 
 ## Licença
 
-Projeto de uso livre como base para outros projetos.
+Projeto de uso livre.

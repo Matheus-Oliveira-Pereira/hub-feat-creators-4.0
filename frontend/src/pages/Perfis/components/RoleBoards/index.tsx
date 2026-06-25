@@ -22,7 +22,7 @@ const ROLE_BOARDS: RoleBoard[] = [
   {
     module: 'Usuários',
     icon: 'pi pi-users',
-    color: '#3b82f6',
+    color: '#C2E000',
     roles: [
       { value: 'USRA', label: 'Adicionar' },
       { value: 'USRB', label: 'Visualizar' },

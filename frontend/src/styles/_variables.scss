@@ -1,7 +1,14 @@
+// Marca Feat Creators
+$brand-lime: #C2E000;
+$brand-lime-dark: #A6C400;   // hover
+$brand-lime-light: #D7F23F;  // glow / foco / acento claro
+$brand-black: #141414;
+$on-lime: #141414;           // texto sobre fundo lime
+
 // Cores principais
-$primary-color: #3B82F6;
-$primary-dark: #2563EB;
-$primary-light: #93C5FD;
+$primary-color: $brand-lime;
+$primary-dark: $brand-lime-dark;
+$primary-light: $brand-lime-light;
 
 $secondary-color: #6B7280;
 $secondary-dark: #4B5563;

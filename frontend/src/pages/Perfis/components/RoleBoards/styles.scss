@@ -132,24 +132,24 @@
 // ─── Dark Theme ───
 [data-theme="dark"] {
   .roles-section .roles-section-header {
-    border-bottom-color: #334155;
+    border-bottom-color: #2e2e2e;
     label { color: #cbd5e1; }
     .select-all-toggle .toggle-label {
       color: #64748b;
-      &.active { color: #60a5fa; }
+      &.active { color: #D7F23F; }
     }
   }
 
   .role-board {
-    background: #1e293b;
-    border-color: #334155;
+    background: #1d1d1d;
+    border-color: #2e2e2e;
     box-shadow: none;
 
     // board-header keeps its --board-color gradient
 
     .role-row {
-      border-bottom-color: #253348;
-      &:hover { background: #253348; }
+      border-bottom-color: #262626;
+      &:hover { background: #262626; }
 
       &.active {
         background: rgba(34, 197, 94, 0.1);
@@ -165,9 +165,9 @@
 
       .role-info {
         .role-code {
-          background: #0f172a;
+          background: #141414;
           color: #64748b;
-          border-color: #334155;
+          border-color: #2e2e2e;
         }
         .role-label { color: #94a3b8; }
       }

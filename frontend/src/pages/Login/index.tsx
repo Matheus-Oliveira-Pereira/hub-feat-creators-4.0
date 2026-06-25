@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { useAuth } from '../../contexts/AuthContext';
+import logo from '../../assets/logo.svg';
 import './styles.scss';
 
 function Login() {
@@ -42,13 +43,13 @@ function Login() {
       <div className="login-container">
         <div className="login-branding">
           <div className="branding-content">
-            <div className="branding-logo">HFC</div>
-            <h1>Hub Feat Creators</h1>
-            <p>Plataforma de gestão integrada para seus projetos</p>
+            <img src={logo} alt="Feat Creators" className="branding-logo-img" />
+            <h1>Hub de assessoria de criadores</h1>
+            <p>Gestão integrada de influenciadores, marcas e mídia kits</p>
             <div className="branding-features">
-              <div className="feature"><i className="pi pi-shield" /><span>Autenticação segura com JWT</span></div>
-              <div className="feature"><i className="pi pi-users" /><span>Gestão de usuários e perfis</span></div>
-              <div className="feature"><i className="pi pi-lock" /><span>Controle granular de permissões</span></div>
+              <div className="feature"><i className="pi pi-star" /><span>Gestão completa de influenciadores</span></div>
+              <div className="feature"><i className="pi pi-id-card" /><span>Mídia kits automáticos em PDF</span></div>
+              <div className="feature"><i className="pi pi-chart-line" /><span>Insights de redes com IA</span></div>
             </div>
           </div>
         </div>

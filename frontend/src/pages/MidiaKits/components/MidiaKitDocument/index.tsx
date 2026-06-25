@@ -1,18 +1,30 @@
 import { Document, Page, Text, View, StyleSheet, Image, Svg, Path, Link } from '@react-pdf/renderer';
 import { MidiaKitTemplate, Sessao, InfluenciadorRef, RedeCapa, labelTipo, parseFotos, parseConfig, formatarValor, garantirUrl } from '../../service';
 import { SOCIAL_ICONS } from './socialIcons';
+import icoBarras from '../../../../assets/icons_transparent_background 2.png';
+import icoPizza from '../../../../assets/icons_transparent_background 3.png';
+import icoSeta from '../../../../assets/icons_transparent_background 6.png';
+import icoBalao from '../../../../assets/icons_transparent_background 8.png';
+import icoCoracao from '../../../../assets/icons_transparent_background 9.png';
+import icoPessoa from '../../../../assets/icons_transparent_background 11.png';
 
 const ANO = new Date().getFullYear();
 
-const TIPO_REDE: Record<string, string> = {
-  INSIGHTS_INSTAGRAM: 'INSTAGRAM',
-  INSIGHTS_TIKTOK: 'TIKTOK',
-  INSIGHTS_YOUTUBE: 'YOUTUBE',
+// Ícones decorativos da marca por tipo de seção
+const SECAO_ICONE: Record<string, string> = {
+  SOBRE_INFLUENCIADOR: icoPessoa,
+  CONTEUDOS: icoBalao,
+  INSIGHTS_INSTAGRAM: icoBarras,
+  INSIGHTS_TIKTOK: icoSeta,
+  INSIGHTS_YOUTUBE: icoBarras,
+  MARCAS: icoCoracao,
+  EXEMPLOS_PUBLIS: icoPizza,
+  CONTATO: icoBalao,
 };
 
-const BG = '#0d0d0d';
+const BG = '#141414';
 const CARD = '#1a1a1a';
-const LIME = '#cdfa00';
+const LIME = '#C2E000';
 const TEXT = '#f5f5f5';
 const MUTED = '#9ca3af';
 
@@ -48,6 +60,8 @@ const styles = StyleSheet.create({
   conteudoCard: { width: 150, height: 250, borderRadius: 14, objectFit: 'cover' },
 
   insightsHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
+  secaoHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 },
+  secaoIcone: { width: 26, height: 26, objectFit: 'contain' },
 
   metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 18, marginTop: 14 },
   metricCard: { backgroundColor: CARD, borderRadius: 14, padding: 16, minWidth: 150, flexGrow: 1 },
@@ -95,6 +109,12 @@ function IconeRede({ rede, size = 14, color = LIME }: Readonly<{ rede: string; s
       <Path d={d} fill={color} />
     </Svg>
   );
+}
+
+function IconeSecao({ tipo }: Readonly<{ tipo: string }>) {
+  const src = SECAO_ICONE[tipo];
+  if (!src) return null;
+  return <Image src={src} style={styles.secaoIcone} />;
 }
 
 function TituloAcento({ texto, base = styles.titulo }: Readonly<{ texto: string; base?: typeof styles.titulo }>) {
@@ -183,7 +203,10 @@ function Sobre({ template, sessao }: Readonly<{ template: MidiaKitTemplate; sess
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
       <Topo template={template} />
-      <TituloAcento texto={sessao.titulo || 'Sobre o influenciador'} />
+      <View style={styles.secaoHead}>
+        <IconeSecao tipo={sessao.tipo} />
+        <TituloAcento texto={sessao.titulo || 'Sobre o influenciador'} />
+      </View>
       <View style={styles.sobreWrap}>
         <View style={styles.sobreTexto}>
           {paragrafos.length > 0
@@ -202,7 +225,10 @@ function Conteudos({ template, sessao }: Readonly<{ template: MidiaKitTemplate; 
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
       <Topo template={template} />
-      <TituloAcento texto={sessao.titulo || 'Conteúdos recentes'} />
+      <View style={styles.secaoHead}>
+        <IconeSecao tipo={sessao.tipo} />
+        <TituloAcento texto={sessao.titulo || 'Conteúdos recentes'} />
+      </View>
       <Text style={styles.subtitulo}>{sessao.conteudo || 'Clique nas imagens para assistir aos vídeos.'}</Text>
       <View style={styles.cardsRow}>
         {fotos.map((src, i) => {
@@ -259,13 +285,12 @@ function Insights({ template, sessao }: Readonly<{ template: MidiaKitTemplate; s
     else if (v && typeof v === 'object') objetos.push([k, v as Record<string, unknown>]);
     else escalares.push([k, v]);
   });
-  const rede = TIPO_REDE[sessao.tipo];
 
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
       <Topo template={template} />
       <View style={styles.insightsHead}>
-        {rede && <IconeRede rede={rede} size={22} />}
+        <IconeSecao tipo={sessao.tipo} />
         <TituloAcento texto={sessao.titulo || labelTipo(sessao.tipo)} />
       </View>
       {sessao.conteudo ? <Text style={styles.subtitulo}>{sessao.conteudo}</Text> : <View style={{ height: 6 }} />}
@@ -308,7 +333,10 @@ function Galeria({ template, sessao }: Readonly<{ template: MidiaKitTemplate; se
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
       <Topo template={template} />
-      <TituloAcento texto={sessao.titulo || labelTipo(sessao.tipo)} />
+      <View style={styles.secaoHead}>
+        <IconeSecao tipo={sessao.tipo} />
+        <TituloAcento texto={sessao.titulo || labelTipo(sessao.tipo)} />
+      </View>
       {sessao.conteudo ? <Text style={styles.subtitulo}>{sessao.conteudo}</Text> : <View style={{ height: 12 }} />}
       {fotos.length > 0 && (
         <View style={styles.fotosGrid}>
@@ -330,7 +358,10 @@ function Contato({ template, sessao }: Readonly<{ template: MidiaKitTemplate; se
     <Page size="A4" orientation="landscape" style={styles.page}>
       <Topo template={template} />
       <View style={styles.contatoBody}>
-        <TituloAcento texto={sessao.titulo || 'E aí, bora fazer um feat?'} base={styles.contatoTitulo} />
+        <View style={styles.secaoHead}>
+          <IconeSecao tipo={sessao.tipo} />
+          <TituloAcento texto={sessao.titulo || 'E aí, bora fazer um feat?'} base={styles.contatoTitulo} />
+        </View>
         {sessao.conteudo ? <Text style={styles.contatoSub}>{sessao.conteudo}</Text> : null}
         <View style={styles.contatoCards}>
           {mostrarEmail && (

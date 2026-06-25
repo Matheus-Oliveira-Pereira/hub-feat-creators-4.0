@@ -79,8 +79,8 @@
         width: 34px;
         height: 34px;
         border-radius: 8px;
-        background: linear-gradient(135deg, $primary-color, #818cf8);
-        color: white;
+        background: linear-gradient(135deg, $brand-lime, $brand-lime-dark);
+        color: $on-lime;
         display: flex;
         align-items: center;
         justify-content: center;

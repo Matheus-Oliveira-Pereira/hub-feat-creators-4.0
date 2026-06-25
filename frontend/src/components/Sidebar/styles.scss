@@ -6,7 +6,7 @@ $sidebar-expanded: 240px;
 .layout-sidebar {
   width: $sidebar-collapsed;
   min-height: 100vh;
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(180deg, #1d1d1d 0%, #141414 100%);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -21,7 +21,6 @@ $sidebar-expanded: 240px;
     width: $sidebar-expanded;
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
 
-    .sidebar-header .sidebar-title { opacity: 1; }
     .sidebar-menu .menu-section .section-dot { display: none; }
     .sidebar-menu .menu-section .menu-section-label { opacity: 1; }
     .sidebar-menu .menu-item .menu-label { opacity: 1; visibility: visible; }
@@ -37,27 +36,13 @@ $sidebar-expanded: 240px;
     height: 60px;
     overflow: hidden;
 
-    .sidebar-logo {
-      width: 38px;
-      height: 38px;
-      min-width: 38px;
-      background: linear-gradient(135deg, $primary-color, #818cf8);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 1.1rem;
-    }
-
-    .sidebar-title {
-      color: white;
-      font-size: 1.05rem;
-      font-weight: 600;
-      white-space: nowrap;
-      opacity: 0;
-      transition: opacity 0.15s ease;
+    .sidebar-logo-img {
+      height: 30px;
+      width: auto;
+      max-width: none;
+      display: block;
+      flex-shrink: 0;
+      object-fit: contain;
     }
   }
 
@@ -128,8 +113,8 @@ $sidebar-expanded: 240px;
       }
 
       &.active {
-        background: rgba(59, 130, 246, 0.15);
-        color: #93c5fd;
+        background: rgba(194, 224, 0, 0.12);
+        color: #D7F23F;
         border-left-color: $primary-color;
         font-weight: 500;
       }

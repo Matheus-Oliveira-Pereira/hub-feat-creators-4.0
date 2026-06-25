@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { canBrowse, getModulePrefixByPath } from '../../utils/roles';
+import logo from '../../assets/logo.svg';
 import './styles.scss';
 
 interface MenuItem {
@@ -43,8 +44,7 @@ function Sidebar() {
   return (
     <aside className="layout-sidebar">
       <div className="sidebar-header">
-        <div className="sidebar-logo">HFC</div>
-        <span className="sidebar-title">Hub Feat Creators</span>
+        <img src={logo} alt="Feat Creators" className="sidebar-logo-img" />
       </div>
 
       <nav className="sidebar-menu">
