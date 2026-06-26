@@ -21,6 +21,8 @@ const menuItems: MenuItem[] = [
   { label: 'Mídia Kits', icon: 'pi pi-id-card', path: '/midia-kits' },
   { section: 'Sistema' },
   { label: 'Configurações', icon: 'pi pi-cog', path: '/configuracoes' },
+  { label: 'Contas de E-mail', icon: 'pi pi-at', path: '/contas-email' },
+  { label: 'Logs de E-mail', icon: 'pi pi-envelope', path: '/email-logs' },
 ];
 
 function Sidebar() {

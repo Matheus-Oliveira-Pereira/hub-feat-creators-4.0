@@ -6,6 +6,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -57,6 +61,10 @@ public class Influenciador extends Entidade implements br.com.matheus.hubfeatcre
 
     @Enumerated(EnumType.STRING)
     private StatusInfluenciador status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "CONTA_EMAIL_ID", foreignKey = @ForeignKey(name = "FK_INFLUENCIADOR_CONTA_EMAIL"))
+    private ContaEmail contaEmail;
 
     @Override
     public void desativar() {

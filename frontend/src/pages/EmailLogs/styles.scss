@@ -1,0 +1,15 @@
+@use '../../styles/variables' as *;
+
+.email-erro {
+  display: inline-block;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $gray-700;
+  cursor: help;
+}
+
+.text-muted {
+  color: $gray-500;
+}

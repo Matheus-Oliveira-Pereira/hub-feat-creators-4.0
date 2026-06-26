@@ -1,0 +1,51 @@
+package br.com.matheus.hubfeatcreators.entidades;
+
+import br.com.matheus.hubfeatcreators.entidades.superclasses.Entidade;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.envers.Audited;
+
+@Entity
+@Table(name = "LOG_EMAIL")
+@Audited
+@Getter
+@Setter
+@NoArgsConstructor
+public class LogEmail extends Entidade {
+
+    public enum Status {
+        SUCESSO, FALHA, CANCELADO
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Status status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "EMAIL_ID", foreignKey = @ForeignKey(name = "FK_LOG_EMAIL_EMAIL"))
+    private Email email;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "CONTA_EMAIL_ID", foreignKey = @ForeignKey(name = "FK_LOG_EMAIL_CONTA_EMAIL"))
+    private ContaEmail contaEmail;
+
+    private String contaNome;
+
+    private String titulo;
+
+    @Column(length = 4096)
+    private String erro;
+
+    @Column(length = 2048)
+    private String destinatarios;
+}

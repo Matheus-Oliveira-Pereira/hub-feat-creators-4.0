@@ -12,6 +12,8 @@ export const MODULES = {
   MARCAS: { prefix: 'MRC', path: '/marcas' },
   MIDIA_KIT: { prefix: 'MDK', path: '/midia-kits' },
   CONFIGURACOES: { prefix: 'CFG', path: '/configuracoes' },
+  CONTAS_EMAIL: { prefix: 'CTE', path: '/contas-email' },
+  EMAIL_LOGS: { prefix: 'EML', path: '/email-logs' },
 } as const;
 
 export function hasRole(userRoles: string[], modulePrefix: string, action: string): boolean {

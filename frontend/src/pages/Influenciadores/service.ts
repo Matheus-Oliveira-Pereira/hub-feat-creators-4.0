@@ -24,6 +24,7 @@ export interface Influenciador {
   subnicho: string | null;
   foto: string | null;
   status: string;
+  contaEmail: { id: string } | null;
 }
 
 export interface InfluenciadorForm {
@@ -39,6 +40,8 @@ export interface InfluenciadorForm {
   subnicho: string;
   foto: string;
   status: string;
+  contaEmailId?: string | null;
+  contaEmail?: { id: string } | null;
 }
 
 export interface ImportacaoLinhaDTO {

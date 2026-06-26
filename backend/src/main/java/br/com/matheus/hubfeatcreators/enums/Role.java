@@ -24,7 +24,15 @@ public enum Role implements GrantedAuthority {
     MRCC,
     MRCD,
     CFGB,
-    CFGC;
+    CFGC,
+    EMLA,
+    EMLB,
+    EMLC,
+    EMLD,
+    CTEA,
+    CTEB,
+    CTEC,
+    CTED;
 
     @Override
     public String getAuthority() {

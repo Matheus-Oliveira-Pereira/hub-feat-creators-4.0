@@ -1,0 +1,62 @@
+@use '../../styles/variables' as *;
+
+.contas-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  .btn-teste-conta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: $border-radius-md;
+    background: $gray-100;
+    color: $primary-color;
+    cursor: pointer;
+
+    &:hover {
+      background: $gray-200;
+    }
+  }
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.switch-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+
+  label {
+    margin: 0;
+  }
+}
+
+.config-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: $gray-500;
+}
+
+.teste-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.text-muted {
+  color: $gray-500;
+}

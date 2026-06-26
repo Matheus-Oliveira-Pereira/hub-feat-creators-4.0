@@ -5,6 +5,7 @@ import { DataTable, DataTablePageEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { MultiSelect } from 'primereact/multiselect';
+import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
 import PageHeader from '../../components/PageHeader';
@@ -22,13 +23,14 @@ import { useNotificacoes } from '../../contexts/WebSocketContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
 import ImportacaoDialog from './components/ImportacaoDialog';
 import { influenciadorService, InfluenciadorDTO, InfluenciadorForm, InfluenciadorFiltros } from './service';
+import { contaEmailService } from '../ContasEmail/service';
 import './styles.scss';
 
 interface FormErrors { nome?: string; email?: string; }
 
 const FORM_VAZIO: InfluenciadorForm = {
   nome: '', email: '', telefone: '', instagram: '', tiktok: '', linkedin: '', youtube: '', discord: '',
-  nicho: '', subnicho: '', foto: '', status: 'ATIVO',
+  nicho: '', subnicho: '', foto: '', status: 'ATIVO', contaEmailId: '',
 };
 
 function Influenciadores() {
@@ -65,10 +67,19 @@ function Influenciadores() {
     queryFn: () => influenciadorService.listar(currentPage, pageSize, queryFiltros),
   });
 
+  const { data: contasEmail } = useQuery({
+    queryKey: ['contas-email-options'],
+    queryFn: () => contaEmailService.listarAtivos(),
+  });
+
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['influenciadores'] });
 
   const salvarMutation = useMutation({
-    mutationFn: async () => (editando ? influenciadorService.atualizar(formId!, form) : influenciadorService.salvar(form)),
+    mutationFn: async () => {
+      const { contaEmailId, ...rest } = form;
+      const payload = { ...rest, contaEmail: contaEmailId ? { id: contaEmailId } : null };
+      return editando ? influenciadorService.atualizar(formId!, payload) : influenciadorService.salvar(payload);
+    },
     onSuccess: () => { toast.current?.show({ severity: 'success', summary: 'Sucesso', detail: editando ? 'Influenciador atualizado' : 'Influenciador criado' }); setDialogVisible(false); invalidate(); },
     onError: (err: unknown) => { const e = err as { response?: { data?: { message?: string } } }; toast.current?.show({ severity: 'error', summary: 'Erro', detail: e.response?.data?.message || 'Erro ao salvar' }); },
   });
@@ -130,6 +141,7 @@ function Influenciadores() {
         telefone: data.telefone ?? '', instagram: data.instagram ?? '', tiktok: data.tiktok ?? '',
         linkedin: data.linkedin ?? '', youtube: data.youtube ?? '', discord: data.discord ?? '',
         nicho: data.nicho ?? '', subnicho: data.subnicho ?? '', foto: data.foto ?? '', status: data.status,
+        contaEmailId: data.contaEmail?.id ?? '',
       });
       setFormId(row.id); setEditando(true); setErrors({}); setSubmitted(false); setDialogVisible(true);
     } catch { toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar influenciador' }); }
@@ -256,6 +268,13 @@ function Influenciadores() {
           <label htmlFor="foto">Foto (URL)</label>
           <InputText id="foto" value={form.foto} onChange={(e) => setForm({ ...form, foto: e.target.value })} className="w-full" placeholder="https://..." />
           {form.foto.trim() && <img src={form.foto} alt="Pré-visualização" className="influ-foto-preview" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+        </div>
+        <div className="form-field">
+          <label htmlFor="contaEmail"><i className="pi pi-at" /> Conta de e-mail (remetente)</label>
+          <Dropdown id="contaEmail" value={form.contaEmailId} options={contasEmail ?? []} optionLabel="nome" optionValue="id"
+            onChange={(e) => setForm({ ...form, contaEmailId: e.value })} placeholder="Usar conta do sistema (padrão)" className="w-full"
+            showClear baseZIndex={10000} />
+          <small className="config-hint">Se vazio, prospecções usam a conta do sistema.</small>
         </div>
         <div className="form-field">
           <label htmlFor="status">Status <span className="required">*</span></label>
