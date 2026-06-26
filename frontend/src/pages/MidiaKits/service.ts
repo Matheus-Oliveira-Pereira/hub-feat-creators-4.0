@@ -161,7 +161,7 @@ export function tituloPadrao(tipo: string, influ?: InfluenciadorRef | null): str
   }
 }
 
-/** Formata valores numéricos grandes (842000 → "842 mil", 1838725 → "1,8 Mi"); mantém % e strings. */
+/** Formata valores numéricos grandes (842000 → "842 Mil", 1838725 → "1,8 Milhão"); mantém % e strings. */
 export function formatarValor(v: unknown): string {
   if (typeof v === 'boolean' || v == null) return String(v);
   const s = String(v).trim();
@@ -169,8 +169,12 @@ export function formatarValor(v: unknown): string {
   const num = Number(s.replace(/\./g, '').replace(',', '.'));
   if (!Number.isFinite(num) || s === '' || /[a-zA-Z]/.test(s)) return s;
   const abs = Math.abs(num);
-  if (abs >= 1_000_000) return `${(num / 1_000_000).toFixed(1).replace('.', ',')} Mi`;
-  if (abs >= 1_000) return `${Math.round(num / 1_000)} mil`;
+  if (abs >= 1_000_000) {
+    const x = num / 1_000_000;
+    const unidade = Math.floor(Math.abs(x)) >= 2 ? 'Milhões' : 'Milhão';
+    return `${x.toFixed(1).replace('.', ',')} ${unidade}`;
+  }
+  if (abs >= 1_000) return `${Math.round(num / 1_000)} Mil`;
   return s;
 }
 
