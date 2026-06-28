@@ -14,6 +14,8 @@ export const MODULES = {
   CONFIGURACOES: { prefix: 'CFG', path: '/configuracoes' },
   CONTAS_EMAIL: { prefix: 'CTE', path: '/contas-email' },
   EMAIL_LOGS: { prefix: 'EML', path: '/email-logs' },
+  PROSPECAO: { prefix: 'PSP', path: '/prospecao' },
+  PUBLICIDADE: { prefix: 'PUB', path: '/publicidade' },
 } as const;
 
 export function hasRole(userRoles: string[], modulePrefix: string, action: string): boolean {

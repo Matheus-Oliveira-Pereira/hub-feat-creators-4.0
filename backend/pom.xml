@@ -66,6 +66,12 @@
             <artifactId>hibernate-envers</artifactId>
         </dependency>
 
+        <!-- Jackson + Hibernate: serializa proxies lazy não inicializados como null -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-hibernate6</artifactId>
+        </dependency>
+
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

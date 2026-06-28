@@ -1,0 +1,40 @@
+@use '../../styles/variables' as *;
+@use 'sass:color';
+
+.fin-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: $gray-100;
+  color: $gray-700;
+
+  &.fin-atrasado {
+    background: rgba($danger-color, 0.15);
+    color: color.adjust($danger-color, $lightness: -10%);
+  }
+}
+
+.qtd-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  background: $gray-100;
+  color: $gray-600;
+}
+
+.financeiro-box {
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  padding: 0.75rem 1rem 0.25rem;
+  margin: 0.5rem 0 1rem;
+
+  legend {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $gray-700;
+    padding: 0 0.4rem;
+  }
+}

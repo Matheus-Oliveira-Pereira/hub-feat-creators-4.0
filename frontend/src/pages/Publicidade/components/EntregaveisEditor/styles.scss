@@ -1,0 +1,41 @@
+@use '../../../../styles/variables' as *;
+
+.entregaveis-editor {
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  padding: 0.75rem;
+
+  .entregaveis-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+
+    span { font-weight: 600; font-size: 0.85rem; }
+  }
+
+  .entregaveis-vazio { color: $gray-500; font-size: 0.8rem; margin: 0.5rem 0; }
+
+  .entregavel-linha {
+    display: grid;
+    grid-template-columns: 1.4fr 1.6fr 1fr 1.2fr auto;
+    gap: 0.4rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+
+    .ent-remover {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid $gray-200;
+      background: $gray-50;
+      border-radius: 6px;
+      cursor: pointer;
+      color: $danger-color;
+
+      &:hover { background: $danger-color; color: #fff; border-color: $danger-color; }
+    }
+  }
+}

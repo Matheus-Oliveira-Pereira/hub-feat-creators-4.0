@@ -32,7 +32,15 @@ public enum Role implements GrantedAuthority {
     CTEA,
     CTEB,
     CTEC,
-    CTED;
+    CTED,
+    PSPA,
+    PSPB,
+    PSPC,
+    PSPD,
+    PUBA,
+    PUBB,
+    PUBC,
+    PUBD;
 
     @Override
     public String getAuthority() {

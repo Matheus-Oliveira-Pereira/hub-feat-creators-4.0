@@ -57,7 +57,11 @@ public class MarcaService extends EntidadeService<Marca, MarcaRepository> {
         }
     }
 
-    /** Remove contatos 100% vazios, faz trim, seta marca e reindexa a ordem. */
+    /**
+     * Remove contatos 100% vazios, faz trim, seta marca e reindexa a ordem.
+     * Muta a coleção in-place (clear + addAll) para preservar a referência gerenciada
+     * pelo orphanRemoval — substituir por nova lista quebra a entidade gerenciada no update.
+     */
     private void sanitizarContatos(Marca marca) {
         if (marca.getContatos() == null) {
             marca.setContatos(new ArrayList<>());
@@ -75,7 +79,8 @@ public class MarcaService extends EntidadeService<Marca, MarcaRepository> {
             c.setOrdem(ordem++);
             validos.add(c);
         }
-        marca.setContatos(validos);
+        marca.getContatos().clear();
+        marca.getContatos().addAll(validos);
     }
 
     /** Cada contato precisa de nome + (email OU telefone). */
