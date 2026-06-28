@@ -35,6 +35,21 @@ export interface ContaEmailForm {
   status: string;
 }
 
+export interface ImportacaoLinhaDTO {
+  linha: number;
+  nome: string;
+  status: 'SUCESSO' | 'DUPLICADO' | 'ERRO';
+  erro: string | null;
+}
+
+export interface ImportacaoResultadoDTO {
+  totalLinhas: number;
+  sucesso: number;
+  duplicados: number;
+  erros: number;
+  detalhes: ImportacaoLinhaDTO[];
+}
+
 export interface ContaEmailFiltros {
   status?: string[];
   nome?: string;
@@ -97,5 +112,24 @@ export const contaEmailService = {
   enviarTeste: async (contaId: string, destino: string): Promise<{ sucesso: boolean; erro: string | null }> => {
     const response = await api.post<{ sucesso: boolean; erro: string | null }>('/emails/teste', { destino, contaId });
     return response.data;
+  },
+
+  importarCSV: async (arquivo: File): Promise<ImportacaoResultadoDTO> => {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    const response = await api.post<ImportacaoResultadoDTO>('/contas-email/importacao', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  downloadTemplate: async () => {
+    const response = await api.get('/contas-email/importacao/template', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'contas_email_template.csv';
+    link.click();
+    window.URL.revokeObjectURL(url);
   },
 };

@@ -24,6 +24,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import DeleteDialog from '../../components/DeleteDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
+import ImportacaoDialog from './components/ImportacaoDialog';
 import { contaEmailService, ContaEmailDTO, ContaEmailForm, ContaEmailFiltros } from './service';
 import './styles.scss';
 
@@ -58,6 +59,7 @@ function ContasEmail() {
   const [deleteTarget, setDeleteTarget] = useState<ContaEmailDTO | null>(null);
   const [testeTarget, setTesteTarget] = useState<ContaEmailDTO | null>(null);
   const [testeDestino, setTesteDestino] = useState('');
+  const [importVisible, setImportVisible] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryFiltros: ContaEmailFiltros = { ...filtros, textoDeBusca: debouncedBusca || undefined, mostrarInativos };
@@ -204,7 +206,9 @@ function ContasEmail() {
             <CrudHeader searchValue={filtroGlobal} onSearchChange={setFiltroGlobal} searchPlaceholder="Buscar por nome, usuário, host..."
               onFilterClick={() => setFilterVisible(true)} newLabel="Nova Conta" onNewClick={abrirNovo} showNew={podeAdicionar}
               showInactive onToggleInactive={(v) => { setMostrarInativos(v); setCurrentPage(0); }} inactiveActive={mostrarInativos}
-            />
+            >
+              {podeAdicionar && <button type="button" className="btn-importar" onClick={() => setImportVisible(true)}><i className="pi pi-file-import" /> Importar CSV</button>}
+            </CrudHeader>
           }
           paginator rowsPerPageOptions={[5, 10, 25]} emptyMessage={mostrarInativos ? 'Nenhum registro desativado' : 'Nenhuma conta cadastrada'} stripedRows
         >
@@ -286,6 +290,8 @@ function ContasEmail() {
         loading={excluirMutation.isPending} entityName={deleteTarget?.nome} />
 
       <HistoryDialog visible={historyVisible} onHide={() => setHistoryVisible(false)} entityId={historyId} servicePath="/contas-email" />
+
+      <ImportacaoDialog visible={importVisible} onHide={() => setImportVisible(false)} onComplete={invalidate} />
 
       <FilterSidebar visible={filterVisible} onHide={() => setFilterVisible(false)} onClear={() => { setFiltros({ status: [] }); setCurrentPage(0); }} clearDisabled={!temFiltroAtivo}>
         <div className="form-field">

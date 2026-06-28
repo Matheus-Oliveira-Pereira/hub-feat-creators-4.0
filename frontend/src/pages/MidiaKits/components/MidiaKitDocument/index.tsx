@@ -86,7 +86,8 @@ const styles = StyleSheet.create({
   sobreFoto: { width: 280, height: 280, borderRadius: 11.5, objectFit: 'cover' },
   paragrafo: { marginBottom: 12 },
 
-  cardsRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  conteudosCenter: { flexGrow: 1, justifyContent: 'center' },
+  cardsRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' },
   conteudoCard: { width: 150, height: 250, borderRadius: 14, objectFit: 'cover' },
 
   insightsCenter: { flexGrow: 1, justifyContent: 'center' },
@@ -121,6 +122,14 @@ const styles = StyleSheet.create({
   fotosGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
   fotoItem: { width: 150, height: 150, borderRadius: 12, objectFit: 'cover' },
 
+  // Marcas (logos)
+  marcasGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12 },
+  marcaCard: { width: 150, backgroundColor: '#f5f5f5', borderRadius: 14, padding: 12, alignItems: 'center', border: `1 solid ${BORDER}` },
+  marcaLogo: { width: 126, height: 90, objectFit: 'contain' },
+  marcaNome: { fontSize: 10, color: '#111', fontFamily: 'Helvetica-Bold', marginTop: 8, textAlign: 'center' },
+
+  linkPrints: { fontSize: 10.5, color: LIME, textDecoration: 'none', marginBottom: 14 },
+
   // Contato
   contatoBody: { flexGrow: 1, justifyContent: 'center' },
   contatoTitulo: { fontSize: 46, fontFamily: HEADING, color: TEXT, maxWidth: 480, marginBottom: 24, lineHeight: 1.1 },
@@ -129,7 +138,8 @@ const styles = StyleSheet.create({
   contatoCard: { backgroundColor: CARD, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, border: `1 solid ${BORDER}` },
   contatoLabel: { fontSize: 8, color: MUTED, marginBottom: 6, marginLeft: 21 },
   contatoLinha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  contatoVal: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: TEXT },
+  contatoIcone: { width: 14, alignItems: 'center', justifyContent: 'center' },
+  contatoVal: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: TEXT, lineHeight: 1 },
 
   rodape: { borderTop: `1 solid ${BORDER}`, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rodapeTxt: { fontSize: 8, color: MUTED, maxWidth: 360 },
@@ -353,12 +363,14 @@ function Conteudos({ sessao }: Readonly<{ sessao: Sessao }>) {
         <TituloAcento texto={sessao.titulo || 'Conteúdos recentes'} />
       </View>
       <Text style={styles.subtitulo}>{sessao.conteudo || 'Clique nas imagens para assistir aos vídeos.'}</Text>
-      <View style={styles.cardsRow}>
-        {fotos.map((src, i) => {
-          const card = <Image src={src} style={styles.conteudoCard} />;
-          const url = garantirUrl(links[i]);
-          return url ? <Link key={src.slice(-16)} src={url}>{card}</Link> : <View key={src.slice(-16)}>{card}</View>;
-        })}
+      <View style={styles.conteudosCenter}>
+        <View style={styles.cardsRow}>
+          {fotos.map((src, i) => {
+            const card = <Image src={src} style={styles.conteudoCard} />;
+            const url = garantirUrl(links[i]);
+            return url ? <Link key={src.slice(-16)} src={url}>{card}</Link> : <View key={src.slice(-16)}>{card}</View>;
+          })}
+        </View>
       </View>
     </Page>
   );
@@ -412,6 +424,7 @@ function Insights({ sessao }: Readonly<{ sessao: Sessao }>) {
 
   const redeInfo = TIPO_REDE[sessao.tipo];
   const titulo = (!sessao.titulo || /^insights/i.test(sessao.titulo.trim())) ? `Insights ${MES_ANO}` : sessao.titulo;
+  const linkPrints = garantirUrl(parseConfig(sessao.config).linkPrints);
 
   return (
     <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
@@ -426,6 +439,7 @@ function Insights({ sessao }: Readonly<{ sessao: Sessao }>) {
         <TituloAcento texto={titulo} />
       </View>
       {sessao.conteudo ? <Text style={styles.subtitulo}>{sessao.conteudo}</Text> : <View style={{ height: 6 }} />}
+      {linkPrints ? <Link src={linkPrints} style={styles.linkPrints}>Clique aqui para baixar os prints originais dos insights</Link> : null}
 
       {escalares.length > 0 && (
         <View style={styles.metricGrid}>
@@ -471,6 +485,35 @@ function Insights({ sessao }: Readonly<{ sessao: Sessao }>) {
   );
 }
 
+function Marcas({ sessao }: Readonly<{ sessao: Sessao }>) {
+  const config = parseConfig(sessao.config);
+  const marcas = (config.marcas ?? []).filter((m) => ehUrl(m.logotipo));
+  const fotos = parseFotos(sessao.fotos); // imagens manuais extras (sem nome)
+  return (
+    <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
+      <View style={styles.secaoHead}>
+        <TituloAcento texto={sessao.titulo || labelTipo(sessao.tipo)} />
+      </View>
+      {sessao.conteudo ? <Text style={styles.subtitulo}>{sessao.conteudo}</Text> : <View style={{ height: 12 }} />}
+      {(marcas.length > 0 || fotos.length > 0) && (
+        <View style={styles.marcasGrid}>
+          {marcas.map((m) => (
+            <View key={m.id} style={styles.marcaCard}>
+              <Image src={m.logotipo!} style={styles.marcaLogo} />
+              <Text style={styles.marcaNome}>{m.nome}</Text>
+            </View>
+          ))}
+          {fotos.map((src) => (
+            <View key={src.slice(-16)} style={styles.marcaCard}>
+              <Image src={src} style={styles.marcaLogo} />
+            </View>
+          ))}
+        </View>
+      )}
+    </Page>
+  );
+}
+
 function Galeria({ sessao }: Readonly<{ sessao: Sessao }>) {
   const fotos = parseFotos(sessao.fotos);
   return (
@@ -497,6 +540,7 @@ function Contato({ template, sessao }: Readonly<{ template: MidiaKitTemplate; se
   const mostrarWhatsapp = config.mostrarWhatsapp !== false && !!whatsapp;
   return (
     <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
+      <Topo template={template} />
       <View style={styles.contatoBody}>
         <Text style={styles.contatoTitulo}>E aí, bora{'\n'}fazer um <Text style={styles.tituloLime}>feat?</Text></Text>
         <View style={styles.contatoCards}>
@@ -504,7 +548,7 @@ function Contato({ template, sessao }: Readonly<{ template: MidiaKitTemplate; se
             <View style={styles.contatoCard}>
               <Text style={styles.contatoLabel}>Email</Text>
               <View style={styles.contatoLinha}>
-                <IconeRede rede="EMAIL" size={13} color={LIME} />
+                <View style={styles.contatoIcone}><IconeRede rede="EMAIL" size={13} color={LIME} /></View>
                 <Text style={styles.contatoVal}>{email}</Text>
               </View>
             </View>
@@ -513,7 +557,7 @@ function Contato({ template, sessao }: Readonly<{ template: MidiaKitTemplate; se
             <View style={styles.contatoCard}>
               <Text style={styles.contatoLabel}>WhatsApp</Text>
               <View style={styles.contatoLinha}>
-                <IconeRede rede="WHATSAPP" size={13} color={LIME} />
+                <View style={styles.contatoIcone}><IconeRede rede="WHATSAPP" size={13} color={LIME} /></View>
                 <Text style={styles.contatoVal}>{formatarTelefone(whatsapp)}</Text>
               </View>
             </View>
@@ -537,10 +581,12 @@ function renderSessao(template: MidiaKitTemplate, sessao: Sessao, key: string) {
   switch (sessao.tipo) {
     case 'CAPA': return <Capa key={key} template={template} sessao={sessao} />;
     case 'SOBRE_INFLUENCIADOR': return <Sobre key={key} sessao={sessao} />;
-    case 'CONTEUDOS': return <Conteudos key={key} sessao={sessao} />;
+    case 'CONTEUDOS':
+    case 'EXEMPLOS_PUBLIS': return <Conteudos key={key} sessao={sessao} />;
     case 'INSIGHTS_INSTAGRAM':
     case 'INSIGHTS_TIKTOK':
     case 'INSIGHTS_YOUTUBE': return <Insights key={key} sessao={sessao} />;
+    case 'MARCAS': return <Marcas key={key} sessao={sessao} />;
     case 'CONTATO': return <Contato key={key} template={template} sessao={sessao} />;
     default: return <Galeria key={key} sessao={sessao} />;
   }

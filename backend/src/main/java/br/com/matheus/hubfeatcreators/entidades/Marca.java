@@ -3,6 +3,7 @@ package br.com.matheus.hubfeatcreators.entidades;
 import br.com.matheus.hubfeatcreators.entidades.superclasses.Entidade;
 import br.com.matheus.hubfeatcreators.enums.StatusMarca;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -32,6 +33,11 @@ public class Marca extends Entidade implements br.com.matheus.hubfeatcreators.in
 
     @NotBlank(message = "Nome é obrigatório")
     private String nome;
+
+    /** Logotipo da marca como data URL base64. @NotAudited p/ não inchar tabelas _AUD. */
+    @Column(columnDefinition = "TEXT")
+    @NotAudited
+    private String logotipo;
 
     @Enumerated(EnumType.STRING)
     private StatusMarca status;

@@ -11,3 +11,59 @@
     color: #b45309;
   }
 }
+
+.logo-upload {
+  .logo-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: 1px dashed $gray-400;
+    border-radius: $border-radius-md;
+    color: $gray-600;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: border-color 0.15s, color 0.15s;
+
+    &:hover {
+      border-color: $primary-color;
+      color: $primary-color;
+    }
+
+    input {
+      display: none;
+    }
+  }
+
+  .logo-preview {
+    position: relative;
+    display: inline-block;
+
+    img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      border: 1px solid $gray-300;
+      border-radius: $border-radius-md;
+      background: #fff;
+      padding: 0.5rem;
+    }
+
+    button {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: $danger-color;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+  }
+}

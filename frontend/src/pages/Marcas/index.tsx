@@ -21,9 +21,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotificacoes } from '../../contexts/WebSocketContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
 import { marcaService, MarcaDTO, MarcaForm, MarcaFiltros, Contato, contatoVazio, contatoInvalido } from './service';
+import { comprimirImagem } from '../../utils/imagem';
 import './styles.scss';
 
-const FORM_VAZIO: MarcaForm = { nome: '', status: 'ATIVO', contatos: [] };
+const FORM_VAZIO: MarcaForm = { nome: '', status: 'ATIVO', logotipo: '', contatos: [] };
 
 function Marcas() {
   const queryClient = useQueryClient();
@@ -48,6 +49,18 @@ function Marcas() {
   const [deactivateTarget, setDeactivateTarget] = useState<MarcaDTO | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MarcaDTO | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
+
+  const carregarLogotipo = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    try {
+      const dataUrl = await comprimirImagem(files[0]);
+      setForm((f) => ({ ...f, logotipo: dataUrl }));
+    } catch {
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar o logotipo' });
+    }
+    if (logoRef.current) logoRef.current.value = '';
+  };
 
   const queryFiltros: MarcaFiltros = { ...filtros, textoDeBusca: debouncedBusca || undefined, mostrarInativos };
 
@@ -109,6 +122,7 @@ function Marcas() {
       setForm({
         nome: data.nome,
         status: data.status,
+        logotipo: data.logotipo ?? '',
         contatos: (data.contatos || []).map((c) => ({ id: c.id, nome: c.nome ?? '', email: c.email ?? '', telefone: c.telefone ?? '' })),
       });
       setFormId(row.id); setEditando(true); setSubmitted(false); setDialogVisible(true);
@@ -183,6 +197,24 @@ function Marcas() {
           <label htmlFor="nome">Nome <span className="required">*</span></label>
           <InputText id="nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="w-full" />
           {submitted && !form.nome.trim() && <small className="p-error"><i className="pi pi-exclamation-circle" />Nome é obrigatório</small>}
+        </div>
+        <div className="form-field">
+          <label htmlFor="logotipo">Logotipo</label>
+          <div className="logo-upload">
+            {form.logotipo
+              ? (
+                <div className="logo-preview">
+                  <img src={form.logotipo} alt="Logotipo" />
+                  <button type="button" onClick={() => setForm({ ...form, logotipo: '' })} title="Remover"><i className="pi pi-times" /></button>
+                </div>
+              )
+              : (
+                <label className="logo-add">
+                  <i className="pi pi-upload" /> Enviar imagem
+                  <input ref={logoRef} id="logotipo" type="file" accept="image/*" onChange={(e) => carregarLogotipo(e.target.files)} />
+                </label>
+              )}
+          </div>
         </div>
         <div className="form-field">
           <ContatosEditor contatos={form.contatos} onChange={(contatos: Contato[]) => setForm({ ...form, contatos })} submitted={submitted} />

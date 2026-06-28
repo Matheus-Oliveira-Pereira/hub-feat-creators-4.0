@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Dropdown } from 'primereact/dropdown';
+import { MultiSelect } from 'primereact/multiselect';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Button } from 'primereact/button';
 import {
-  midiaKitService, Sessao, SessaoConfig, RedeCapa, InfluenciadorRef, TIPOS_SESSAO, REDES_CAPA,
+  midiaKitService, Sessao, SessaoConfig, RedeCapa, InfluenciadorRef, MarcaRef, TIPOS_SESSAO, REDES_CAPA,
   labelTipo, requerPrint, comprimirImagem, parseFotos, parseConfig, configPadrao, tituloPadrao, conteudoPadrao,
 } from '../../service';
 import './styles.scss';
@@ -92,12 +93,13 @@ function ContatoEditor({ config, patchConfig }: { config: SessaoConfig; patchCon
   );
 }
 
-function SessaoCard({ sessao, index, total, templateId, influenciador, onPatch, onMove, onRemove, onToast }: {
+function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDisponiveis, onPatch, onMove, onRemove, onToast }: {
   sessao: Sessao;
   index: number;
   total: number;
   templateId: string | null;
   influenciador: InfluenciadorRef | null;
+  marcasDisponiveis: MarcaRef[];
   onPatch: (patch: Partial<Sessao>) => void;
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
@@ -110,10 +112,13 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, onPatch, 
   const precisaPrint = requerPrint(sessao.tipo);
   const isInsight = sessao.tipo.startsWith('INSIGHTS_');
   const isConteudos = sessao.tipo === 'CONTEUDOS';
+  const isMarcas = sessao.tipo === 'MARCAS';
+  const usaLinks = isConteudos || sessao.tipo === 'EXEMPLOS_PUBLIS';
   const podeAnalisar = !!templateId && !!sessao.id;
   const fotos = parseFotos(sessao.fotos);
   const config = parseConfig(sessao.config);
   const links = config.links ?? [];
+  const marcasSelecionadas = config.marcas ?? [];
   const vazia = sessaoVazia(sessao);
   const ativa = sessao.ativa !== false;
 
@@ -149,7 +154,15 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, onPatch, 
 
   const removerFoto = (i: number) => {
     onPatch({ fotos: JSON.stringify(fotos.filter((_, idx) => idx !== i)) });
-    if (isConteudos) patchConfig({ links: links.filter((_, idx) => idx !== i) });
+    if (usaLinks) patchConfig({ links: links.filter((_, idx) => idx !== i) });
+  };
+
+  const setMarcas = (ids: string[]) => {
+    const snapshot = ids
+      .map((id) => marcasDisponiveis.find((m) => m.id === id))
+      .filter((m): m is MarcaRef => !!m)
+      .map(({ id, nome, logotipo }) => ({ id, nome, logotipo }));
+    patchConfig({ marcas: snapshot });
   };
 
   const setLink = (i: number, valor: string) => {
@@ -189,6 +202,20 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, onPatch, 
       {sessao.tipo === 'CAPA' && <CapaRedes config={config} influ={influenciador} patchConfig={patchConfig} />}
       {sessao.tipo === 'CONTATO' && <ContatoEditor config={config} patchConfig={patchConfig} />}
 
+      {isMarcas && (
+        <div className="form-field">
+          <label>Marcas cadastradas</label>
+          <MultiSelect
+            value={marcasSelecionadas.map((m) => m.id)} options={marcasDisponiveis}
+            optionLabel="nome" optionValue="id" filter display="chip"
+            onChange={(e) => setMarcas(e.value)} placeholder="Selecionar marcas..."
+            className="w-full" baseZIndex={10000}
+            emptyMessage="Nenhuma marca cadastrada"
+          />
+          <small className="campo-ajuda">Os logos das marcas selecionadas aparecem no PDF. Fotos abaixo são opcionais (extras).</small>
+        </div>
+      )}
+
       <div className="sessao-fotos">
         <label>Fotos</label>
         <div className="fotos-grid">
@@ -205,7 +232,7 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, onPatch, 
         </div>
       </div>
 
-      {isConteudos && fotos.length > 0 && (
+      {usaLinks && fotos.length > 0 && (
         <div className="bloco-config">
           <div className="bloco-head"><span>Link por foto</span></div>
           {fotos.map((src, i) => (
@@ -218,11 +245,19 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, onPatch, 
       )}
 
       {isInsight && (
-        <div className="form-field">
-          <label>Campos a extrair (comando para a IA)</label>
-          <InputTextarea value={config.comando ?? ''} onChange={(e) => patchConfig({ comando: e.target.value })} rows={2} className="w-full"
-            placeholder="Ex: extraia apenas seguidores, alcance, engajamento e faixa etária" />
-        </div>
+        <>
+          <div className="form-field">
+            <label>Campos a extrair (comando para a IA)</label>
+            <InputTextarea value={config.comando ?? ''} onChange={(e) => patchConfig({ comando: e.target.value })} rows={2} className="w-full"
+              placeholder="Ex: extraia apenas seguidores, alcance, engajamento e faixa etária" />
+          </div>
+          <div className="form-field">
+            <label>Link dos prints originais</label>
+            <InputText value={config.linkPrints ?? ''} onChange={(e) => patchConfig({ linkPrints: e.target.value })} className="w-full"
+              placeholder="https://drive.google.com/..." />
+            <small className="campo-ajuda">Se preenchido, o PDF mostra um link para baixar os prints originais dos insights.</small>
+          </div>
+        </>
       )}
 
       {precisaPrint && (
@@ -248,6 +283,16 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, onPatch, 
 
 function SessoesEditor({ sessoes, onChange, templateId, influenciador, onToast }: SessoesEditorProps) {
   const [novoTipo, setNovoTipo] = useState<string | null>(null);
+  const [marcasDisponiveis, setMarcasDisponiveis] = useState<MarcaRef[]>([]);
+
+  useEffect(() => {
+    let ativo = true;
+    midiaKitService.listarMarcas()
+      .then((m) => { if (ativo) setMarcasDisponiveis(m); })
+      .catch(() => onToast('error', 'Falha ao carregar marcas cadastradas'));
+    return () => { ativo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const adicionar = () => {
     if (!novoTipo) return;
@@ -286,6 +331,7 @@ function SessoesEditor({ sessoes, onChange, templateId, influenciador, onToast }
 
       {sessoes.map((s, i) => (
         <SessaoCard key={s.id ?? `nova-${i}`} sessao={s} index={i} total={sessoes.length} templateId={templateId} influenciador={influenciador}
+          marcasDisponiveis={marcasDisponiveis}
           onPatch={(p) => patch(i, p)} onMove={(d) => mover(i, d)} onRemove={() => remover(i)} onToast={onToast} />
       ))}
     </div>

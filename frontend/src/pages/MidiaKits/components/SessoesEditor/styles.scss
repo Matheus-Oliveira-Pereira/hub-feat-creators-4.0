@@ -18,6 +18,13 @@
     padding: 1rem 0;
   }
 
+  .campo-ajuda {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.72rem;
+    color: $gray-500;
+  }
+
   .sessao-card {
     border: 1px solid $gray-200;
     border-radius: $border-radius-md;

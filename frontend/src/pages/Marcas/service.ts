@@ -19,12 +19,14 @@ export interface Marca {
   id: string;
   nome: string;
   status: string;
+  logotipo?: string;
   contatos: Contato[];
 }
 
 export interface MarcaForm {
   nome: string;
   status: string;
+  logotipo?: string;
   contatos: Contato[];
 }
 

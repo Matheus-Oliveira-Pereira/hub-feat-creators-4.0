@@ -46,6 +46,12 @@ export interface RedeCapa {
   url: string;
 }
 
+export interface MarcaRef {
+  id: string;
+  nome: string;
+  logotipo?: string | null;
+}
+
 export interface SessaoConfig {
   redes?: RedeCapa[];
   links?: string[];
@@ -54,6 +60,10 @@ export interface SessaoConfig {
   mostrarEmail?: boolean;
   whatsapp?: string;
   mostrarWhatsapp?: boolean;
+  /** Snapshot das marcas cadastradas selecionadas na seção MARCAS. */
+  marcas?: MarcaRef[];
+  /** Link para baixar os prints originais (seções de insights). */
+  linkPrints?: string;
 }
 
 export interface MidiaKitTemplate {
@@ -161,11 +171,21 @@ export function tituloPadrao(tipo: string, influ?: InfluenciadorRef | null): str
   }
 }
 
-/** Formata valores numéricos grandes (842000 → "842 Mil", 1838725 → "1,8 Milhão"); mantém % e strings. */
+/** Formata valores numéricos grandes (842000 → "842 Mil", 1838725 → "1,8 Milhão"); mantém % e strings.
+ *  Expande sufixos abreviados (842K → 842000, 1.8M → 1800000) p/ nunca exibir "K". */
 export function formatarValor(v: unknown): string {
   if (typeof v === 'boolean' || v == null) return String(v);
-  const s = String(v).trim();
+  let s = String(v).trim();
   if (s.includes('%')) return s;
+  // Sufixos K/M/mil/mi → expande para número antes de formatar (insights nunca mostram "K").
+  const suf = /^([\d.,]+)\s*(k|mil|m|mi|mm)\b/i.exec(s);
+  if (suf) {
+    const n = Number(suf[1].replace(',', '.'));
+    if (Number.isFinite(n)) {
+      const mult = /^(k|mil)$/i.test(suf[2]) ? 1_000 : 1_000_000;
+      s = String(n * mult);
+    }
+  }
   const num = Number(s.replace(/\./g, '').replace(',', '.'));
   if (!Number.isFinite(num) || s === '' || /[a-zA-Z]/.test(s)) return s;
   const abs = Math.abs(num);
@@ -237,29 +257,8 @@ export function semearInfluenciador(sessoes: Sessao[], influ: InfluenciadorRef):
   });
 }
 
-/** Compacta uma imagem para data URL JPEG (reduz payload guardado no template). */
-export function comprimirImagem(file: File, maxLado = 900, qualidade = 0.72): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * escala);
-        canvas.height = Math.round(img.height * escala);
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('canvas')); return; }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', qualidade));
-      };
-      img.onerror = reject;
-      img.src = reader.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+// comprimirImagem extraída p/ utils/imagem.ts (reuso em Marcas); reexportada p/ não quebrar imports.
+export { comprimirImagem } from '../../utils/imagem';
 
 export function parseFotos(fotos?: string | null): string[] {
   if (!fotos) return [];
@@ -327,6 +326,11 @@ export const midiaKitService = {
 
   listarInfluenciadores: async (): Promise<InfluenciadorRef[]> => {
     const response = await api.get<InfluenciadorRef[]>('/influenciadores/ativos');
+    return response.data;
+  },
+
+  listarMarcas: async (): Promise<MarcaRef[]> => {
+    const response = await api.get<MarcaRef[]>('/marcas/ativos');
     return response.data;
   },
 };
