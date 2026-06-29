@@ -1,8 +1,10 @@
 package br.com.matheus.hubfeatcreators.controladores;
 
 import br.com.matheus.hubfeatcreators.entidades.FollowUp;
+import br.com.matheus.hubfeatcreators.entidades.LogEmail;
 import br.com.matheus.hubfeatcreators.entidades.Prospecao;
 import br.com.matheus.hubfeatcreators.servicos.ProspecaoService;
+import br.com.matheus.hubfeatcreators.visoes.dtos.EnvioEmailRequest;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.telas.prospecao.ProspecaoDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,7 +34,12 @@ public class ProspecaoController extends EntidadeController<Prospecao, Prospecao
     }
 
     @PostMapping("/{id}/follow-up")
-    public ResponseEntity<FollowUp> registrarFollowUp(@PathVariable UUID id, @RequestBody FollowUp followUp) {
-        return ResponseEntity.ok(service.registrarFollowUp(id, followUp));
+    public ResponseEntity<FollowUp> registrarFollowUp(@PathVariable UUID id, @RequestBody EnvioEmailRequest body) {
+        return ResponseEntity.ok(service.registrarFollowUp(id, body.getAssunto(), body.getCorpo(), body.getObservacoes()));
+    }
+
+    @PostMapping("/{id}/email")
+    public ResponseEntity<LogEmail> enviarEmailContato(@PathVariable UUID id, @RequestBody EnvioEmailRequest body) {
+        return ResponseEntity.ok(service.enviarEmailContato(id, body.getAssunto(), body.getCorpo()));
     }
 }

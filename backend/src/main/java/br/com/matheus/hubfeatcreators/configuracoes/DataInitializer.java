@@ -2,12 +2,16 @@ package br.com.matheus.hubfeatcreators.configuracoes;
 
 import br.com.matheus.hubfeatcreators.entidades.Perfil;
 import br.com.matheus.hubfeatcreators.entidades.PublicidadeEntregaveisFormato;
+import br.com.matheus.hubfeatcreators.entidades.TemplateEmail;
 import br.com.matheus.hubfeatcreators.entidades.Usuario;
 import br.com.matheus.hubfeatcreators.enums.Role;
 import br.com.matheus.hubfeatcreators.enums.StatusPerfil;
+import br.com.matheus.hubfeatcreators.enums.StatusTemplateEmail;
 import br.com.matheus.hubfeatcreators.enums.StatusUsuario;
+import br.com.matheus.hubfeatcreators.enums.TipoTemplateEmail;
 import br.com.matheus.hubfeatcreators.repositorios.PerfilRepository;
 import br.com.matheus.hubfeatcreators.repositorios.PublicidadeEntregaveisFormatoRepository;
+import br.com.matheus.hubfeatcreators.repositorios.TemplateEmailRepository;
 import br.com.matheus.hubfeatcreators.repositorios.UsuarioRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +32,14 @@ public class DataInitializer implements CommandLineRunner {
     private final UsuarioRepository usuarioRepository;
     private final PerfilRepository perfilRepository;
     private final PublicidadeEntregaveisFormatoRepository formatoRepository;
+    private final TemplateEmailRepository templateEmailRepository;
     private final EntityManager entityManager;
 
     @Override
     @Transactional
     public void run(String... args) {
         seedFormatosEntregavel();
+        seedTemplatesEmail();
 
         // ddl-auto:update não atualiza CHECK constraints de colunas enum no PostgreSQL.
         entityManager.createNativeQuery(
@@ -91,5 +97,39 @@ public class DataInitializer implements CommandLineRunner {
             formatoRepository.save(formato);
         });
         log.info("Formatos de entregável pré-cadastrados ({}).", descricoes.size());
+    }
+
+    /** Pré-cadastra um template padrão por tipo (idempotente: só quando a tabela está vazia). */
+    private void seedTemplatesEmail() {
+        if (templateEmailRepository.count() > 0) {
+            return;
+        }
+        TemplateEmail prospecao = new TemplateEmail();
+        prospecao.setNome("Prospecção — padrão");
+        prospecao.setTipo(TipoTemplateEmail.PROSPECAO);
+        prospecao.setPadrao(true);
+        prospecao.setStatus(StatusTemplateEmail.ATIVO);
+        prospecao.setAssunto("Parceria com {{influenciador}}");
+        prospecao.setCorpo("<p>Olá, {{contato}}!</p>"
+                + "<p>Sou da assessoria do(a) <strong>{{influenciador}}</strong> ({{nicho}}) e gostaria de "
+                + "apresentar uma proposta de parceria com a <strong>{{marca}}</strong>.</p>"
+                + "<p>Podemos conversar sobre os detalhes?</p>"
+                + "<p>Abraços!</p>");
+        templateEmailRepository.save(prospecao);
+
+        TemplateEmail followUp = new TemplateEmail();
+        followUp.setNome("Follow-up — padrão");
+        followUp.setTipo(TipoTemplateEmail.FOLLOW_UP);
+        followUp.setPadrao(true);
+        followUp.setStatus(StatusTemplateEmail.ATIVO);
+        followUp.setAssunto("Retomando contato — {{marca}}");
+        followUp.setCorpo("<p>Olá, {{contato}}!</p>"
+                + "<p>Retomando nosso contato sobre a parceria entre <strong>{{marca}}</strong> e "
+                + "<strong>{{influenciador}}</strong>.</p>"
+                + "<p>Ficou alguma dúvida sobre a proposta? Fico à disposição.</p>"
+                + "<p>Abraços!</p>");
+        templateEmailRepository.save(followUp);
+
+        log.info("Templates de e-mail pré-cadastrados (2).");
     }
 }

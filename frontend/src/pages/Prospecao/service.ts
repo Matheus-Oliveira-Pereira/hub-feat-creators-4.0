@@ -70,6 +70,7 @@ export interface FollowUp {
   data: string;
   statusProspecao: StatusProspecao;
   observacao: string | null;
+  observacoes: string | null;
   logEmail?: { id: string; status: string } | null;
 }
 
@@ -140,8 +141,13 @@ export const prospecaoService = {
     return r.data;
   },
 
-  registrarFollowUp: async (id: string, payload: { data?: string; observacao: string }): Promise<FollowUp> => {
+  registrarFollowUp: async (id: string, payload: { assunto: string; corpo: string; observacoes?: string }): Promise<FollowUp> => {
     const r = await api.post<FollowUp>(`/prospecoes/${id}/follow-up`, payload);
+    return r.data;
+  },
+
+  enviarEmailContato: async (id: string, payload: { assunto: string; corpo: string }): Promise<{ status: string }> => {
+    const r = await api.post<{ status: string }>(`/prospecoes/${id}/email`, payload);
     return r.data;
   },
 

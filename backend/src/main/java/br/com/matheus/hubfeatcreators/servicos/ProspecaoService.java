@@ -90,34 +90,51 @@ public class ProspecaoService extends EntidadeService<Prospecao, ProspecaoReposi
                 "id", "versao", "registro", "criadoPor", "followUps", "publicidade");
     }
 
-    /** Registra um follow-up e dispara e-mail ao contato da marca. */
-    public FollowUp registrarFollowUp(UUID prospecaoId, FollowUp followUp) {
+    /** Registra um follow-up e dispara e-mail ao contato da marca (assunto/corpo vindos do painel). */
+    public FollowUp registrarFollowUp(UUID prospecaoId, String assunto, String corpo, String observacoes) {
         Prospecao prospecao = buscar(prospecaoId);
+        String destino = validarContatoEmail(prospecao);
 
-        if (prospecao.getContatoMarca() == null || prospecao.getContatoMarca().getEmail() == null
-                || prospecao.getContatoMarca().getEmail().isBlank()) {
-            throw new RegraNegocioException("A prospecção não possui um contato de marca com e-mail para o follow-up.");
-        }
-
+        FollowUp followUp = new FollowUp();
         followUp.setProspecao(prospecao);
         followUp.setStatusProspecao(prospecao.getStatus());
-        if (followUp.getData() == null) {
-            followUp.setData(LocalDateTime.now());
-        }
+        followUp.setData(LocalDateTime.now());
+        followUp.setObservacao(corpo);
+        followUp.setObservacoes(observacoes);
 
-        String titulo = "Follow-up — " + prospecao.getMarca().getNome();
-        String conteudo = followUp.getObservacao() != null && !followUp.getObservacao().isBlank()
-                ? "<p>" + followUp.getObservacao() + "</p>"
+        String tituloFinal = (assunto != null && !assunto.isBlank())
+                ? assunto : "Follow-up — " + prospecao.getMarca().getNome();
+        String conteudoFinal = (corpo != null && !corpo.isBlank())
+                ? corpo
                 : "<p>Olá! Retomando nosso contato sobre a parceria com "
                         + prospecao.getInfluenciador().getNome() + ".</p>";
 
-        Email email = new Email(titulo, conteudo, List.of(prospecao.getContatoMarca().getEmail()));
+        Email email = new Email(tituloFinal, conteudoFinal, List.of(destino));
         LogEmail logEmail = emailService.enviarSync(email, prospecao.getInfluenciador());
         followUp.setLogEmail(logEmail);
 
         prospecao.getFollowUps().add(followUp);
         super.salvar(prospecao);
         return followUp;
+    }
+
+    /** Envia e-mail de contato inicial ao contato da marca (não registra histórico de follow-up). */
+    public LogEmail enviarEmailContato(UUID prospecaoId, String assunto, String corpo) {
+        Prospecao prospecao = buscar(prospecaoId);
+        String destino = validarContatoEmail(prospecao);
+        Email email = new Email(
+                assunto != null ? assunto : "Contato — " + prospecao.getMarca().getNome(),
+                corpo != null ? corpo : "",
+                List.of(destino));
+        return emailService.enviarSync(email, prospecao.getInfluenciador());
+    }
+
+    private String validarContatoEmail(Prospecao prospecao) {
+        if (prospecao.getContatoMarca() == null || prospecao.getContatoMarca().getEmail() == null
+                || prospecao.getContatoMarca().getEmail().isBlank()) {
+            throw new RegraNegocioException("A prospecção não possui um contato de marca com e-mail.");
+        }
+        return prospecao.getContatoMarca().getEmail();
     }
 
     private void validar(Prospecao p) {

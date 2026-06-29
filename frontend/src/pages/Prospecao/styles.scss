@@ -14,14 +14,8 @@
     margin-bottom: 1rem;
     flex-wrap: wrap;
 
-    .prospecao-influ-select {
-      min-width: 280px;
-    }
-
-    .prospecao-toolbar-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
+    .prospecao-influ-select { min-width: 280px; }
+    .prospecao-toolbar-actions { display: flex; gap: 0.5rem; }
   }
 
   .prospecao-empty {
@@ -32,7 +26,6 @@
     justify-content: center;
     color: $gray-500;
     gap: 0.75rem;
-
     i { font-size: 2.5rem; opacity: 0.4; }
   }
 
@@ -41,63 +34,84 @@
 
 .kanban-board {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.85rem;
   overflow-x: auto;
   padding-bottom: 1rem;
   align-items: flex-start;
+}
 
-  .kanban-column {
-    flex: 0 0 240px;
-    background: $gray-100;
-    border-radius: $border-radius-md;
+.kanban-column {
+  flex: 0 0 250px;
+  background: $gray-100;
+  border-radius: $border-radius-lg;
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+  max-height: calc(100vh - 240px);
+  border: 1.5px solid $gray-300;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+
+  &.over {
+    border-color: $primary-color;
+    background: rgba($primary-color, 0.1);
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+  }
+
+  .kanban-column-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0.85rem;
+    position: sticky;
+    top: 0;
+
+    .kanban-column-title {
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: $gray-700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .kanban-column-count {
+      background: $white;
+      color: $gray-600;
+      border-radius: $border-radius-full;
+      padding: 0.1rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      min-width: 22px;
+      text-align: center;
+    }
+  }
+
+  .kanban-column-body {
+    padding: 0 0.55rem 0.55rem;
     display: flex;
     flex-direction: column;
-    max-height: 100%;
-    border: 1px solid transparent;
-    transition: border-color 0.15s, background 0.15s;
-
-    &.over {
-      border-color: $primary-color;
-      background: rgba($primary-color, 0.08);
-    }
-
-    .kanban-column-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.65rem 0.75rem;
-      border-bottom: 1px solid $gray-200;
-
-      .kanban-column-title { font-weight: 600; font-size: 0.8rem; }
-      .kanban-column-count {
-        background: $gray-200;
-        border-radius: 10px;
-        padding: 0.1rem 0.5rem;
-        font-size: 0.7rem;
-        font-weight: 600;
-      }
-    }
-
-    .kanban-column-body {
-      padding: 0.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      overflow-y: auto;
-      min-height: 80px;
-    }
+    gap: 0.55rem;
+    overflow-y: auto;
+    min-height: 60px;
   }
 }
 
 .kanban-card {
-  background: #fff;
+  background: $white;
   border: 1px solid $gray-200;
+  border-left: 3px solid $primary-color;
   border-radius: $border-radius-md;
-  padding: 0.65rem;
+  padding: 0.7rem;
   cursor: grab;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: $shadow-sm;
+  transition: box-shadow 0.15s, transform 0.1s;
 
+  &:hover { box-shadow: $shadow-md; transform: translateY(-1px); }
   &:active { cursor: grabbing; }
+
+  &.overlay {
+    cursor: grabbing;
+    box-shadow: $shadow-lg;
+    transform: rotate(2deg);
+  }
 
   .kanban-card-head {
     display: flex;
@@ -106,32 +120,49 @@
     gap: 0.5rem;
     margin-bottom: 0.4rem;
 
-    .kanban-card-marca { font-weight: 600; font-size: 0.85rem; }
+    .kanban-card-marca { font-weight: 700; font-size: 0.88rem; color: $gray-800; }
   }
 
   .tipo-badge {
-    font-size: 0.6rem;
+    font-size: 0.58rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 0.1rem 0.4rem;
+    letter-spacing: 0.4px;
+    padding: 0.12rem 0.4rem;
     border-radius: 4px;
     white-space: nowrap;
 
     &.tipo-receptivo { background: rgba(#3b82f6, 0.15); color: #2563eb; }
-    &.tipo-prospecao { background: rgba($primary-color, 0.2); color: color.adjust($primary-color, $lightness: -25%); }
+    &.tipo-prospecao { background: rgba($primary-color, 0.25); color: color.adjust($primary-color, $lightness: -28%); }
   }
 
-  .kanban-card-valor { font-size: 0.9rem; font-weight: 700; color: $gray-800; margin-bottom: 0.4rem; }
+  .kanban-card-valor { font-size: 0.95rem; font-weight: 700; color: $gray-900; margin-bottom: 0.5rem; }
 
   .kanban-card-meta {
     display: flex;
-    gap: 0.6rem;
-    font-size: 0.7rem;
-    color: $gray-500;
-    margin-bottom: 0.5rem;
+    gap: 0.4rem;
+    margin-bottom: 0.55rem;
+    flex-wrap: wrap;
 
-    .dias-parado.alerta { color: #d97706; font-weight: 600; }
-    i { font-size: 0.7rem; }
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: $gray-500;
+      background: $gray-100;
+      border-radius: $border-radius-full;
+      padding: 0.12rem 0.5rem;
+      i { font-size: 0.65rem; }
+
+      &.alerta { background: rgba($warning-color, 0.18); color: color.adjust($warning-color, $lightness: -12%); }
+      &.followup-count.destaque {
+        background: $primary-color;
+        color: $on-lime;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.25);
+      }
+    }
   }
 
   .kanban-card-actions {
@@ -140,8 +171,8 @@
     justify-content: flex-end;
 
     button {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -150,17 +181,14 @@
       border-radius: 6px;
       cursor: pointer;
       color: $gray-600;
+      transition: all 0.12s;
 
-      &:hover { background: $primary-color; color: #000; border-color: $primary-color; }
+      &:hover { background: $primary-color; color: $on-lime; border-color: $primary-color; }
     }
   }
 }
 
-.followup-info {
-  font-size: 0.85rem;
-  color: $gray-600;
-  margin-bottom: 0.75rem;
-}
+.followup-info { font-size: 0.85rem; color: $gray-600; margin-bottom: 0.75rem; }
 
 .followup-historico {
   margin-top: 1rem;
@@ -184,7 +212,68 @@
       margin-bottom: 0.25rem;
     }
     p { margin: 0.25rem 0; }
-    .fu-ok { color: #16a34a; }
-    .fu-falha { color: #dc2626; }
+    .fu-interna { color: $gray-500; font-style: italic; font-size: 0.75rem; i { font-size: 0.7rem; margin-right: 0.25rem; } }
+    .fu-ok { color: $success-color; }
+    .fu-falha { color: $danger-color; }
+  }
+}
+
+// ─── Dark Theme ───
+[data-theme="dark"] {
+  .kanban-column {
+    background: #161616;
+    border-color: #2e2e2e;
+
+    &.over {
+      border-color: $brand-lime;
+      background: rgba($brand-lime, 0.08);
+      box-shadow: 0 0 0 3px rgba($brand-lime, 0.12);
+    }
+
+    .kanban-column-head {
+      .kanban-column-title { color: #cbd5e1; }
+      .kanban-column-count { background: #262626; color: #cbd5e1; }
+    }
+  }
+
+  .kanban-card {
+    background: #1d1d1d;
+    border-color: #2e2e2e;
+    border-left-color: $brand-lime;
+    box-shadow: none;
+
+    &:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
+    &.overlay { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6); }
+
+    .kanban-card-head .kanban-card-marca { color: #f1f5f9; }
+    .kanban-card-valor { color: $brand-lime; }
+
+    .tipo-badge {
+      &.tipo-receptivo { background: rgba(#3b82f6, 0.22); color: #93c5fd; }
+      &.tipo-prospecao { background: rgba($brand-lime, 0.18); color: $brand-lime-light; }
+    }
+
+    .kanban-card-meta .meta-chip {
+      background: #262626;
+      color: #94a3b8;
+      &.alerta { background: rgba($warning-color, 0.2); color: #fcd34d; }
+      &.followup-count.destaque { background: $brand-lime; color: $brand-black; box-shadow: 0 0 0 2px rgba($brand-lime, 0.25); }
+    }
+
+    .kanban-card-actions button {
+      background: #141414;
+      border-color: #2e2e2e;
+      color: #94a3b8;
+      &:hover { background: $brand-lime; color: $brand-black; border-color: $brand-lime; }
+    }
+  }
+
+  .followup-info { color: #94a3b8; }
+  .followup-historico {
+    border-top-color: #2e2e2e;
+    .followup-item {
+      background: #161616;
+      .followup-item-head { color: #64748b; }
+    }
   }
 }

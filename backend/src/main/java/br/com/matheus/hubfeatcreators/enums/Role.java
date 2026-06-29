@@ -40,7 +40,11 @@ public enum Role implements GrantedAuthority {
     PUBA,
     PUBB,
     PUBC,
-    PUBD;
+    PUBD,
+    TMEA,
+    TMEB,
+    TMEC,
+    TMED;
 
     @Override
     public String getAuthority() {

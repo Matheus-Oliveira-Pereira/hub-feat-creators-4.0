@@ -1,0 +1,43 @@
+@use '../../styles/variables' as *;
+
+.tipo-tpl-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+
+  &.tipo-prospecao { background: rgba($primary-color, 0.25); color: $gray-800; }
+  &.tipo-follow_up { background: rgba($info-color, 0.18); color: #2563eb; }
+}
+
+.padrao-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: $gray-800;
+  background: rgba($primary-color, 0.25);
+  border-radius: $border-radius-full;
+  padding: 0.12rem 0.5rem;
+  i { font-size: 0.65rem; color: $primary-dark; }
+}
+
+.qtd-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  background: $gray-100;
+  color: $gray-600;
+}
+
+[data-theme="dark"] {
+  .tipo-tpl-badge.tipo-prospecao { background: rgba($brand-lime, 0.18); color: $brand-lime-light; }
+  .tipo-tpl-badge.tipo-follow_up { background: rgba($info-color, 0.22); color: #93c5fd; }
+  .padrao-badge { background: rgba($brand-lime, 0.18); color: $brand-lime-light; i { color: $brand-lime; } }
+  .qtd-badge { background: #262626; color: #94a3b8; }
+}

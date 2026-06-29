@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors, closestCorners } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, PointerSensor, useSensor, useSensors, closestCorners } from '@dnd-kit/core';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
@@ -18,9 +18,10 @@ import {
 import KanbanColumn from './components/KanbanColumn';
 import KanbanCard from './components/KanbanCard';
 import ProspecaoDialog from './components/ProspecaoDialog';
-import FollowUpDialog from './components/FollowUpDialog';
+import EnvioEmailDialog from './components/EnvioEmailDialog';
 import EncerramentoDialog from './components/EncerramentoDialog';
 import ProspecaoReportDocument from './components/ProspecaoReportDocument';
+import ProspecaoDetalheReportDocument from './components/ProspecaoDetalheReportDocument';
 import PublicidadeDialog, { PublicidadeInicial } from '../Publicidade/components/PublicidadeDialog';
 import './styles.scss';
 
@@ -49,9 +50,11 @@ function ProspecaoPage() {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editando, setEditando] = useState<Prospecao | null>(null);
   const [followUpAlvo, setFollowUpAlvo] = useState<Prospecao | null>(null);
+  const [contatoInicialAlvo, setContatoInicialAlvo] = useState<Prospecao | null>(null);
   const [encerrarAlvo, setEncerrarAlvo] = useState<Prospecao | null>(null);
   const [publiInicial, setPubliInicial] = useState<PublicidadeInicial | null>(null);
   const [exportando, setExportando] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -72,6 +75,13 @@ function ProspecaoPage() {
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['prospecao-board', influId] });
+
+  // Seleciona automaticamente o primeiro influenciador disponível.
+  useEffect(() => {
+    if (!influId && influenciadores.length > 0) {
+      setInfluId(influenciadores[0].id);
+    }
+  }, [influenciadores, influId]);
 
   useEffect(() => {
     const unsub = subscribe((n) => { if (n.entidade === 'Prospecao' || n.entidade === 'Publicidade') invalidate(); });
@@ -94,7 +104,10 @@ function ProspecaoPage() {
   const showToast = (severity: 'success' | 'error' | 'warn', detail: string) =>
     toast.current?.show({ severity, summary: severity === 'success' ? 'Sucesso' : 'Atenção', detail });
 
+  const handleDragStart = (event: DragStartEvent) => setActiveId(event.active.id as string);
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
     const { active, over } = event;
     if (!over) return;
     const novoStatus = over.id as StatusProspecao;
@@ -115,6 +128,10 @@ function ProspecaoPage() {
       return;
     }
     statusMutation.mutate({ p: card, status: novoStatus });
+    // Rascunho → Contato inicial: abre painel de e-mail (envio opcional).
+    if (card.status === 'RASCUNHO' && novoStatus === 'CONTATO_INICIAL') {
+      setContatoInicialAlvo({ ...card, status: novoStatus });
+    }
   };
 
   const abrirNovo = () => { setEditando(null); setDialogVisible(true); };
@@ -138,7 +155,22 @@ function ProspecaoPage() {
     }
   };
 
+  const gerarRelatorioProspecao = async (p: Prospecao) => {
+    try {
+      const blob = await pdf(<ProspecaoDetalheReportDocument prospecao={p} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `prospeccao-${(p.marca?.nome ?? 'detalhe').replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      showToast('error', 'Falha ao gerar PDF');
+    }
+  };
+
   const porStatus = (status: StatusProspecao) => board.filter((p) => p.status === status);
+  const cardAtivo = activeId ? board.find((p) => p.id === activeId) ?? null : null;
 
   return (
     <div className="prospecao-page">
@@ -168,16 +200,19 @@ function ProspecaoPage() {
       )}
 
       {influId && (
-        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={podeEditar ? handleDragEnd : undefined}>
+        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={podeEditar ? handleDragEnd : undefined}>
           <div className="kanban-board">
             {STATUS_ORDEM.map((status) => (
               <KanbanColumn key={status} status={status} quantidade={porStatus(status).length}>
                 {porStatus(status).map((p) => (
-                  <KanbanCard key={p.id} prospecao={p} onEdit={abrirEdicao} onFollowUp={setFollowUpAlvo} />
+                  <KanbanCard key={p.id} prospecao={p} onEdit={abrirEdicao} onFollowUp={setFollowUpAlvo} onReport={gerarRelatorioProspecao} />
                 ))}
               </KanbanColumn>
             ))}
           </div>
+          <DragOverlay>
+            {cardAtivo ? <KanbanCard prospecao={cardAtivo} onEdit={() => {}} onFollowUp={() => {}} onReport={() => {}} overlay /> : null}
+          </DragOverlay>
           {isLoading && <p className="prospecao-loading">Carregando...</p>}
         </DndContext>
       )}
@@ -192,12 +227,24 @@ function ProspecaoPage() {
         marcas={marcas}
       />
 
-      <FollowUpDialog
+      <EnvioEmailDialog
         visible={!!followUpAlvo}
         onHide={() => setFollowUpAlvo(null)}
         onSaved={invalidate}
         onToast={showToast}
         prospecao={followUpAlvo}
+        tipo="FOLLOW_UP"
+        registrarComoFollowUp
+      />
+
+      <EnvioEmailDialog
+        visible={!!contatoInicialAlvo}
+        onHide={() => setContatoInicialAlvo(null)}
+        onSaved={invalidate}
+        onToast={showToast}
+        prospecao={contatoInicialAlvo}
+        tipo="PROSPECAO"
+        registrarComoFollowUp={false}
       />
 
       <EncerramentoDialog

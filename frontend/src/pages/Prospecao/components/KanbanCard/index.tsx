@@ -5,6 +5,8 @@ interface Props {
   prospecao: Prospecao;
   onEdit: (p: Prospecao) => void;
   onFollowUp: (p: Prospecao) => void;
+  onReport: (p: Prospecao) => void;
+  overlay?: boolean;
 }
 
 function formatarValor(v: number | null): string {
@@ -18,19 +20,27 @@ function diasParado(iso?: string): number | null {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function KanbanCard({ prospecao, onEdit, onFollowUp }: Readonly<Props>) {
+function KanbanCard({ prospecao, onEdit, onFollowUp, onReport, overlay }: Readonly<Props>) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: prospecao.id });
   const dias = diasParado(prospecao.ultimaModificacao);
-  const ultimoFollowUp = prospecao.followUps?.[0]?.data;
+  const qtdFollowUp = prospecao.followUps?.length ?? 0;
   const podeFollowUp = STATUS_PERMITE_FOLLOWUP.includes(prospecao.status);
 
-  const style: React.CSSProperties = {
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const style: React.CSSProperties = overlay
+    ? {}
+    : {
+        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+        opacity: isDragging ? 0.4 : 1,
+      };
 
   return (
-    <div ref={setNodeRef} style={style} className="kanban-card" {...attributes} {...listeners}>
+    <div
+      ref={overlay ? undefined : setNodeRef}
+      style={style}
+      className={`kanban-card ${overlay ? 'overlay' : ''}`}
+      {...(overlay ? {} : attributes)}
+      {...(overlay ? {} : listeners)}
+    >
       <div className="kanban-card-head">
         <span className="kanban-card-marca">{prospecao.marca?.nome ?? '—'}</span>
         {prospecao.tipo && (
@@ -42,15 +52,13 @@ function KanbanCard({ prospecao, onEdit, onFollowUp }: Readonly<Props>) {
 
       <div className="kanban-card-meta">
         {dias != null && (
-          <span className={`dias-parado ${dias >= 7 ? 'alerta' : ''}`} title="Dias desde a última atualização">
+          <span className={`meta-chip ${dias >= 7 ? 'alerta' : ''}`} title="Dias desde a última atualização">
             <i className="pi pi-clock" /> {dias}d
           </span>
         )}
-        {ultimoFollowUp && (
-          <span className="ultimo-followup" title="Último follow-up">
-            <i className="pi pi-send" /> {new Date(ultimoFollowUp).toLocaleDateString('pt-BR')}
-          </span>
-        )}
+        <span className={`meta-chip followup-count ${qtdFollowUp >= 3 ? 'destaque' : ''}`} title="Follow-ups realizados">
+          <i className="pi pi-send" /> {qtdFollowUp}
+        </span>
       </div>
 
       <div className="kanban-card-actions">
@@ -58,6 +66,7 @@ function KanbanCard({ prospecao, onEdit, onFollowUp }: Readonly<Props>) {
         {podeFollowUp && (
           <button type="button" onClick={() => onFollowUp(prospecao)} title="Follow-up"><i className="pi pi-send" /></button>
         )}
+        <button type="button" onClick={() => onReport(prospecao)} title="Relatório desta prospecção"><i className="pi pi-file-pdf" /></button>
       </div>
     </div>
   );

@@ -39,8 +39,13 @@ public class FollowUp extends Entidade {
     @Enumerated(EnumType.STRING)
     private StatusProspecao statusProspecao;
 
+    /** Mensagem enviada no e-mail ao contato. */
     @Column(columnDefinition = "TEXT")
     private String observacao;
+
+    /** Observação interna (não vai no e-mail). */
+    @Column(columnDefinition = "TEXT")
+    private String observacoes;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "log_email_id")

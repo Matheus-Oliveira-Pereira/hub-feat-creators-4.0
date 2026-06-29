@@ -11,6 +11,7 @@ import ContasEmail from '../pages/ContasEmail';
 import EmailLogs from '../pages/EmailLogs';
 import Prospecao from '../pages/Prospecao';
 import Publicidade from '../pages/Publicidade';
+import TemplatesEmail from '../pages/TemplatesEmail';
 import AcessoNegado from '../pages/AcessoNegado';
 import Template from './Template';
 import RequireAuth from './Requisitos/RequireAuth';
@@ -33,6 +34,7 @@ function Rotas() {
           <Route path="configuracoes" element={<RequireRole role="CFGB"><Configuracoes /></RequireRole>} />
           <Route path="contas-email" element={<RequireRole role="CTEB"><ContasEmail /></RequireRole>} />
           <Route path="email-logs" element={<RequireRole role="EMLB"><EmailLogs /></RequireRole>} />
+          <Route path="templates-email" element={<RequireRole role="TMEB"><TemplatesEmail /></RequireRole>} />
           <Route path="acesso-negado" element={<AcessoNegado />} />
         </Route>
       </Routes>
