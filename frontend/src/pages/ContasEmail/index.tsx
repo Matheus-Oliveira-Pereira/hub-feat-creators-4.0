@@ -28,7 +28,7 @@ import ImportacaoDialog from './components/ImportacaoDialog';
 import { contaEmailService, ContaEmailDTO, ContaEmailForm, ContaEmailFiltros } from './service';
 import './styles.scss';
 
-interface FormErrors { nome?: string; host?: string; usuario?: string; }
+interface FormErrors { nome?: string; host?: string; usuario?: string; senha?: string; }
 
 const FORM_VAZIO: ContaEmailForm = {
   nome: '', host: '', porta: 587, usuario: '', remetenteNome: '', senha: '', tls: true, sistema: false, status: 'ATIVO',
@@ -41,6 +41,7 @@ function ContasEmail() {
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [copiando, setCopiando] = useState(false);
   const [filtroGlobal, setFiltroGlobal] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [filtros, setFiltros] = useState<ContaEmailFiltros>({ status: [] });
@@ -127,11 +128,12 @@ function ContasEmail() {
     if (!form.host.trim()) errs.host = 'Servidor SMTP é obrigatório';
     if (!form.usuario.trim()) errs.usuario = 'Usuário (e-mail) é obrigatório';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.usuario.trim())) errs.usuario = 'E-mail inválido';
+    if (copiando && !form.senha?.trim()) errs.senha = 'Informe a senha da nova conta';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const abrirNovo = () => { setForm(FORM_VAZIO); setFormId(null); setEditando(false); setSenhaConfigurada(false); setErrors({}); setSubmitted(false); setDialogVisible(true); };
+  const abrirNovo = () => { setForm(FORM_VAZIO); setFormId(null); setEditando(false); setCopiando(false); setSenhaConfigurada(false); setErrors({}); setSubmitted(false); setDialogVisible(true); };
 
   const abrirEdicao = async (row: ContaEmailDTO) => {
     try {
@@ -142,7 +144,21 @@ function ContasEmail() {
         sistema: data.sistema, status: data.status,
       });
       setSenhaConfigurada(true);
-      setFormId(row.id); setEditando(true); setErrors({}); setSubmitted(false); setDialogVisible(true);
+      setFormId(row.id); setEditando(true); setCopiando(false); setErrors({}); setSubmitted(false); setDialogVisible(true);
+    } catch { toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar conta' }); }
+  };
+
+  // Copia uma conta como nova: campos únicos (nome, usuário) e senha em branco para forçar troca.
+  const abrirCopia = async (row: ContaEmailDTO) => {
+    try {
+      const data = await contaEmailService.buscar(row.id);
+      setForm({
+        nome: '', host: data.host, porta: data.porta, usuario: '',
+        remetenteNome: data.remetenteNome ?? '', senha: '', tls: data.tls ?? true,
+        sistema: false, status: 'ATIVO',
+      });
+      setSenhaConfigurada(false);
+      setFormId(null); setEditando(false); setCopiando(true); setErrors({}); setSubmitted(false); setDialogVisible(true);
     } catch { toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar conta' }); }
   };
 
@@ -178,11 +194,13 @@ function ContasEmail() {
       <TableActions
         onHistory={() => { setHistoryId(row.id); setHistoryVisible(true); }}
         onEdit={() => abrirEdicao(row)}
+        onCopy={() => abrirCopia(row)}
         onDeactivate={() => setDeactivateTarget(row)}
         onRestore={() => restaurarMutation.mutate(row.id)}
         onDelete={() => setDeleteTarget(row)}
         showHistory
         showEdit={podeEditar && row.status === 'ATIVO'}
+        showCopy={podeAdicionar && row.status === 'ATIVO'}
         showDeactivate={podeExcluir && row.status === 'ATIVO'}
         showRestore={row.status === 'INATIVO'}
         showDelete={podeExcluir && row.status === 'INATIVO'}
@@ -222,7 +240,12 @@ function ContasEmail() {
         </DataTable>
       </div>
 
-      <FormDialog visible={dialogVisible} onHide={() => setDialogVisible(false)} title={editando ? 'Editar Conta' : 'Nova Conta'} icon={editando ? 'pi pi-pencil' : 'pi pi-at'} onSave={salvar} loading={salvarMutation.isPending}>
+      <FormDialog visible={dialogVisible} onHide={() => setDialogVisible(false)} title={copiando ? 'Copiar Conta' : (editando ? 'Editar Conta' : 'Nova Conta')} icon={copiando ? 'pi pi-copy' : (editando ? 'pi pi-pencil' : 'pi pi-at')} onSave={salvar} loading={salvarMutation.isPending}>
+        {copiando && (
+          <div className="copia-hint">
+            <i className="pi pi-info-circle" /> Cópia de conta. Defina um <strong>nome</strong>, um <strong>usuário/e-mail</strong> e a <strong>senha</strong> próprios para a nova conta.
+          </div>
+        )}
         <div className={`form-field ${submitted && errors.nome ? 'field-error' : ''}`}>
           <label htmlFor="nome">Nome <span className="required">*</span></label>
           <InputText id="nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="w-full" placeholder="Ex: Conta principal" />
@@ -248,11 +271,13 @@ function ContasEmail() {
           <label htmlFor="remetenteNome">Nome do remetente</label>
           <InputText id="remetenteNome" value={form.remetenteNome} onChange={(e) => setForm({ ...form, remetenteNome: e.target.value })} className="w-full" placeholder="Hub Feat Creators" />
         </div>
-        <div className="form-field">
-          <label htmlFor="senha">Senha</label>
+        <div className={`form-field ${submitted && errors.senha ? 'field-error' : ''}`}>
+          <label htmlFor="senha">Senha {copiando && <span className="required">*</span>}</label>
           <InputText id="senha" type="password" value={form.senha ?? ''} onChange={(e) => setForm({ ...form, senha: e.target.value })} className="w-full"
             placeholder={senhaConfigurada ? '•••••••••• (já configurada — preencha para alterar)' : 'Senha ou app password'} autoComplete="new-password" />
-          <small className="config-hint">{senhaConfigurada ? 'Deixe em branco para manter a senha atual.' : 'Armazenada criptografada; nunca é exibida.'}</small>
+          {submitted && errors.senha
+            ? <small className="p-error"><i className="pi pi-exclamation-circle" />{errors.senha}</small>
+            : <small className="config-hint">{senhaConfigurada ? 'Deixe em branco para manter a senha atual.' : 'Armazenada criptografada; nunca é exibida.'}</small>}
         </div>
         <div className="form-grid-2">
           <div className="form-field switch-field">

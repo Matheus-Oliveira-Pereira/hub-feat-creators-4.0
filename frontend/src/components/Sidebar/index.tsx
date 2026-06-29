@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { canBrowse, getModulePrefixByPath } from '../../utils/roles';
 import logo from '../../assets/logo.svg';
+import logoMini from '../../assets/logo_mini.svg';
 import './styles.scss';
 
 interface MenuItem {
@@ -50,7 +51,8 @@ function Sidebar() {
   return (
     <aside className="layout-sidebar">
       <div className="sidebar-header">
-        <img src={logo} alt="Feat Creators" className="sidebar-logo-img" />
+        <img src={logoMini} alt="Feat Creators" className="sidebar-logo-img sidebar-logo-mini" />
+        <img src={logo} alt="Feat Creators" className="sidebar-logo-img sidebar-logo-full" />
       </div>
 
       <nav className="sidebar-menu">

@@ -58,6 +58,7 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
   const [marcaId, setMarcaId] = useState<string | null>(null);
   const [influId, setInfluId] = useState<string | null>(null);
   const [parceiro, setParceiro] = useState('');
+  const [descricao, setDescricao] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [porcentagem, setPorcentagem] = useState<number>(20);
   const [financeiro, setFinanceiro] = useState<Financeiro>({ ...FINANCEIRO_VAZIO });
@@ -77,6 +78,7 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
       setMarcaId(editando.marca?.id ?? null);
       setInfluId(editando.influenciador?.id ?? null);
       setParceiro(editando.parceiro ?? '');
+      setDescricao(editando.descricao ?? '');
       setObservacoes(editando.observacoes ?? '');
       setPorcentagem(editando.porcentagemAssessora ?? 20);
       setFinanceiro(editando.financeiro ?? { ...FINANCEIRO_VAZIO });
@@ -85,6 +87,7 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
       setMarcaId(inicial.marca.id);
       setInfluId(inicial.influenciador.id);
       setParceiro('');
+      setDescricao('');
       setObservacoes('');
       setPorcentagem(20);
       setFinanceiro({ ...FINANCEIRO_VAZIO, valorTotal: inicial.valorTotal });
@@ -93,6 +96,7 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
       setMarcaId(null);
       setInfluId(null);
       setParceiro('');
+      setDescricao('');
       setObservacoes('');
       setPorcentagem(20);
       setFinanceiro({ ...FINANCEIRO_VAZIO });
@@ -119,6 +123,7 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
         influenciador: { id: influId! },
         prospecao: inicial?.prospecaoId ? { id: inicial.prospecaoId } : (editando?.prospecao ?? null),
         parceiro: parceiro.trim(),
+        descricao: descricao.trim(),
         observacoes: observacoes.trim(),
         porcentagemAssessora: porcentagem,
         financeiro: { ...financeiro },
@@ -183,6 +188,11 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
           <label htmlFor="p-pct">% Assessoria</label>
           <InputNumber inputId="p-pct" value={porcentagem} onValueChange={(e) => { const v = e.value ?? 0; setPorcentagem(v); recalcular(financeiro.valorTotal, v); }} suffix="%" min={0} max={100} className="w-full" />
         </div>
+      </div>
+
+      <div className="form-field">
+        <label htmlFor="p-descricao">Descrição</label>
+        <InputTextarea id="p-descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className="w-full" autoResize />
       </div>
 
       <div className="form-field">

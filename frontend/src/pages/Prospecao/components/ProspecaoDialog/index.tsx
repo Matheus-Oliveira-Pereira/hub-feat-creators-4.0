@@ -46,6 +46,7 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
   const [tipo, setTipo] = useState<TipoProspecao>('PROSPECAO');
   const [nicho, setNicho] = useState('');
   const [dataContato, setDataContato] = useState<Date | null>(new Date());
+  const [descricao, setDescricao] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [valorProposto, setValorProposto] = useState<number | null>(null);
   const [valorAceito, setValorAceito] = useState<number | null>(null);
@@ -64,6 +65,7 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
       setTipo(editando.tipo ?? 'PROSPECAO');
       setNicho(editando.nicho ?? '');
       setDataContato(editando.dataContato ? new Date(editando.dataContato + 'T00:00:00') : null);
+      setDescricao(editando.descricao ?? '');
       setObservacoes(editando.observacoes ?? '');
       setValorProposto(editando.valorProposto ?? null);
       setValorAceito(editando.valorAceito ?? null);
@@ -75,6 +77,7 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
       setTipo('PROSPECAO');
       setNicho(influenciador?.nicho ?? '');
       setDataContato(new Date());
+      setDescricao('');
       setObservacoes('');
       setValorProposto(null);
       setValorAceito(null);
@@ -104,6 +107,7 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
         dataContato: dateToIso(dataContato),
         tipo,
         nicho: nicho.trim(),
+        descricao: descricao.trim(),
         observacoes: observacoes.trim(),
         valorProposto,
         valorAceito,
@@ -197,6 +201,11 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
       <div className="form-field">
         <label htmlFor="nicho">Nicho</label>
         <InputText id="nicho" value={nicho} onChange={(e) => setNicho(e.target.value)} className="w-full" placeholder="Puxado do influenciador, editável" />
+      </div>
+
+      <div className="form-field">
+        <label htmlFor="descricao">Descrição</label>
+        <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className="w-full" autoResize />
       </div>
 
       <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>

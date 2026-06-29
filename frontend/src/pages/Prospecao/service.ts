@@ -82,6 +82,7 @@ export interface Prospecao {
   dataContato: string | null;
   tipo: TipoProspecao | null;
   nicho: string | null;
+  descricao: string | null;
   observacoes: string | null;
   valorProposto: number | null;
   valorAceito: number | null;
@@ -101,6 +102,7 @@ export interface ProspecaoForm {
   dataContato: string | null;
   tipo: TipoProspecao;
   nicho: string;
+  descricao: string;
   observacoes: string;
   valorProposto: number | null;
   valorAceito: number | null;

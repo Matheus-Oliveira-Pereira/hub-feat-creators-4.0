@@ -25,6 +25,9 @@ $sidebar-expanded: 240px;
     .sidebar-menu .menu-section .menu-section-label { opacity: 1; }
     .sidebar-menu .menu-item .menu-label { opacity: 1; visibility: visible; }
     .sidebar-footer .sidebar-footer-text { opacity: 1; transform: translateX(0); }
+
+    .sidebar-header .sidebar-logo-mini { opacity: 0; transform: scale(0.85); }
+    .sidebar-header .sidebar-logo-full { opacity: 1; transform: translateY(-50%) scale(1); }
   }
 
   .sidebar-header {
@@ -35,6 +38,7 @@ $sidebar-expanded: 240px;
     gap: 0.75rem;
     height: 60px;
     overflow: hidden;
+    position: relative;
 
     .sidebar-logo-img {
       height: 30px;
@@ -43,6 +47,21 @@ $sidebar-expanded: 240px;
       display: block;
       flex-shrink: 0;
       object-fit: contain;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    // Crossfade: mini visível recolhido, full visível expandido (no hover).
+    .sidebar-logo-full {
+      position: absolute;
+      left: 0.8rem;
+      top: 50%;
+      transform: translateY(-50%) scale(0.85);
+      opacity: 0;
+    }
+
+    .sidebar-logo-mini {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 

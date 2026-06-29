@@ -47,6 +47,9 @@ public class Publicidade extends Entidade implements br.com.matheus.hubfeatcreat
     private Prospecao prospecao;
 
     @Column(columnDefinition = "TEXT")
+    private String descricao;
+
+    @Column(columnDefinition = "TEXT")
     private String observacoes;
 
     private String parceiro;

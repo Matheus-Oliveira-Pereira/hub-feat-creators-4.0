@@ -61,6 +61,9 @@ public class Prospecao extends Entidade implements br.com.matheus.hubfeatcreator
     private String nicho;
 
     @Column(columnDefinition = "TEXT")
+    private String descricao;
+
+    @Column(columnDefinition = "TEXT")
     private String observacoes;
 
     private BigDecimal valorProposto;

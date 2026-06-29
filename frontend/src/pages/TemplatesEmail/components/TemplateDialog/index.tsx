@@ -21,12 +21,13 @@ interface Props {
   onSaved: () => void;
   onToast: (severity: 'success' | 'error' | 'warn', detail: string) => void;
   editando: TemplateEmail | null;
+  copiando?: boolean;
 }
 
 const TIPO_OPTIONS = (Object.keys(TIPO_TEMPLATE_LABEL) as TipoTemplateEmail[])
   .map((t) => ({ label: TIPO_TEMPLATE_LABEL[t], value: t }));
 
-function TemplateDialog({ visible, onHide, onSaved, onToast, editando }: Readonly<Props>) {
+function TemplateDialog({ visible, onHide, onSaved, onToast, editando, copiando = false }: Readonly<Props>) {
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState<TipoTemplateEmail>('PROSPECAO');
   const [assunto, setAssunto] = useState('');
@@ -43,12 +44,12 @@ function TemplateDialog({ visible, onHide, onSaved, onToast, editando }: Readonl
     if (!visible) return;
     setSubmitted(false);
     if (editando) {
-      setNome(editando.nome);
+      setNome(copiando ? '' : editando.nome);
       setTipo(editando.tipo);
       setAssunto(editando.assunto);
       setCorpo(editando.corpo ?? '');
-      setPadrao(editando.padrao);
-      setStatus(editando.status);
+      setPadrao(copiando ? false : editando.padrao);
+      setStatus(copiando ? 'ATIVO' : editando.status);
     } else {
       setNome('');
       setTipo('PROSPECAO');
@@ -57,7 +58,7 @@ function TemplateDialog({ visible, onHide, onSaved, onToast, editando }: Readonl
       setPadrao(false);
       setStatus('ATIVO');
     }
-  }, [visible, editando]);
+  }, [visible, editando, copiando]);
 
   const inserirVariavel = (token: string) => {
     if (lastFocus.current === 'assunto' && assuntoRef.current) {
@@ -89,10 +90,13 @@ function TemplateDialog({ visible, onHide, onSaved, onToast, editando }: Readonl
   const salvarMutation = useMutation({
     mutationFn: () => {
       const payload: TemplateEmailForm = { nome: nome.trim(), tipo, assunto: assunto.trim(), corpo, padrao, status };
-      return editando ? templateEmailService.atualizar(editando.id, payload) : templateEmailService.salvar(payload);
+      return (editando && !copiando) ? templateEmailService.atualizar(editando.id, payload) : templateEmailService.salvar(payload);
     },
     onSuccess: () => {
-      onToast('success', editando ? 'Template atualizado' : 'Template criado');
+      let msg = 'Template criado';
+      if (copiando) msg = 'Template copiado';
+      else if (editando) msg = 'Template atualizado';
+      onToast('success', msg);
       onSaved();
       onHide();
     },
@@ -111,16 +115,26 @@ function TemplateDialog({ visible, onHide, onSaved, onToast, editando }: Readonl
     salvarMutation.mutate();
   };
 
+  let titulo = 'Novo Template';
+  let icone = 'pi pi-plus';
+  if (copiando) { titulo = 'Copiar Template'; icone = 'pi pi-copy'; }
+  else if (editando) { titulo = 'Editar Template'; icone = 'pi pi-pencil'; }
+
   return (
     <FormDialog
       visible={visible}
       onHide={onHide}
-      title={editando ? 'Editar Template' : 'Novo Template'}
-      icon={editando ? 'pi pi-pencil' : 'pi pi-plus'}
+      title={titulo}
+      icon={icone}
       onSave={salvar}
       loading={salvarMutation.isPending}
       width="720px"
     >
+      {copiando && (
+        <div className="copia-hint">
+          <i className="pi pi-info-circle" /> Cópia de template. Defina uma <strong>descrição (nome)</strong> única para o novo template.
+        </div>
+      )}
       <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
         <div className={`form-field ${submitted && !nome.trim() ? 'field-error' : ''}`} style={{ flex: 2 }}>
           <label htmlFor="t-nome">Nome <span className="required">*</span></label>

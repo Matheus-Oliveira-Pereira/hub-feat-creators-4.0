@@ -42,6 +42,7 @@ function TemplatesEmail() {
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editando, setEditando] = useState<TemplateEmail | null>(null);
+  const [copiando, setCopiando] = useState(false);
   const [filtroGlobal, setFiltroGlobal] = useState('');
   const [debouncedBusca, setDebouncedBusca] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
@@ -94,11 +95,23 @@ function TemplatesEmail() {
   const showToast = (severity: 'success' | 'error' | 'warn', detail: string) =>
     toast.current?.show({ severity, summary: severity === 'success' ? 'Sucesso' : 'Atenção', detail });
 
-  const abrirNovo = () => { setEditando(null); setDialogVisible(true); };
+  const abrirNovo = () => { setEditando(null); setCopiando(false); setDialogVisible(true); };
   const abrirEdicao = async (row: TemplateEmailDTO) => {
     try {
       const full = await templateEmailService.buscar(row.id);
       setEditando(full);
+      setCopiando(false);
+      setDialogVisible(true);
+    } catch {
+      showToast('error', 'Erro ao carregar template');
+    }
+  };
+  // Copia um template como novo: a descrição (nome) fica em branco para forçar troca.
+  const abrirCopia = async (row: TemplateEmailDTO) => {
+    try {
+      const full = await templateEmailService.buscar(row.id);
+      setEditando(full);
+      setCopiando(true);
       setDialogVisible(true);
     } catch {
       showToast('error', 'Erro ao carregar template');
@@ -117,11 +130,13 @@ function TemplatesEmail() {
     <TableActions
       onHistory={() => { setHistoryId(row.id); setHistoryVisible(true); }}
       onEdit={() => abrirEdicao(row)}
+      onCopy={() => abrirCopia(row)}
       onDeactivate={() => setDeactivateTarget(row)}
       onRestore={() => restaurarMutation.mutate(row.id)}
       onDelete={() => setDeleteTarget(row)}
       showHistory
       showEdit={podeEditar && row.status === 'ATIVO'}
+      showCopy={podeAdicionar && row.status === 'ATIVO'}
       showDeactivate={podeExcluir && row.status === 'ATIVO'}
       showRestore={row.status === 'INATIVO'}
       showDelete={podeExcluir && row.status === 'INATIVO'}
@@ -163,6 +178,7 @@ function TemplatesEmail() {
         onSaved={invalidate}
         onToast={showToast}
         editando={editando}
+        copiando={copiando}
       />
 
       <ConfirmDialog visible={!!deactivateTarget} onHide={() => setDeactivateTarget(null)} onConfirm={() => deactivateTarget && desativarMutation.mutate(deactivateTarget.id)}

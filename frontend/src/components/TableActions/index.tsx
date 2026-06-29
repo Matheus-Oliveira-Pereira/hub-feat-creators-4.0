@@ -3,11 +3,13 @@ import './styles.scss';
 
 interface TableActionsProps {
   onEdit?: () => void;
+  onCopy?: () => void;
   onDeactivate?: () => void;
   onRestore?: () => void;
   onDelete?: () => void;
   onHistory?: () => void;
   showEdit?: boolean;
+  showCopy?: boolean;
   showDeactivate?: boolean;
   showRestore?: boolean;
   showDelete?: boolean;
@@ -15,10 +17,10 @@ interface TableActionsProps {
 }
 
 function TableActions({
-  onEdit, onDeactivate, onRestore, onDelete, onHistory,
-  showEdit = true, showDeactivate = true, showRestore = false, showDelete = false, showHistory = false,
+  onEdit, onCopy, onDeactivate, onRestore, onDelete, onHistory,
+  showEdit = true, showCopy = false, showDeactivate = true, showRestore = false, showDelete = false, showHistory = false,
 }: TableActionsProps) {
-  const hasAny = showHistory || showEdit || showDeactivate || showRestore || showDelete;
+  const hasAny = showHistory || showEdit || showCopy || showDeactivate || showRestore || showDelete;
   if (!hasAny) return null;
 
   return (
@@ -32,6 +34,11 @@ function TableActions({
       {showEdit && onEdit && (
         <button type="button" className="action-btn btn-editar" onClick={onEdit} data-pr-tooltip="Editar">
           <i className="pi pi-pencil" />
+        </button>
+      )}
+      {showCopy && onCopy && (
+        <button type="button" className="action-btn btn-copiar" onClick={onCopy} data-pr-tooltip="Copiar">
+          <i className="pi pi-copy" />
         </button>
       )}
       {showDeactivate && onDeactivate && (

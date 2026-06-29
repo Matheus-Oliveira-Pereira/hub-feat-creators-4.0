@@ -61,6 +61,7 @@ export interface Publicidade {
   marca: Ref;
   influenciador: Ref;
   prospecao: { id: string } | null;
+  descricao: string | null;
   observacoes: string | null;
   parceiro: string | null;
   porcentagemAssessora: number;
@@ -73,6 +74,7 @@ export interface PublicidadeForm {
   marca: { id: string };
   influenciador: { id: string };
   prospecao: { id: string } | null;
+  descricao: string;
   observacoes: string;
   parceiro: string;
   porcentagemAssessora: number;
