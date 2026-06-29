@@ -6,6 +6,17 @@
 @import 'primeflex/primeflex.css';
 @import 'quill/dist/quill.snow.css';
 
+// Linha de rótulo com ação à direita (ex: botão "Editar com IA").
+.label-com-acao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+
+  label { margin: 0; }
+}
+
 // ─── Reset ───
 * {
   margin: 0;

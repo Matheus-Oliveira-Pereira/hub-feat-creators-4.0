@@ -1,0 +1,55 @@
+@use '../../styles/variables' as *;
+
+.assistente-ia-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #4338ca;
+  border-radius: $border-radius-md;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { background: #e0e7ff; border-color: #a5b4fc; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  i { font-size: 0.9rem; }
+}
+
+.assistente-ia-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  label { font-size: 0.85rem; font-weight: 500; color: $gray-700; }
+}
+
+.assistente-ia-sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+
+  .sugestao-chip {
+    padding: 0.25rem 0.6rem;
+    border: 1px solid $gray-300;
+    background: $gray-100;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: $gray-700;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover { background: #eef2ff; border-color: #c7d2fe; color: #4338ca; }
+  }
+}
+
+.assistente-ia-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}

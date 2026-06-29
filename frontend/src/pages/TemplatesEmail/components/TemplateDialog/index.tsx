@@ -6,6 +6,7 @@ import { InputSwitch } from 'primereact/inputswitch';
 import { Editor } from 'primereact/editor';
 import FormDialog from '../../../../components/FormDialog';
 import StatusDropdown from '../../../../components/StatusDropdown';
+import AssistenteIa from '../../../../components/AssistenteIa';
 import VariaveisBar from '../VariaveisBar';
 import {
   templateEmailService,
@@ -161,7 +162,10 @@ function TemplateDialog({ visible, onHide, onSaved, onToast, editando, copiando 
       </div>
 
       <div className="form-field">
-        <label>Corpo</label>
+        <div className="label-com-acao">
+          <label>Corpo</label>
+          <AssistenteIa value={corpo} onResult={setCorpo} />
+        </div>
         <div onFocus={() => { lastFocus.current = 'corpo'; }}>
           <Editor
             ref={editorRef}

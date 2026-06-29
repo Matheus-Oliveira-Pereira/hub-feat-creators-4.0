@@ -5,6 +5,7 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Editor } from 'primereact/editor';
 import FormDialog from '../../../../components/FormDialog';
+import AssistenteIa from '../../../../components/AssistenteIa';
 import { templateEmailService, TipoTemplateEmail } from '../../../TemplatesEmail/service';
 import { prospecaoService, Prospecao, STATUS_LABEL } from '../../service';
 
@@ -122,7 +123,10 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
       </div>
 
       <div className="form-field">
-        <label>Corpo</label>
+        <div className="label-com-acao">
+          <label>Corpo</label>
+          <AssistenteIa value={corpo} onResult={setCorpo} />
+        </div>
         <Editor value={corpo} onTextChange={(e) => setCorpo(e.htmlValue ?? '')} style={{ height: '200px' }} />
       </div>
 
