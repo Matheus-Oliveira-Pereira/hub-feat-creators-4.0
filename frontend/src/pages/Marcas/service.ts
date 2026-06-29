@@ -20,6 +20,8 @@ export interface Marca {
   nome: string;
   status: string;
   logotipo?: string;
+  linkFormulario?: string;
+  siteMarca?: string;
   contatos: Contato[];
 }
 
@@ -27,6 +29,8 @@ export interface MarcaForm {
   nome: string;
   status: string;
   logotipo?: string;
+  linkFormulario?: string;
+  siteMarca?: string;
   contatos: Contato[];
 }
 

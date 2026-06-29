@@ -24,7 +24,7 @@ import { marcaService, MarcaDTO, MarcaForm, MarcaFiltros, Contato, contatoVazio,
 import { comprimirImagem } from '../../utils/imagem';
 import './styles.scss';
 
-const FORM_VAZIO: MarcaForm = { nome: '', status: 'ATIVO', logotipo: '', contatos: [] };
+const FORM_VAZIO: MarcaForm = { nome: '', status: 'ATIVO', logotipo: '', linkFormulario: '', siteMarca: '', contatos: [] };
 
 function Marcas() {
   const queryClient = useQueryClient();
@@ -123,6 +123,8 @@ function Marcas() {
         nome: data.nome,
         status: data.status,
         logotipo: data.logotipo ?? '',
+        linkFormulario: data.linkFormulario ?? '',
+        siteMarca: data.siteMarca ?? '',
         contatos: (data.contatos || []).map((c) => ({ id: c.id, nome: c.nome ?? '', email: c.email ?? '', telefone: c.telefone ?? '' })),
       });
       setFormId(row.id); setEditando(true); setSubmitted(false); setDialogVisible(true);
@@ -215,6 +217,14 @@ function Marcas() {
                 </label>
               )}
           </div>
+        </div>
+        <div className="form-field">
+          <label htmlFor="linkFormulario">Link do formulário</label>
+          <InputText id="linkFormulario" value={form.linkFormulario ?? ''} onChange={(e) => setForm({ ...form, linkFormulario: e.target.value })} className="w-full" placeholder="https://..." />
+        </div>
+        <div className="form-field">
+          <label htmlFor="siteMarca">Site da marca</label>
+          <InputText id="siteMarca" value={form.siteMarca ?? ''} onChange={(e) => setForm({ ...form, siteMarca: e.target.value })} className="w-full" placeholder="https://..." />
         </div>
         <div className="form-field">
           <ContatosEditor contatos={form.contatos} onChange={(contatos: Contato[]) => setForm({ ...form, contatos })} submitted={submitted} />

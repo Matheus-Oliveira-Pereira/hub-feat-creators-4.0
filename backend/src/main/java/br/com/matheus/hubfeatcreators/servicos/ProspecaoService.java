@@ -8,6 +8,7 @@ import br.com.matheus.hubfeatcreators.entidades.LogEmail;
 import br.com.matheus.hubfeatcreators.entidades.Marca;
 import br.com.matheus.hubfeatcreators.entidades.Prospecao;
 import br.com.matheus.hubfeatcreators.enums.StatusProspecao;
+import br.com.matheus.hubfeatcreators.enums.TipoProspecao;
 import br.com.matheus.hubfeatcreators.exceptions.EntidadeNaoEncontradaException;
 import br.com.matheus.hubfeatcreators.exceptions.RegraNegocioException;
 import br.com.matheus.hubfeatcreators.repositorios.InfluenciadorRepository;
@@ -53,7 +54,9 @@ public class ProspecaoService extends EntidadeService<Prospecao, ProspecaoReposi
     @Transactional
     public Prospecao salvar(Prospecao entidade) {
         if (entidade.getStatus() == null) {
-            entidade.setStatus(StatusProspecao.RASCUNHO);
+            entidade.setStatus(entidade.getTipo() == TipoProspecao.RECEPTIVO
+                    ? StatusProspecao.CONTATO_INICIAL
+                    : StatusProspecao.RASCUNHO);
         }
         resolverReferencias(entidade);
         validar(entidade);

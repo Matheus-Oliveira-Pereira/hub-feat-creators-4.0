@@ -97,6 +97,8 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
       icon="pi pi-send"
       onSave={() => mutation.mutate()}
       loading={mutation.isPending}
+      saveLabel="Enviar e-mail"
+      saveIcon="pi pi-send"
       width="660px"
     >
       {!destino && (

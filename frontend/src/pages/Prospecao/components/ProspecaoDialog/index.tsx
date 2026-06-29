@@ -108,7 +108,7 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
         valorProposto,
         valorAceito,
         valorContraproposto,
-        status: editando ? editando.status : 'RASCUNHO',
+        status: editando ? editando.status : (tipo === 'RECEPTIVO' ? 'CONTATO_INICIAL' : 'RASCUNHO'),
         motivoEncerramento: editando ? editando.motivoEncerramento : null,
       };
       return editando ? prospecaoService.atualizar(editando.id, payload as unknown as Partial<Prospecao>) : prospecaoService.salvar(payload);

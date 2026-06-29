@@ -34,6 +34,12 @@ public class Marca extends Entidade implements br.com.matheus.hubfeatcreators.in
     @NotBlank(message = "Nome é obrigatório")
     private String nome;
 
+    /** Link do formulário da marca. */
+    private String linkFormulario;
+
+    /** Site da marca. */
+    private String siteMarca;
+
     /** Logotipo da marca como data URL base64. @NotAudited p/ não inchar tabelas _AUD. */
     @Column(columnDefinition = "TEXT")
     @NotAudited
