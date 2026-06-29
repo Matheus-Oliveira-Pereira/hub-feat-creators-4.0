@@ -75,6 +75,12 @@ public class Prospecao extends Entidade implements br.com.matheus.hubfeatcreator
     @Enumerated(EnumType.STRING)
     private StatusProspecao status;
 
+    /** Confirma o envio do e-mail de contato inicial (automático ao enviar, ou marcado manualmente). */
+    private Boolean emailContatoInicialEnviado = false;
+
+    /** Data do envio automático do e-mail de contato inicial; base da regra de follow-up. */
+    private java.time.LocalDateTime dataEmailContatoInicial;
+
     @Column(columnDefinition = "TEXT")
     private String motivoEncerramento;
 

@@ -4,6 +4,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { InputNumber } from 'primereact/inputnumber';
+import { InputSwitch } from 'primereact/inputswitch';
 import { Calendar } from 'primereact/calendar';
 import FormDialog from '../../../../components/FormDialog';
 import {
@@ -51,6 +52,8 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
   const [valorProposto, setValorProposto] = useState<number | null>(null);
   const [valorAceito, setValorAceito] = useState<number | null>(null);
   const [valorContraproposto, setValorContraproposto] = useState<number | null>(null);
+  const [emailContatoInicialEnviado, setEmailContatoInicialEnviado] = useState(false);
+  const [motivoEncerramento, setMotivoEncerramento] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const influRef = editando ? editando.influenciador : influenciador;
@@ -70,6 +73,8 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
       setValorProposto(editando.valorProposto ?? null);
       setValorAceito(editando.valorAceito ?? null);
       setValorContraproposto(editando.valorContraproposto ?? null);
+      setEmailContatoInicialEnviado(editando.emailContatoInicialEnviado ?? false);
+      setMotivoEncerramento(editando.motivoEncerramento ?? '');
     } else {
       setMarcaId(null);
       setContatoId(null);
@@ -82,6 +87,8 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
       setValorProposto(null);
       setValorAceito(null);
       setValorContraproposto(null);
+      setEmailContatoInicialEnviado(false);
+      setMotivoEncerramento('');
     }
   }, [visible, editando, influenciador]);
 
@@ -113,7 +120,8 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
         valorAceito,
         valorContraproposto,
         status: editando ? editando.status : (tipo === 'RECEPTIVO' ? 'CONTATO_INICIAL' : 'RASCUNHO'),
-        motivoEncerramento: editando ? editando.motivoEncerramento : null,
+        motivoEncerramento: editando ? (motivoEncerramento.trim() || null) : null,
+        emailContatoInicialEnviado,
       };
       return editando ? prospecaoService.atualizar(editando.id, payload as unknown as Partial<Prospecao>) : prospecaoService.salvar(payload);
     },
@@ -152,6 +160,11 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
       loading={salvarMutation.isPending}
       width="640px"
     >
+      <div className="form-field">
+        <label htmlFor="descricao">Descrição</label>
+        <InputText id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-full" placeholder="Resumo curto (aparece no card)" maxLength={80} />
+      </div>
+
       <div className="form-field">
         <label>Influenciador</label>
         <InputText value={influRef?.nome ?? ''} disabled className="w-full" />
@@ -203,11 +216,6 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
         <InputText id="nicho" value={nicho} onChange={(e) => setNicho(e.target.value)} className="w-full" placeholder="Puxado do influenciador, editável" />
       </div>
 
-      <div className="form-field">
-        <label htmlFor="descricao">Descrição</label>
-        <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className="w-full" autoResize />
-      </div>
-
       <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
         <div className="form-field" style={{ flex: 1 }}>
           <label htmlFor="vp">Valor proposto</label>
@@ -227,6 +235,18 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
         <label htmlFor="obs">Observações</label>
         <InputTextarea id="obs" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={3} className="w-full" autoResize />
       </div>
+
+      <div className="form-field switch-field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <InputSwitch id="email-contato" checked={emailContatoInicialEnviado} onChange={(e) => setEmailContatoInicialEnviado(!!e.value)} />
+        <label htmlFor="email-contato" style={{ margin: 0 }}>E-mail de contato inicial enviado</label>
+      </div>
+
+      {editando?.status === 'ENCERRADO' && (
+        <div className="form-field">
+          <label htmlFor="motivo-encerramento">Motivo do encerramento</label>
+          <InputTextarea id="motivo-encerramento" value={motivoEncerramento} onChange={(e) => setMotivoEncerramento(e.target.value)} rows={3} className="w-full" autoResize />
+        </div>
+      )}
     </FormDialog>
   );
 }

@@ -1,11 +1,12 @@
 import { useDraggable } from '@dnd-kit/core';
-import { Prospecao, TIPO_LABEL, STATUS_PERMITE_FOLLOWUP } from '../../service';
+import { Prospecao, TIPO_LABEL, STATUS_PERMITE_FOLLOWUP, precisaFollowUp } from '../../service';
 
 interface Props {
   prospecao: Prospecao;
   onEdit: (p: Prospecao) => void;
   onFollowUp: (p: Prospecao) => void;
   onReport: (p: Prospecao) => void;
+  onHistorico: (p: Prospecao) => void;
   overlay?: boolean;
 }
 
@@ -20,11 +21,14 @@ function diasParado(iso?: string): number | null {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function KanbanCard({ prospecao, onEdit, onFollowUp, onReport, overlay }: Readonly<Props>) {
+function KanbanCard({ prospecao, onEdit, onFollowUp, onReport, onHistorico, overlay }: Readonly<Props>) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: prospecao.id });
   const dias = diasParado(prospecao.ultimaModificacao);
   const qtdFollowUp = prospecao.followUps?.length ?? 0;
   const podeFollowUp = STATUS_PERMITE_FOLLOWUP.includes(prospecao.status);
+  const contatoNome = prospecao.contatoMarca?.nome ?? null;
+  const titulo = prospecao.descricao?.trim() || prospecao.marca?.nome || '—';
+  const cobraFollowUp = precisaFollowUp(prospecao);
 
   const style: React.CSSProperties = overlay
     ? {}
@@ -37,18 +41,36 @@ function KanbanCard({ prospecao, onEdit, onFollowUp, onReport, overlay }: Readon
     <div
       ref={overlay ? undefined : setNodeRef}
       style={style}
-      className={`kanban-card ${overlay ? 'overlay' : ''}`}
+      className={`kanban-card ${overlay ? 'overlay' : ''} ${cobraFollowUp ? 'precisa-followup' : ''}`}
       {...(overlay ? {} : attributes)}
       {...(overlay ? {} : listeners)}
     >
       <div className="kanban-card-head">
-        <span className="kanban-card-marca">{prospecao.marca?.nome ?? '—'}</span>
+        <span className="kanban-card-titulo">{titulo}</span>
         {prospecao.tipo && (
           <span className={`tipo-badge tipo-${prospecao.tipo.toLowerCase()}`}>{TIPO_LABEL[prospecao.tipo]}</span>
         )}
       </div>
 
+      <div className="kanban-card-sub">
+        <span className="kanban-card-marca"><i className="pi pi-bookmark" /> {prospecao.marca?.nome ?? '—'}</span>
+        {contatoNome && <span className="kanban-card-contato"><i className="pi pi-user" /> {contatoNome}</span>}
+      </div>
+
       <div className="kanban-card-valor">{formatarValor(prospecao.valorAceito ?? prospecao.valorProposto)}</div>
+
+      <div className="kanban-card-badges">
+        {prospecao.emailContatoInicialEnviado && (
+          <span className="badge-contato-enviado" title="E-mail de contato inicial enviado">
+            <i className="pi pi-check-circle" /> Contato inicial
+          </span>
+        )}
+        {cobraFollowUp && (
+          <span className="badge-precisa-followup" title="Precisa de follow-up">
+            <i className="pi pi-bell" /> Follow-up
+          </span>
+        )}
+      </div>
 
       <div className="kanban-card-meta">
         {dias != null && (
@@ -56,9 +78,14 @@ function KanbanCard({ prospecao, onEdit, onFollowUp, onReport, overlay }: Readon
             <i className="pi pi-clock" /> {dias}d
           </span>
         )}
-        <span className={`meta-chip followup-count ${qtdFollowUp >= 3 ? 'destaque' : ''}`} title="Follow-ups realizados">
+        <button
+          type="button"
+          className={`meta-chip followup-count clicavel ${qtdFollowUp >= 3 ? 'destaque' : ''}`}
+          title="Ver histórico de follow-ups"
+          onClick={() => onHistorico(prospecao)}
+        >
           <i className="pi pi-send" /> {qtdFollowUp}
-        </span>
+        </button>
       </div>
 
       <div className="kanban-card-actions">

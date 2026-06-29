@@ -45,6 +45,30 @@ export const STATUS_PERMITE_FOLLOWUP: StatusProspecao[] = [
   'AGUARDANDO_INFLUENCIADOR',
 ];
 
+/** Status em que o card cobra follow-up automaticamente. */
+export const STATUS_PRECISA_FOLLOWUP: StatusProspecao[] = ['CONTATO_INICIAL', 'AGUARDANDO_MARCA'];
+
+function diffDias(iso: string): number {
+  const base = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso).getTime();
+  return Math.floor((Date.now() - base) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Regra de cobrança de follow-up: só nos status CONTATO_INICIAL/AGUARDANDO_MARCA e com
+ * o contato inicial confirmado. Sem follow-up ainda → 1 dia após o contato inicial
+ * (base: dataEmailContatoInicial, ou dataContato no ativamento manual). Com follow-ups → 3 em 3 dias.
+ */
+export function precisaFollowUp(p: Prospecao): boolean {
+  if (!STATUS_PRECISA_FOLLOWUP.includes(p.status)) return false;
+  if (!p.emailContatoInicialEnviado) return false;
+  const fus = p.followUps ?? [];
+  if (fus.length === 0) {
+    const base = p.dataEmailContatoInicial ?? p.dataContato;
+    return base ? diffDias(base) >= 1 : false;
+  }
+  return diffDias(fus[0].data) >= 3;
+}
+
 /** Mapeia status para o relatório: negociação agrupa os "aguardando". */
 export function statusRelatorio(status: StatusProspecao): string {
   if (status === 'AGUARDANDO_MARCA' || status === 'AGUARDANDO_ASSESSORA' || status === 'AGUARDANDO_INFLUENCIADOR') {
@@ -89,6 +113,8 @@ export interface Prospecao {
   valorContraproposto: number | null;
   status: StatusProspecao;
   motivoEncerramento: string | null;
+  emailContatoInicialEnviado: boolean;
+  dataEmailContatoInicial?: string | null;
   ativo: boolean;
   followUps: FollowUp[];
   registro?: string;
@@ -109,6 +135,7 @@ export interface ProspecaoForm {
   valorContraproposto: number | null;
   status: StatusProspecao;
   motivoEncerramento: string | null;
+  emailContatoInicialEnviado: boolean;
 }
 
 export interface ProspecaoDTO {

@@ -20,6 +20,7 @@ import KanbanCard from './components/KanbanCard';
 import ProspecaoDialog from './components/ProspecaoDialog';
 import EnvioEmailDialog from './components/EnvioEmailDialog';
 import EncerramentoDialog from './components/EncerramentoDialog';
+import HistoricoFollowUpDialog from './components/HistoricoFollowUpDialog';
 import ProspecaoReportDocument from './components/ProspecaoReportDocument';
 import ProspecaoDetalheReportDocument from './components/ProspecaoDetalheReportDocument';
 import PublicidadeDialog, { PublicidadeInicial } from '../Publicidade/components/PublicidadeDialog';
@@ -52,6 +53,7 @@ function ProspecaoPage() {
   const [followUpAlvo, setFollowUpAlvo] = useState<Prospecao | null>(null);
   const [contatoInicialAlvo, setContatoInicialAlvo] = useState<Prospecao | null>(null);
   const [encerrarAlvo, setEncerrarAlvo] = useState<Prospecao | null>(null);
+  const [historicoAlvo, setHistoricoAlvo] = useState<Prospecao | null>(null);
   const [publiInicial, setPubliInicial] = useState<PublicidadeInicial | null>(null);
   const [exportando, setExportando] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -205,13 +207,13 @@ function ProspecaoPage() {
             {STATUS_ORDEM.map((status) => (
               <KanbanColumn key={status} status={status} quantidade={porStatus(status).length}>
                 {porStatus(status).map((p) => (
-                  <KanbanCard key={p.id} prospecao={p} onEdit={abrirEdicao} onFollowUp={setFollowUpAlvo} onReport={gerarRelatorioProspecao} />
+                  <KanbanCard key={p.id} prospecao={p} onEdit={abrirEdicao} onFollowUp={setFollowUpAlvo} onReport={gerarRelatorioProspecao} onHistorico={setHistoricoAlvo} />
                 ))}
               </KanbanColumn>
             ))}
           </div>
           <DragOverlay>
-            {cardAtivo ? <KanbanCard prospecao={cardAtivo} onEdit={() => {}} onFollowUp={() => {}} onReport={() => {}} overlay /> : null}
+            {cardAtivo ? <KanbanCard prospecao={cardAtivo} onEdit={() => {}} onFollowUp={() => {}} onReport={() => {}} onHistorico={() => {}} overlay /> : null}
           </DragOverlay>
           {isLoading && <p className="prospecao-loading">Carregando...</p>}
         </DndContext>
@@ -245,6 +247,12 @@ function ProspecaoPage() {
         prospecao={contatoInicialAlvo}
         tipo="PROSPECAO"
         registrarComoFollowUp={false}
+      />
+
+      <HistoricoFollowUpDialog
+        visible={!!historicoAlvo}
+        onHide={() => setHistoricoAlvo(null)}
+        prospecao={historicoAlvo}
       />
 
       <EncerramentoDialog

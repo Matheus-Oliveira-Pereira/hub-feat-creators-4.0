@@ -129,7 +129,17 @@ public class ProspecaoService extends EntidadeService<Prospecao, ProspecaoReposi
                 assunto != null ? assunto : "Contato — " + prospecao.getMarca().getNome(),
                 corpo != null ? corpo : "",
                 List.of(destino));
-        return emailService.enviarSync(email, prospecao.getInfluenciador());
+        LogEmail logEmail = emailService.enviarSync(email, prospecao.getInfluenciador());
+
+        // Confirma o contato inicial e guarda a data (base da regra de follow-up).
+        if (logEmail.getStatus() == LogEmail.Status.SUCESSO) {
+            prospecao.setEmailContatoInicialEnviado(true);
+            if (prospecao.getDataEmailContatoInicial() == null) {
+                prospecao.setDataEmailContatoInicial(LocalDateTime.now());
+            }
+            super.salvar(prospecao);
+        }
+        return logEmail;
     }
 
     private String validarContatoEmail(Prospecao prospecao) {

@@ -113,14 +113,61 @@
     transform: rotate(2deg);
   }
 
+  // Card que está cobrando follow-up: destaque na borda esquerda.
+  &.precisa-followup {
+    border-left-color: $warning-color;
+    box-shadow: 0 0 0 1px rgba($warning-color, 0.35), $shadow-sm;
+  }
+
   .kanban-card-head {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 0.5rem;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.25rem;
 
-    .kanban-card-marca { font-weight: 700; font-size: 0.88rem; color: $gray-800; }
+    .kanban-card-titulo { font-weight: 700; font-size: 0.9rem; color: $gray-900; line-height: 1.25; }
+  }
+
+  .kanban-card-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+    margin-bottom: 0.45rem;
+    font-size: 0.74rem;
+    color: $gray-600;
+
+    .kanban-card-marca, .kanban-card-contato {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      i { font-size: 0.68rem; color: $gray-500; }
+    }
+    .kanban-card-marca { font-weight: 600; color: $gray-700; }
+  }
+
+  .kanban-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.14rem 0.45rem;
+      border-radius: $border-radius-full;
+      i { font-size: 0.65rem; }
+    }
+    .badge-contato-enviado { background: rgba($success-color, 0.15); color: color.adjust($success-color, $lightness: -8%); }
+    .badge-precisa-followup {
+      background: rgba($warning-color, 0.2);
+      color: color.adjust($warning-color, $lightness: -15%);
+      animation: pulso-followup 1.6s ease-in-out infinite;
+    }
   }
 
   .tipo-badge {
@@ -152,10 +199,12 @@
       font-weight: 600;
       color: $gray-500;
       background: $gray-100;
+      border: none;
       border-radius: $border-radius-full;
       padding: 0.12rem 0.5rem;
       i { font-size: 0.65rem; }
 
+      &.clicavel { cursor: pointer; transition: background 0.12s, color 0.12s; &:hover { background: $gray-200; color: $gray-700; } }
       &.alerta { background: rgba($warning-color, 0.18); color: color.adjust($warning-color, $lightness: -12%); }
       &.followup-count.destaque {
         background: $primary-color;
@@ -188,7 +237,13 @@
   }
 }
 
+@keyframes pulso-followup {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
 .followup-info { font-size: 0.85rem; color: $gray-600; margin-bottom: 0.75rem; }
+.followup-vazio { font-size: 0.85rem; color: $gray-500; font-style: italic; }
 
 .followup-historico {
   margin-top: 1rem;
@@ -245,8 +300,10 @@
     &:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
     &.overlay { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6); }
 
-    .kanban-card-head .kanban-card-marca { color: #f1f5f9; }
+    .kanban-card-head .kanban-card-titulo { color: #f1f5f9; }
+    .kanban-card-sub { color: #94a3b8; .kanban-card-marca { color: #cbd5e1; } i { color: #64748b; } }
     .kanban-card-valor { color: $brand-lime; }
+    &.precisa-followup { border-left-color: $warning-color; }
 
     .tipo-badge {
       &.tipo-receptivo { background: rgba(#3b82f6, 0.22); color: #93c5fd; }
@@ -256,6 +313,7 @@
     .kanban-card-meta .meta-chip {
       background: #262626;
       color: #94a3b8;
+      &.clicavel:hover { background: #333; color: #cbd5e1; }
       &.alerta { background: rgba($warning-color, 0.2); color: #fcd34d; }
       &.followup-count.destaque { background: $brand-lime; color: $brand-black; box-shadow: 0 0 0 2px rgba($brand-lime, 0.25); }
     }
