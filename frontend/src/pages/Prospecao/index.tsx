@@ -21,6 +21,7 @@ import ProspecaoDialog from './components/ProspecaoDialog';
 import EnvioEmailDialog from './components/EnvioEmailDialog';
 import EncerramentoDialog from './components/EncerramentoDialog';
 import HistoricoFollowUpDialog from './components/HistoricoFollowUpDialog';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import ProspecaoReportDocument from './components/ProspecaoReportDocument';
 import ProspecaoDetalheReportDocument from './components/ProspecaoDetalheReportDocument';
 import PublicidadeDialog, { PublicidadeInicial } from '../Publicidade/components/PublicidadeDialog';
@@ -47,13 +48,14 @@ function ProspecaoPage() {
   const podeAdicionar = canAdd(roles, MODULES.PROSPECAO.prefix);
   const podeEditar = canChange(roles, MODULES.PROSPECAO.prefix);
 
-  const [influId, setInfluId] = useState<string | null>(null);
+  const [influId, setInfluId] = useState<string | null>(() => localStorage.getItem('prospecao:influId'));
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editando, setEditando] = useState<Prospecao | null>(null);
   const [followUpAlvo, setFollowUpAlvo] = useState<Prospecao | null>(null);
   const [contatoInicialAlvo, setContatoInicialAlvo] = useState<Prospecao | null>(null);
   const [encerrarAlvo, setEncerrarAlvo] = useState<Prospecao | null>(null);
   const [historicoAlvo, setHistoricoAlvo] = useState<Prospecao | null>(null);
+  const [reativarAlvo, setReativarAlvo] = useState<{ card: Prospecao; novoStatus: StatusProspecao } | null>(null);
   const [publiInicial, setPubliInicial] = useState<PublicidadeInicial | null>(null);
   const [exportando, setExportando] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -78,12 +80,17 @@ function ProspecaoPage() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['prospecao-board', influId] });
 
-  // Seleciona automaticamente o primeiro influenciador disponível.
+  // Restaura o último influenciador (localStorage) ou cai no primeiro disponível.
   useEffect(() => {
-    if (!influId && influenciadores.length > 0) {
-      setInfluId(influenciadores[0].id);
-    }
+    if (influenciadores.length === 0) return;
+    const existe = influId && influenciadores.some((i) => i.id === influId);
+    if (!existe) setInfluId(influenciadores[0].id);
   }, [influenciadores, influId]);
+
+  // Persiste o influenciador selecionado.
+  useEffect(() => {
+    if (influId) localStorage.setItem('prospecao:influId', influId);
+  }, [influId]);
 
   useEffect(() => {
     const unsub = subscribe((n) => { if (n.entidade === 'Prospecao' || n.entidade === 'Publicidade') invalidate(); });
@@ -92,7 +99,10 @@ function ProspecaoPage() {
 
   const statusMutation = useMutation({
     mutationFn: ({ p, status, motivo }: { p: Prospecao; status: StatusProspecao; motivo?: string }) =>
-      prospecaoService.atualizar(p.id, buildUpdatePayload(p, { status, motivoEncerramento: motivo ?? p.motivoEncerramento })),
+      prospecaoService.atualizar(p.id, buildUpdatePayload(p, {
+        status,
+        motivoEncerramento: motivo !== undefined ? (motivo.trim() || null) : p.motivoEncerramento,
+      })),
     onSuccess: () => { invalidate(); },
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } };
@@ -116,6 +126,12 @@ function ProspecaoPage() {
     const card = board.find((p) => p.id === active.id);
     if (!card || card.status === novoStatus) return;
 
+    // Publicidade fechada é terminal: não pode voltar.
+    if (card.status === 'PUBLICIDADE_FECHADA') {
+      showToast('warn', 'Publicidade fechada não pode voltar.');
+      return;
+    }
+
     if (novoStatus === 'ENCERRADO') {
       setEncerrarAlvo(card);
       return;
@@ -126,9 +142,17 @@ function ProspecaoPage() {
         marca: { id: card.marca.id, nome: card.marca.nome },
         influenciador: { id: card.influenciador.id, nome: card.influenciador.nome },
         valorTotal: card.valorAceito ?? card.valorProposto ?? null,
+        descricao: card.descricao,
       });
       return;
     }
+
+    // Reativar a partir de encerrado: pede confirmação (e limpa o motivo).
+    if (card.status === 'ENCERRADO') {
+      setReativarAlvo({ card, novoStatus });
+      return;
+    }
+
     statusMutation.mutate({ p: card, status: novoStatus });
     // Rascunho → Contato inicial: abre painel de e-mail (envio opcional).
     if (card.status === 'RASCUNHO' && novoStatus === 'CONTATO_INICIAL') {
@@ -253,6 +277,21 @@ function ProspecaoPage() {
         visible={!!historicoAlvo}
         onHide={() => setHistoricoAlvo(null)}
         prospecao={historicoAlvo}
+      />
+
+      <ConfirmDialog
+        visible={!!reativarAlvo}
+        onHide={() => setReativarAlvo(null)}
+        onConfirm={() => {
+          if (reativarAlvo) statusMutation.mutate({ p: reativarAlvo.card, status: reativarAlvo.novoStatus, motivo: '' });
+          setReativarAlvo(null);
+        }}
+        title="Reativar Prospecção"
+        icon="pi pi-replay"
+        message="Reativar este card? A justificativa de encerramento será apagada."
+        confirmLabel="Reativar"
+        confirmIcon="pi pi-replay"
+        confirmSeverity="warning"
       />
 
       <EncerramentoDialog

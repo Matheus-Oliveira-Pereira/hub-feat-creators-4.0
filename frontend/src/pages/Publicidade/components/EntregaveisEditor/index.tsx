@@ -1,11 +1,9 @@
-import { Dropdown } from 'primereact/dropdown';
-import { InputText } from 'primereact/inputtext';
-import { Calendar } from 'primereact/calendar';
+import { useState } from 'react';
 import { Button } from 'primereact/button';
+import EntregavelDialog from './EntregavelDialog';
 import {
   Entregavel,
   FormatoRef,
-  StatusEntregavel,
   STATUS_ENTREGAVEL_LABEL,
 } from '../../service';
 import './styles.scss';
@@ -16,59 +14,60 @@ interface Props {
   onChange: (e: Entregavel[]) => void;
 }
 
-const STATUS_OPTIONS = (Object.keys(STATUS_ENTREGAVEL_LABEL) as StatusEntregavel[])
-  .map((s) => ({ label: STATUS_ENTREGAVEL_LABEL[s], value: s }));
-
-const NOVO: Entregavel = { status: 'PRODUCAO', escopo: '', dataEntrega: null, formato: null };
-
-function dateToIso(d: Date | null | undefined): string | null {
-  if (!d) return null;
-  return d.toISOString().split('T')[0];
+function formatarData(iso: string | null): string {
+  if (!iso) return 'Sem data';
+  return new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 }
 
 function EntregaveisEditor({ entregaveis, formatos, onChange }: Readonly<Props>) {
-  const patch = (i: number, p: Partial<Entregavel>) =>
-    onChange(entregaveis.map((e, idx) => (idx === i ? { ...e, ...p } : e)));
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
 
-  const adicionar = () => onChange([...entregaveis, { ...NOVO }]);
+  const abrirNovo = () => { setEditIndex(null); setDialogVisible(true); };
+  const abrirEdicao = (i: number) => { setEditIndex(i); setDialogVisible(true); };
   const remover = (i: number) => onChange(entregaveis.filter((_, idx) => idx !== i));
 
-  const formatoOptions = formatos.map((f) => ({ label: f.descricao, value: f.id }));
+  const salvar = (e: Entregavel) => {
+    if (editIndex !== null) {
+      onChange(entregaveis.map((item, idx) => (idx === editIndex ? e : item)));
+    } else {
+      onChange([...entregaveis, e]);
+    }
+    setDialogVisible(false);
+  };
 
   return (
     <div className="entregaveis-editor">
       <div className="entregaveis-head">
         <span>Entregáveis</span>
-        <Button label="Adicionar entregável" icon="pi pi-plus" className="btn-add-entregavel" type="button" onClick={adicionar} />
+        <Button label="Adicionar entregável" icon="pi pi-plus" className="btn-add-entregavel" type="button" onClick={abrirNovo} />
       </div>
 
       {entregaveis.length === 0 && <p className="entregaveis-vazio">Nenhum entregável. Adicione acima.</p>}
 
-      {entregaveis.map((e, i) => (
-        <div key={e.id ?? `novo-${i}`} className="entregavel-linha">
-          <Dropdown
-            value={e.formato?.id ?? null}
-            options={formatoOptions}
-            onChange={(ev) => patch(i, { formato: ev.value ? { id: ev.value, descricao: formatos.find((f) => f.id === ev.value)?.descricao ?? '' } : null })}
-            placeholder="Formato"
-            filter
-            className="ent-formato"
-            baseZIndex={10000}
-          />
-          <InputText value={e.escopo} onChange={(ev) => patch(i, { escopo: ev.target.value })} placeholder="Escopo" className="ent-escopo" />
-          <Calendar
-            value={e.dataEntrega ? new Date(e.dataEntrega + 'T00:00:00') : null}
-            onChange={(ev) => patch(i, { dataEntrega: dateToIso(ev.value as Date) })}
-            placeholder="Entrega"
-            dateFormat="dd/mm/yy"
-            showIcon
-            className="ent-data"
-            baseZIndex={10000}
-          />
-          <Dropdown value={e.status} options={STATUS_OPTIONS} onChange={(ev) => patch(i, { status: ev.value })} className="ent-status" baseZIndex={10000} />
-          <button type="button" className="ent-remover" onClick={() => remover(i)} title="Remover"><i className="pi pi-trash" /></button>
-        </div>
-      ))}
+      <div className="entregaveis-lista">
+        {entregaveis.map((e, i) => (
+          <button key={e.id ?? `novo-${i}`} type="button" className="entregavel-card" onClick={() => abrirEdicao(i)}>
+            <div className="ec-top">
+              <span className="ec-formato">{e.formato?.descricao ?? 'Sem formato'}</span>
+              <span className={`ec-status ec-status-${e.status.toLowerCase()}`}>{STATUS_ENTREGAVEL_LABEL[e.status]}</span>
+            </div>
+            {e.escopo && <p className="ec-escopo">{e.escopo}</p>}
+            <div className="ec-bottom">
+              <span><i className="pi pi-calendar" /> {formatarData(e.dataEntrega)}</span>
+              <button type="button" className="ec-remover" onClick={(ev) => { ev.stopPropagation(); remover(i); }} title="Remover"><i className="pi pi-trash" /></button>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <EntregavelDialog
+        visible={dialogVisible}
+        onHide={() => setDialogVisible(false)}
+        onSave={salvar}
+        formatos={formatos}
+        inicial={editIndex !== null ? entregaveis[editIndex] : null}
+      />
     </div>
   );
 }

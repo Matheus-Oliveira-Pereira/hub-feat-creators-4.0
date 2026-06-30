@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
-import { canBrowse, getModulePrefixByPath } from '../../utils/roles';
+import { canBrowse, getModulePrefixByPath, MODULES } from '../../utils/roles';
+import { publicidadeService } from '../../pages/Publicidade/service';
 import logo from '../../assets/logo.svg';
 import logoMini from '../../assets/logo_mini.svg';
 import './styles.scss';
@@ -33,6 +35,15 @@ const menuItems: MenuItem[] = [
 function Sidebar() {
   const { user } = useAuth();
   const userRoles = user?.roles ?? [];
+
+  const podeVerPublicidade = canBrowse(userRoles, MODULES.PUBLICIDADE.prefix);
+  const { data: pagamentosAtrasados = 0 } = useQuery({
+    queryKey: ['sidebar-pagamentos-atrasados'],
+    queryFn: () => publicidadeService.listar(0, 1, { statusPagamento: ['ATRASADO'] }).then((r) => r.totalElements).catch(() => 0),
+    enabled: podeVerPublicidade,
+    staleTime: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  });
 
   const visibleItems = menuItems.filter((item) => {
     if (item.section || item.path === '/') return true;
@@ -71,6 +82,9 @@ function Sidebar() {
             >
               <i className={item.icon} />
               <span className="menu-label">{item.label}</span>
+              {item.path === '/publicidade' && pagamentosAtrasados > 0 && (
+                <span className="menu-badge" title={`${pagamentosAtrasados} pagamento(s) atrasado(s)`}>{pagamentosAtrasados}</span>
+              )}
             </NavLink>
           )
         )}

@@ -81,6 +81,9 @@ public class Prospecao extends Entidade implements br.com.matheus.hubfeatcreator
     /** Data do envio automático do e-mail de contato inicial; base da regra de follow-up. */
     private java.time.LocalDateTime dataEmailContatoInicial;
 
+    /** Rastreabilidade: id da publicidade gerada ao fechar a prospecção. */
+    private java.util.UUID publicidadeId;
+
     @Column(columnDefinition = "TEXT")
     private String motivoEncerramento;
 

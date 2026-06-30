@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import Rotas from './routes/Rotas';
+import './utils/primereactLocale';
 import './App.scss';
 
 function App() {

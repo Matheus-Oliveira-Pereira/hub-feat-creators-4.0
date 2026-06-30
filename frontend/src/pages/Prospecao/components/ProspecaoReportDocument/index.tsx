@@ -1,5 +1,10 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image, Svg, Path } from '@react-pdf/renderer';
 import { Prospecao, TIPO_LABEL, statusRelatorio } from '../../service';
+import { LOGO_PATHS, LOGO_VIEWBOX } from '../../../MidiaKits/components/MidiaKitDocument/logo';
+
+function ehImg(src?: string | null): src is string {
+  return !!src && (src.startsWith('http') || src.startsWith('data:'));
+}
 
 const BG = '#0a0a0a';
 const CARD = '#1a1a1a';
@@ -10,7 +15,11 @@ const BORDER = '#3d3d3d';
 
 const styles = StyleSheet.create({
   page: { backgroundColor: BG, color: TEXT, padding: 36, fontFamily: 'Helvetica', fontSize: 10 },
-  topbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 },
+  brandbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  logo: { width: 110, height: 30, objectFit: 'contain' },
+  topbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  topbarLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar: { width: 54, height: 54, borderRadius: 27, objectFit: 'cover', border: `1.5 solid ${LIME}` },
   titulo: { fontSize: 22, fontFamily: 'Helvetica-Bold', color: TEXT },
   tituloLime: { color: LIME },
   sub: { fontSize: 9, color: MUTED, marginTop: 4 },
@@ -57,18 +66,28 @@ export function ProspecaoReportDocument({
   const fechadas = prospecoes.filter((p) => p.status === 'PUBLICIDADE_FECHADA').length;
   const encerradas = prospecoes.filter((p) => p.status === 'ENCERRADO').length;
   const hoje = new Date().toLocaleDateString('pt-BR');
+  const foto = prospecoes.find((p) => ehImg(p.influenciador?.foto))?.influenciador?.foto;
 
   return (
     <Document title={`Relatório de Prospecção — ${influenciadorNome}`}>
       <Page size="A4" style={styles.page}>
-        <View style={styles.topbar}>
-          <View>
-            <Text style={styles.titulo}>
-              Relatório de <Text style={styles.tituloLime}>Prospecção</Text>
-            </Text>
-            <Text style={styles.sub}>{influenciadorNome}</Text>
-          </View>
+        <View style={styles.brandbar}>
+          <Svg width={110} height={30} viewBox={LOGO_VIEWBOX} style={styles.logo}>
+            {LOGO_PATHS.map((p) => <Path key={p.d.slice(0, 24)} d={p.d} fill={p.lime ? LIME : TEXT} />)}
+          </Svg>
           <Text style={styles.data}>Gerado em {hoje}</Text>
+        </View>
+
+        <View style={styles.topbar}>
+          <View style={styles.topbarLeft}>
+            {ehImg(foto) && <Image src={foto} style={styles.avatar} />}
+            <View>
+              <Text style={styles.titulo}>
+                Relatório de <Text style={styles.tituloLime}>Prospecção</Text>
+              </Text>
+              <Text style={styles.sub}>{influenciadorNome}</Text>
+            </View>
+          </View>
         </View>
 
         <View style={styles.tabela}>

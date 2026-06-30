@@ -2,8 +2,26 @@ import BaseService, { PaginatedResponse } from '../../services/baseService';
 import api from '../../services/api';
 
 export type StatusEntregavel = 'PRODUCAO' | 'REVISAO_MARCA' | 'REFACAO' | 'ATRASADO' | 'PUBLICADO';
-export type StatusFinanceiro = 'NOTA_NAO_EMITIDA' | 'NOTA_EMITIDA' | 'PAGAMENTO_RECEBIDO' | 'PAGAMENTO_ATRASADO';
+export type StatusNota = 'NAO_EMITIDA' | 'EMITIDA' | 'ENVIADA';
+export type StatusPagamento = 'PENDENTE' | 'RECEBIDO' | 'ATRASADO';
 export type FormaPagamento = 'TRANSFERENCIA' | 'PIX' | 'PAYPAL';
+export type Moeda = 'BRL' | 'USD';
+
+/** Dias após o fechamento sem nota emitida que disparam o alerta "nota atrasada". */
+export const DIAS_ALERTA_NOTA = 7;
+
+export const MOEDA_LABEL: Record<Moeda, string> = {
+  BRL: 'Real (R$)',
+  USD: 'Dólar (US$)',
+};
+
+/** Formata valor monetário conforme a moeda (BRL → pt-BR, USD → en-US). */
+export function formatarMoeda(v: number | null, moeda: Moeda | null = 'BRL'): string {
+  if (v == null) return '—';
+  const m = moeda ?? 'BRL';
+  const locale = m === 'USD' ? 'en-US' : 'pt-BR';
+  return v.toLocaleString(locale, { style: 'currency', currency: m });
+}
 
 export const STATUS_ENTREGAVEL_LABEL: Record<StatusEntregavel, string> = {
   PRODUCAO: 'Produção',
@@ -13,11 +31,16 @@ export const STATUS_ENTREGAVEL_LABEL: Record<StatusEntregavel, string> = {
   PUBLICADO: 'Publicado',
 };
 
-export const STATUS_FINANCEIRO_LABEL: Record<StatusFinanceiro, string> = {
-  NOTA_NAO_EMITIDA: 'Nota não emitida',
-  NOTA_EMITIDA: 'Nota emitida',
-  PAGAMENTO_RECEBIDO: 'Pagamento recebido',
-  PAGAMENTO_ATRASADO: 'Pagamento atrasado',
+export const STATUS_NOTA_LABEL: Record<StatusNota, string> = {
+  NAO_EMITIDA: 'Não emitida',
+  EMITIDA: 'Emitida',
+  ENVIADA: 'Enviada',
+};
+
+export const STATUS_PAGAMENTO_LABEL: Record<StatusPagamento, string> = {
+  PENDENTE: 'Pendente',
+  RECEBIDO: 'Recebido',
+  ATRASADO: 'Atrasado',
 };
 
 export const FORMA_PAGAMENTO_LABEL: Record<FormaPagamento, string> = {
@@ -47,7 +70,12 @@ export interface Entregavel {
 export interface Financeiro {
   id?: string;
   dataEnvioNota: string | null;
-  status: StatusFinanceiro;
+  numeroNota: string | null;
+  linkNota: string | null;
+  dataVencimentoNota: string | null;
+  moeda: Moeda;
+  statusNota: StatusNota;
+  statusPagamento: StatusPagamento;
   formaPagamento: FormaPagamento | null;
   dataRecebimento: string | null;
   dataPrevistaRecebimento: string | null;
@@ -87,8 +115,12 @@ export interface PublicidadeDTO {
   marcaNome: string;
   influenciadorNome: string;
   parceiro: string | null;
-  statusFinanceiro: StatusFinanceiro | null;
+  statusNota: StatusNota | null;
+  statusPagamento: StatusPagamento | null;
+  moeda: Moeda | null;
   valorTotal: number | null;
+  dataPrevistaRecebimento: string | null;
+  registro: string | null;
   ativo: boolean;
   qtdEntregaveis: number;
 }
@@ -96,7 +128,8 @@ export interface PublicidadeDTO {
 export interface PublicidadeFiltros {
   marca?: string;
   parceiro?: string;
-  statusFinanceiro?: string[];
+  statusNota?: string[];
+  statusPagamento?: string[];
   textoDeBusca?: string;
   mostrarInativos?: boolean;
 }
@@ -108,7 +141,8 @@ function buildQuery(page: number, size: number, filtros: PublicidadeFiltros): st
   if (filtros.textoDeBusca?.length) query.push(`textoDeBusca=${filtros.textoDeBusca}`);
   if (filtros.marca?.length) query.push(`marca=${filtros.marca}`);
   if (filtros.parceiro?.length) query.push(`parceiro=${filtros.parceiro}`);
-  if (filtros.statusFinanceiro?.length) query.push(`statusFinanceiro=${filtros.statusFinanceiro.join(',')}`);
+  if (filtros.statusNota?.length) query.push(`statusNota=${filtros.statusNota.join(',')}`);
+  if (filtros.statusPagamento?.length) query.push(`statusPagamento=${filtros.statusPagamento.join(',')}`);
   if (filtros.mostrarInativos) query.push('mostrarInativos=true');
   return query;
 }

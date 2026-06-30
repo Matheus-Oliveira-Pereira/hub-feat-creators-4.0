@@ -6,6 +6,124 @@
 @import 'primeflex/primeflex.css';
 @import 'quill/dist/quill.snow.css';
 
+// ─── Botão do Calendar (showIcon) — casa com o input ───
+.p-calendar {
+  .p-inputtext {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 0;
+  }
+
+  .p-datepicker-trigger.p-button {
+    background: $gray-100;
+    border: 1px solid $gray-300;
+    border-left: 0;
+    color: $gray-600;
+    width: 2.6rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    transition: background 0.12s, color 0.12s;
+
+    &:enabled:hover { background: $primary-color; border-color: $primary-color; color: $on-lime; }
+    &:focus { box-shadow: none; }
+  }
+}
+
+[data-theme="dark"] .p-calendar {
+  .p-datepicker-trigger.p-button {
+    background: #262626;
+    border-color: #2e2e2e;
+    color: #94a3b8;
+    &:enabled:hover { background: $brand-lime; border-color: $brand-lime; color: $brand-black; }
+  }
+}
+
+// ─── Datepicker (Calendar) — visual da marca ───
+.p-datepicker {
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-lg;
+  padding: 0.5rem;
+
+  .p-datepicker-header {
+    padding: 0.4rem 0.25rem 0.6rem;
+    border-bottom: 1px solid $gray-100;
+    border-radius: 0;
+
+    .p-datepicker-title {
+      display: flex;
+      gap: 0.4rem;
+      .p-datepicker-month, .p-datepicker-year {
+        font-weight: 700;
+        color: $gray-800;
+        text-transform: capitalize;
+        &:hover { color: $secondary-color; }
+      }
+    }
+
+    .p-datepicker-prev, .p-datepicker-next {
+      width: 2rem; height: 2rem;
+      color: $gray-600;
+      border-radius: 50%;
+      &:enabled:hover { background: $gray-100; color: $gray-900; }
+    }
+  }
+
+  table {
+    margin: 0.4rem 0 0;
+    th > span { color: $gray-500; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    td { padding: 0.15rem; }
+    td > span {
+      width: 2.1rem; height: 2.1rem;
+      border-radius: 50%;
+      font-size: 0.82rem;
+      color: $gray-700;
+      transition: background 0.12s, color 0.12s;
+
+      &:not(.p-disabled):hover { background: $gray-100; }
+      &.p-highlight { background: $primary-color; color: $on-lime; font-weight: 700; }
+      &:focus { box-shadow: 0 0 0 2px rgba($primary-color, 0.35); }
+    }
+    td.p-datepicker-today > span {
+      background: transparent;
+      border: 1px solid $primary-color;
+      color: $gray-900;
+      &.p-highlight { background: $primary-color; color: $on-lime; }
+    }
+  }
+
+  .p-datepicker-buttonbar {
+    border-top: 1px solid $gray-100;
+    padding-top: 0.5rem;
+    .p-button.p-button-text { color: $secondary-color; font-size: 0.82rem; font-weight: 600; }
+  }
+}
+
+[data-theme="dark"] .p-datepicker {
+  background: #1d1d1d;
+  border-color: #2e2e2e;
+
+  .p-datepicker-header {
+    background: #1d1d1d;
+    border-bottom-color: #2e2e2e;
+    .p-datepicker-title .p-datepicker-month,
+    .p-datepicker-title .p-datepicker-year { color: #f1f5f9; &:hover { color: $brand-lime; } }
+    .p-datepicker-prev, .p-datepicker-next { color: #94a3b8; &:enabled:hover { background: #262626; color: #fff; } }
+  }
+
+  table {
+    th > span { color: #64748b; }
+    td > span {
+      color: #cbd5e1;
+      &:not(.p-disabled):hover { background: #262626; }
+      &.p-highlight { background: $brand-lime; color: $brand-black; }
+    }
+    td.p-datepicker-today > span { border-color: $brand-lime; color: #fff; &.p-highlight { background: $brand-lime; color: $brand-black; } }
+  }
+
+  .p-datepicker-buttonbar { border-top-color: #2e2e2e; .p-button.p-button-text { color: $brand-lime; } }
+}
+
 // Linha de rótulo com ação à direita (ex: botão "Editar com IA").
 .label-com-acao {
   display: flex;

@@ -100,7 +100,7 @@ export interface FollowUp {
 
 export interface Prospecao {
   id: string;
-  influenciador: { id: string; nome: string; nicho?: string | null };
+  influenciador: { id: string; nome: string; nicho?: string | null; foto?: string | null };
   marca: { id: string; nome: string; contatos?: ContatoMarcaRef[] };
   contatoMarca: ContatoMarcaRef | null;
   dataContato: string | null;
@@ -115,6 +115,7 @@ export interface Prospecao {
   motivoEncerramento: string | null;
   emailContatoInicialEnviado: boolean;
   dataEmailContatoInicial?: string | null;
+  publicidadeId?: string | null;
   ativo: boolean;
   followUps: FollowUp[];
   registro?: string;

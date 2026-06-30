@@ -3,6 +3,7 @@ import { Card } from 'primereact/card';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import BaseService from '../../services/baseService';
+import { publicidadeService } from '../Publicidade/service';
 import './styles.scss';
 
 const influenciadorService = new BaseService('/influenciadores');
@@ -34,12 +35,18 @@ function Dashboard() {
   const { data: marcas = 0 } = useTotal('marcas', marcaService);
   const { data: midiaKits = 0 } = useTotal('midia-kits', midiaKitService);
   const { data: equipe = 0 } = useTotal('equipe', usuarioService);
+  const { data: atrasos = 0 } = useQuery({
+    queryKey: ['dashboard-pagamentos-atrasados'],
+    queryFn: () => publicidadeService.listar(0, 1, { statusPagamento: ['ATRASADO'] }).then((r) => r.totalElements).catch(() => 0),
+    staleTime: 30 * 1000,
+  });
 
   const cards: StatCard[] = [
     { title: 'Influenciadores', value: influenciadores, icon: 'pi pi-star', color: '#141414', bg: 'linear-gradient(135deg, #C2E000, #A6C400)' },
     { title: 'Marcas', value: marcas, icon: 'pi pi-bookmark', color: '#C2E000', bg: 'linear-gradient(135deg, #1d1d1d, #141414)' },
     { title: 'Mídia Kits', value: midiaKits, icon: 'pi pi-id-card', color: '#ffffff', bg: 'linear-gradient(135deg, #f59e0b, #f97316)' },
     { title: 'Equipe', value: equipe, icon: 'pi pi-users', color: '#ffffff', bg: 'linear-gradient(135deg, #22c55e, #10b981)' },
+    { title: 'Pagamentos atrasados', value: atrasos, icon: 'pi pi-exclamation-triangle', color: '#ffffff', bg: 'linear-gradient(135deg, #ef4444, #b91c1c)' },
   ];
 
   return (

@@ -14,6 +14,20 @@
     background: rgba($danger-color, 0.15);
     color: color.adjust($danger-color, $lightness: -10%);
   }
+
+  &.fin-ok {
+    background: rgba($success-color, 0.15);
+    color: color.adjust($success-color, $lightness: -8%);
+  }
+}
+
+.fin-nota-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+
+  .fin-atrasado i { font-size: 0.62rem; margin-right: 0.2rem; }
 }
 
 .qtd-badge {

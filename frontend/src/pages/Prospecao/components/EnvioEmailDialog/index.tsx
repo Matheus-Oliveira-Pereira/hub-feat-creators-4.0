@@ -5,6 +5,7 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Editor } from 'primereact/editor';
 import FormDialog from '../../../../components/FormDialog';
+import ConfirmDialog from '../../../../components/ConfirmDialog';
 import AssistenteIa from '../../../../components/AssistenteIa';
 import { templateEmailService, TipoTemplateEmail } from '../../../TemplatesEmail/service';
 import { prospecaoService, Prospecao, STATUS_LABEL } from '../../service';
@@ -28,6 +29,7 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
   const [assunto, setAssunto] = useState('');
   const [corpo, setCorpo] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [confirmVisible, setConfirmVisible] = useState(false);
 
   const { data: templates = [] } = useQuery({
     queryKey: ['templates-por-tipo', tipo],
@@ -44,6 +46,7 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
     setCorpo('');
     setObservacoes('');
     setTemplateId(null);
+    setConfirmVisible(false);
   }, [visible]);
 
   useEffect(() => {
@@ -90,13 +93,22 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
   const followUps = prospecao?.followUps ?? [];
   const titulo = registrarComoFollowUp ? 'Registrar Follow-up' : 'E-mail de Contato Inicial';
 
+  const pedirConfirmacao = () => {
+    if (!destino) {
+      onToast('warn', 'Prospecção sem contato de marca com e-mail.');
+      return;
+    }
+    setConfirmVisible(true);
+  };
+
   return (
+    <>
     <FormDialog
       visible={visible}
       onHide={onHide}
       title={titulo}
       icon="pi pi-send"
-      onSave={() => mutation.mutate()}
+      onSave={pedirConfirmacao}
       loading={mutation.isPending}
       saveLabel="Enviar e-mail"
       saveIcon="pi pi-send"
@@ -153,6 +165,19 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
         </div>
       )}
     </FormDialog>
+
+    <ConfirmDialog
+      visible={confirmVisible}
+      onHide={() => setConfirmVisible(false)}
+      onConfirm={() => { setConfirmVisible(false); mutation.mutate(); }}
+      title="Confirmar envio"
+      icon="pi pi-send"
+      message={`Enviar este e-mail para ${destino}?`}
+      confirmLabel="Enviar"
+      confirmIcon="pi pi-send"
+      confirmSeverity="success"
+    />
+    </>
   );
 }
 

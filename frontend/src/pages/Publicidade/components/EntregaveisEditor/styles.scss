@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use '../../../../styles/variables' as *;
 
 .entregaveis-editor {
@@ -12,30 +13,114 @@
     margin-bottom: 0.5rem;
 
     span { font-weight: 600; font-size: 0.85rem; }
+
+    .btn-add-entregavel.p-button {
+      background: $primary-color;
+      border-color: $primary-color;
+      color: $on-lime;
+      font-weight: 600;
+      gap: 0.4rem;
+      &:enabled:hover { background: color.adjust($primary-color, $lightness: -6%); border-color: color.adjust($primary-color, $lightness: -6%); color: $on-lime; }
+      &:focus { box-shadow: 0 0 0 2px rgba($primary-color, 0.35); }
+    }
   }
 
   .entregaveis-vazio { color: $gray-500; font-size: 0.8rem; margin: 0.5rem 0; }
 
-  .entregavel-linha {
+  .entregaveis-lista {
     display: grid;
-    grid-template-columns: 1.4fr 1.6fr 1fr 1.2fr auto;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .entregavel-card {
+    display: flex;
+    flex-direction: column;
     gap: 0.4rem;
-    align-items: center;
-    margin-bottom: 0.5rem;
+    text-align: left;
+    background: $gray-50;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-md;
+    padding: 0.6rem 0.7rem;
+    cursor: pointer;
+    transition: border-color 0.12s, box-shadow 0.12s;
 
-    .ent-remover {
-      width: 32px;
-      height: 32px;
+    &:hover { border-color: $primary-color; box-shadow: $shadow-sm; }
+
+    .ec-top {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      border: 1px solid $gray-200;
-      background: $gray-50;
-      border-radius: 6px;
-      cursor: pointer;
-      color: $danger-color;
+      gap: 0.5rem;
 
-      &:hover { background: $danger-color; color: #fff; border-color: $danger-color; }
+      .ec-formato { font-weight: 600; font-size: 0.85rem; color: $gray-800; }
+    }
+
+    .ec-status {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 0.12rem 0.45rem;
+      border-radius: $border-radius-full;
+      white-space: nowrap;
+
+      &.ec-status-producao { background: rgba(#3b82f6, 0.15); color: #2563eb; }
+      &.ec-status-revisao_marca { background: rgba(#f59e0b, 0.18); color: #b45309; }
+      &.ec-status-refacao { background: rgba(#a855f7, 0.18); color: #7c3aed; }
+      &.ec-status-atrasado { background: rgba($danger-color, 0.16); color: $danger-color; }
+      &.ec-status-publicado { background: rgba($success-color, 0.16); color: color.adjust($success-color, $lightness: -8%); }
+    }
+
+    .ec-escopo {
+      margin: 0;
+      font-size: 0.78rem;
+      color: $gray-600;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .ec-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: $gray-500;
+
+      i { font-size: 0.7rem; margin-right: 0.25rem; }
+
+      .ec-remover {
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        color: $danger-color;
+
+        &:hover { background: rgba($danger-color, 0.12); }
+      }
+    }
+  }
+}
+
+[data-theme="dark"] {
+  .entregaveis-editor {
+    border-color: #2e2e2e;
+
+    .entregavel-card {
+      background: #161616;
+      border-color: #2e2e2e;
+      &:hover { border-color: $brand-lime; }
+      .ec-top .ec-formato { color: #f1f5f9; }
+      .ec-escopo { color: #94a3b8; }
     }
   }
 }

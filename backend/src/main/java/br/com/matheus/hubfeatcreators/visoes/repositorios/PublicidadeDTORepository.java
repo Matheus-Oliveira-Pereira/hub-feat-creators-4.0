@@ -1,6 +1,7 @@
 package br.com.matheus.hubfeatcreators.visoes.repositorios;
 
-import br.com.matheus.hubfeatcreators.enums.StatusFinanceiro;
+import br.com.matheus.hubfeatcreators.enums.StatusNota;
+import br.com.matheus.hubfeatcreators.enums.StatusPagamento;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.telas.publicidade.PublicidadeDTO;
 import org.springframework.stereotype.Repository;
@@ -18,7 +19,8 @@ public class PublicidadeDTORepository extends EntidadeDTORepository {
     private static final String HQL_LISTAR = """
             select new br.com.matheus.hubfeatcreators.visoes.telas.publicidade.PublicidadeDTO(
                 p.id, p.marca.nome, p.influenciador.nome, p.parceiro,
-                f.status, f.valorTotal, p.ativo
+                f.statusNota, f.statusPagamento, f.moeda, f.valorTotal,
+                f.dataPrevistaRecebimento, p.registro, p.ativo
             ) from Publicidade p left join p.financeiro f where 1 = 1
             """;
 
@@ -40,12 +42,20 @@ public class PublicidadeDTORepository extends EntidadeDTORepository {
             params.put("parceiro", "%" + requestParams.get("parceiro")[0].toUpperCase() + "%");
         }
 
-        if (requestParams.containsKey("statusFinanceiro")) {
-            var statusList = Arrays.stream(requestParams.get("statusFinanceiro")[0].split(","))
-                    .map(s -> StatusFinanceiro.valueOf(s.trim()))
+        if (requestParams.containsKey("statusNota")) {
+            var notaList = Arrays.stream(requestParams.get("statusNota")[0].split(","))
+                    .map(s -> StatusNota.valueOf(s.trim()))
                     .toList();
-            builder.append(" and f.status in :statusList ");
-            params.put("statusList", statusList);
+            builder.append(" and f.statusNota in :notaList ");
+            params.put("notaList", notaList);
+        }
+
+        if (requestParams.containsKey("statusPagamento")) {
+            var pagamentoList = Arrays.stream(requestParams.get("statusPagamento")[0].split(","))
+                    .map(s -> StatusPagamento.valueOf(s.trim()))
+                    .toList();
+            builder.append(" and f.statusPagamento in :pagamentoList ");
+            params.put("pagamentoList", pagamentoList);
         }
 
         if (!requestParams.containsKey("mostrarInativos")) {

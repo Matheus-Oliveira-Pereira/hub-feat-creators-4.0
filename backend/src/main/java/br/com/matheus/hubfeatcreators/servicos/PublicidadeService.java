@@ -143,8 +143,16 @@ public class PublicidadeService extends EntidadeService<Publicidade, Publicidade
             return;
         }
         Prospecao prospecao = prospecaoService.buscar(p.getProspecao().getId());
+        boolean mudou = false;
         if (prospecao.getStatus() != StatusProspecao.PUBLICIDADE_FECHADA) {
             prospecao.setStatus(StatusProspecao.PUBLICIDADE_FECHADA);
+            mudou = true;
+        }
+        if (!p.getId().equals(prospecao.getPublicidadeId())) {
+            prospecao.setPublicidadeId(p.getId());
+            mudou = true;
+        }
+        if (mudou) {
             prospecaoService.salvar(prospecao);
         }
     }

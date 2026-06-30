@@ -6,6 +6,7 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { InputNumber } from 'primereact/inputnumber';
 import { Calendar } from 'primereact/calendar';
 import FormDialog from '../../../../components/FormDialog';
+import ConfirmDialog from '../../../../components/ConfirmDialog';
 import EntregaveisEditor from '../EntregaveisEditor';
 import {
   publicidadeService,
@@ -13,10 +14,14 @@ import {
   PublicidadeForm,
   Entregavel,
   Financeiro,
-  StatusFinanceiro,
+  StatusNota,
+  StatusPagamento,
   FormaPagamento,
-  STATUS_FINANCEIRO_LABEL,
+  Moeda,
+  STATUS_NOTA_LABEL,
+  STATUS_PAGAMENTO_LABEL,
   FORMA_PAGAMENTO_LABEL,
+  MOEDA_LABEL,
 } from '../../service';
 
 export interface PublicidadeInicial {
@@ -24,6 +29,7 @@ export interface PublicidadeInicial {
   marca: { id: string; nome: string };
   influenciador: { id: string; nome: string };
   valorTotal: number | null;
+  descricao?: string | null;
 }
 
 interface Props {
@@ -35,16 +41,21 @@ interface Props {
   editando: Publicidade | null;
 }
 
-const STATUS_FIN_OPTIONS = (Object.keys(STATUS_FINANCEIRO_LABEL) as StatusFinanceiro[])
-  .map((s) => ({ label: STATUS_FINANCEIRO_LABEL[s], value: s }));
+const STATUS_NOTA_OPTIONS = (Object.keys(STATUS_NOTA_LABEL) as StatusNota[])
+  .map((s) => ({ label: STATUS_NOTA_LABEL[s], value: s }));
+const STATUS_PAGAMENTO_OPTIONS = (Object.keys(STATUS_PAGAMENTO_LABEL) as StatusPagamento[])
+  .map((s) => ({ label: STATUS_PAGAMENTO_LABEL[s], value: s }));
 const FORMA_OPTIONS = (Object.keys(FORMA_PAGAMENTO_LABEL) as FormaPagamento[])
   .map((f) => ({ label: FORMA_PAGAMENTO_LABEL[f], value: f }));
 
 const FINANCEIRO_VAZIO: Financeiro = {
-  dataEnvioNota: null, status: 'NOTA_NAO_EMITIDA', formaPagamento: null,
+  dataEnvioNota: null, numeroNota: null, linkNota: null, dataVencimentoNota: null, moeda: 'BRL',
+  statusNota: 'NAO_EMITIDA', statusPagamento: 'PENDENTE', formaPagamento: null,
   dataRecebimento: null, dataPrevistaRecebimento: null,
   valorTotal: null, valorAssessora: null, valorInfluenciador: null,
 };
+
+const MOEDA_OPTIONS = (Object.keys(MOEDA_LABEL) as Moeda[]).map((m) => ({ label: MOEDA_LABEL[m], value: m }));
 
 function dateToIso(d: Date | null | undefined): string | null {
   if (!d) return null;
@@ -64,6 +75,7 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
   const [financeiro, setFinanceiro] = useState<Financeiro>({ ...FINANCEIRO_VAZIO });
   const [entregaveis, setEntregaveis] = useState<Entregavel[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
 
   const travado = !!inicial; // marca/influ vêm da prospecção fechada
 
@@ -74,6 +86,7 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
   useEffect(() => {
     if (!visible) return;
     setSubmitted(false);
+    setConfirmVisible(false);
     if (editando) {
       setMarcaId(editando.marca?.id ?? null);
       setInfluId(editando.influenciador?.id ?? null);
@@ -81,13 +94,13 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
       setDescricao(editando.descricao ?? '');
       setObservacoes(editando.observacoes ?? '');
       setPorcentagem(editando.porcentagemAssessora ?? 20);
-      setFinanceiro(editando.financeiro ?? { ...FINANCEIRO_VAZIO });
+      setFinanceiro({ ...FINANCEIRO_VAZIO, ...editando.financeiro });
       setEntregaveis(editando.entregaveis ?? []);
     } else if (inicial) {
       setMarcaId(inicial.marca.id);
       setInfluId(inicial.influenciador.id);
       setParceiro('');
-      setDescricao('');
+      setDescricao(inicial.descricao ?? '');
       setObservacoes('');
       setPorcentagem(20);
       setFinanceiro({ ...FINANCEIRO_VAZIO, valorTotal: inicial.valorTotal });
@@ -151,10 +164,14 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
       onToast('warn', 'Selecione marca e influenciador.');
       return;
     }
-    salvarMutation.mutate();
+    setConfirmVisible(true);
   };
 
+  const moedaCur = financeiro.moeda === 'USD' ? 'USD' : 'BRL';
+  const moedaLoc = financeiro.moeda === 'USD' ? 'en-US' : 'pt-BR';
+
   return (
+    <>
     <FormDialog
       visible={visible}
       onHide={onHide}
@@ -162,8 +179,13 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
       icon={editando ? 'pi pi-pencil' : 'pi pi-plus'}
       onSave={salvar}
       loading={salvarMutation.isPending}
-      width="760px"
+      width="920px"
     >
+      <div className="form-field">
+        <label htmlFor="p-descricao">Descrição</label>
+        <InputText id="p-descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} className="w-full" placeholder="Resumo curto" maxLength={80} />
+      </div>
+
       <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
         <div className={`form-field ${submitted && !marcaId ? 'field-error' : ''}`} style={{ flex: 1 }}>
           <label htmlFor="p-marca">Marca <span className="required">*</span></label>
@@ -191,11 +213,6 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
       </div>
 
       <div className="form-field">
-        <label htmlFor="p-descricao">Descrição</label>
-        <InputTextarea id="p-descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} className="w-full" autoResize />
-      </div>
-
-      <div className="form-field">
         <EntregaveisEditor entregaveis={entregaveis} formatos={formatos} onChange={setEntregaveis} />
       </div>
 
@@ -203,22 +220,40 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
         <legend>Financeiro</legend>
         <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
           <div className="form-field" style={{ flex: 1 }}>
-            <label htmlFor="f-total">Valor total</label>
-            <InputNumber inputId="f-total" value={financeiro.valorTotal} onValueChange={(e) => recalcular(e.value ?? null, porcentagem)} mode="currency" currency="BRL" locale="pt-BR" className="w-full" />
+            <label htmlFor="f-moeda">Moeda</label>
+            <Dropdown id="f-moeda" value={financeiro.moeda} options={MOEDA_OPTIONS} onChange={(e) => patchFin({ moeda: e.value })} className="w-full" baseZIndex={10000} />
           </div>
           <div className="form-field" style={{ flex: 1 }}>
-            <label htmlFor="f-ass">Valor assessoria</label>
-            <InputNumber inputId="f-ass" value={financeiro.valorAssessora} onValueChange={(e) => patchFin({ valorAssessora: e.value ?? null })} mode="currency" currency="BRL" locale="pt-BR" className="w-full" />
+            <label htmlFor="f-num-nota">Nº da nota</label>
+            <InputText id="f-num-nota" value={financeiro.numeroNota ?? ''} onChange={(e) => patchFin({ numeroNota: e.target.value || null })} className="w-full" placeholder="Ex: 0001234" />
           </div>
-          <div className="form-field" style={{ flex: 1 }}>
-            <label htmlFor="f-inf">Valor influenciador</label>
-            <InputNumber inputId="f-inf" value={financeiro.valorInfluenciador} onValueChange={(e) => patchFin({ valorInfluenciador: e.value ?? null })} mode="currency" currency="BRL" locale="pt-BR" className="w-full" />
+          <div className="form-field" style={{ flex: 2 }}>
+            <label htmlFor="f-link-nota">Link da nota</label>
+            <InputText id="f-link-nota" value={financeiro.linkNota ?? ''} onChange={(e) => patchFin({ linkNota: e.target.value || null })} className="w-full" placeholder="https://..." />
           </div>
         </div>
         <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
           <div className="form-field" style={{ flex: 1 }}>
-            <label htmlFor="f-status">Status</label>
-            <Dropdown id="f-status" value={financeiro.status} options={STATUS_FIN_OPTIONS} onChange={(e) => patchFin({ status: e.value })} className="w-full" baseZIndex={10000} />
+            <label htmlFor="f-total">Valor total</label>
+            <InputNumber inputId="f-total" value={financeiro.valorTotal} onValueChange={(e) => recalcular(e.value ?? null, porcentagem)} mode="currency" currency={moedaCur} locale={moedaLoc} className="w-full" />
+          </div>
+          <div className="form-field" style={{ flex: 1 }}>
+            <label htmlFor="f-ass">Valor assessoria</label>
+            <InputNumber inputId="f-ass" value={financeiro.valorAssessora} onValueChange={(e) => patchFin({ valorAssessora: e.value ?? null })} mode="currency" currency={moedaCur} locale={moedaLoc} className="w-full" />
+          </div>
+          <div className="form-field" style={{ flex: 1 }}>
+            <label htmlFor="f-inf">Valor influenciador</label>
+            <InputNumber inputId="f-inf" value={financeiro.valorInfluenciador} onValueChange={(e) => patchFin({ valorInfluenciador: e.value ?? null })} mode="currency" currency={moedaCur} locale={moedaLoc} className="w-full" />
+          </div>
+        </div>
+        <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+          <div className="form-field" style={{ flex: 1 }}>
+            <label htmlFor="f-status-nota">Status da nota</label>
+            <Dropdown id="f-status-nota" value={financeiro.statusNota} options={STATUS_NOTA_OPTIONS} onChange={(e) => patchFin({ statusNota: e.value })} className="w-full" baseZIndex={10000} />
+          </div>
+          <div className="form-field" style={{ flex: 1 }}>
+            <label htmlFor="f-status-pag">Status do pagamento</label>
+            <Dropdown id="f-status-pag" value={financeiro.statusPagamento} options={STATUS_PAGAMENTO_OPTIONS} onChange={(e) => patchFin({ statusPagamento: e.value })} className="w-full" baseZIndex={10000} />
           </div>
           <div className="form-field" style={{ flex: 1 }}>
             <label htmlFor="f-forma">Forma de pagamento</label>
@@ -229,6 +264,10 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
           <div className="form-field" style={{ flex: 1 }}>
             <label htmlFor="f-nota">Envio da nota</label>
             <Calendar inputId="f-nota" value={isoToDate(financeiro.dataEnvioNota)} onChange={(e) => patchFin({ dataEnvioNota: dateToIso(e.value as Date) })} dateFormat="dd/mm/yy" showIcon className="w-full" baseZIndex={10000} />
+          </div>
+          <div className="form-field" style={{ flex: 1 }}>
+            <label htmlFor="f-venc">Vencimento da nota</label>
+            <Calendar inputId="f-venc" value={isoToDate(financeiro.dataVencimentoNota)} onChange={(e) => patchFin({ dataVencimentoNota: dateToIso(e.value as Date) })} dateFormat="dd/mm/yy" showIcon className="w-full" baseZIndex={10000} />
           </div>
           <div className="form-field" style={{ flex: 1 }}>
             <label htmlFor="f-prev">Recebimento previsto</label>
@@ -246,6 +285,19 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
         <InputTextarea id="p-obs" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} className="w-full" autoResize />
       </div>
     </FormDialog>
+
+    <ConfirmDialog
+      visible={confirmVisible}
+      onHide={() => setConfirmVisible(false)}
+      onConfirm={() => { setConfirmVisible(false); salvarMutation.mutate(); }}
+      title={editando ? 'Confirmar alteração' : 'Confirmar publicidade'}
+      icon="pi pi-megaphone"
+      message={editando ? 'Salvar as alterações desta publicidade?' : 'Criar esta publicidade?'}
+      confirmLabel="Salvar"
+      confirmIcon="pi pi-check"
+      confirmSeverity="success"
+    />
+    </>
   );
 }
 

@@ -2,7 +2,9 @@ package br.com.matheus.hubfeatcreators.entidades;
 
 import br.com.matheus.hubfeatcreators.entidades.superclasses.Entidade;
 import br.com.matheus.hubfeatcreators.enums.FormaPagamento;
-import br.com.matheus.hubfeatcreators.enums.StatusFinanceiro;
+import br.com.matheus.hubfeatcreators.enums.Moeda;
+import br.com.matheus.hubfeatcreators.enums.StatusNota;
+import br.com.matheus.hubfeatcreators.enums.StatusPagamento;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -36,8 +38,23 @@ public class PublicidadeFinanceiro extends Entidade {
 
     private LocalDate dataEnvioNota;
 
+    /** Número da nota fiscal emitida. */
+    private String numeroNota;
+
+    /** Link/URL da nota fiscal. */
+    private String linkNota;
+
+    /** Prazo de pagamento da marca; base preferencial da regra de atraso. */
+    private LocalDate dataVencimentoNota;
+
     @Enumerated(EnumType.STRING)
-    private StatusFinanceiro status;
+    private Moeda moeda = Moeda.BRL;
+
+    @Enumerated(EnumType.STRING)
+    private StatusNota statusNota;
+
+    @Enumerated(EnumType.STRING)
+    private StatusPagamento statusPagamento;
 
     @Enumerated(EnumType.STRING)
     private FormaPagamento formaPagamento;

@@ -22,17 +22,31 @@ import {
   PublicidadeDTO,
   PublicidadeFiltros,
   Publicidade as PublicidadeEntity,
-  StatusFinanceiro,
-  STATUS_FINANCEIRO_LABEL,
+  StatusNota,
+  StatusPagamento,
+  STATUS_NOTA_LABEL,
+  STATUS_PAGAMENTO_LABEL,
+  formatarMoeda,
+  DIAS_ALERTA_NOTA,
 } from './service';
 import './styles.scss';
 
-const STATUS_FIN_OPTIONS = (Object.keys(STATUS_FINANCEIRO_LABEL) as StatusFinanceiro[])
-  .map((s) => ({ label: STATUS_FINANCEIRO_LABEL[s], value: s }));
+const STATUS_NOTA_OPTIONS = (Object.keys(STATUS_NOTA_LABEL) as StatusNota[])
+  .map((s) => ({ label: STATUS_NOTA_LABEL[s], value: s }));
+const STATUS_PAGAMENTO_OPTIONS = (Object.keys(STATUS_PAGAMENTO_LABEL) as StatusPagamento[])
+  .map((s) => ({ label: STATUS_PAGAMENTO_LABEL[s], value: s }));
 
-function formatarValor(v: number | null): string {
-  if (v == null) return '—';
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+/** Dias inteiros entre hoje e a data (positivo = futuro, negativo = vencido). */
+function diasAte(iso: string | null): number | null {
+  if (!iso) return null;
+  const base = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso).getTime();
+  return Math.ceil((base - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+function diasDesde(iso: string | null): number | null {
+  if (!iso) return null;
+  const base = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso).getTime();
+  return Math.floor((Date.now() - base) / (1000 * 60 * 60 * 24));
 }
 
 function Publicidade() {
@@ -50,7 +64,7 @@ function Publicidade() {
   const [filtroGlobal, setFiltroGlobal] = useState('');
   const [debouncedBusca, setDebouncedBusca] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
-  const [filtros, setFiltros] = useState<PublicidadeFiltros>({ statusFinanceiro: [] });
+  const [filtros, setFiltros] = useState<PublicidadeFiltros>({ statusNota: [], statusPagamento: [] });
   const [mostrarInativos, setMostrarInativos] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -110,13 +124,34 @@ function Publicidade() {
     }
   };
 
-  const statusFinTemplate = (row: PublicidadeDTO) => {
-    if (!row.statusFinanceiro) return <span className="qtd-badge">—</span>;
-    const atrasado = row.statusFinanceiro === 'PAGAMENTO_ATRASADO';
-    return <span className={`fin-badge ${atrasado ? 'fin-atrasado' : ''}`}>{STATUS_FINANCEIRO_LABEL[row.statusFinanceiro]}</span>;
+  const statusNotaTemplate = (row: PublicidadeDTO) => {
+    if (!row.statusNota) return <span className="qtd-badge">—</span>;
+    const emitida = row.statusNota === 'EMITIDA' || row.statusNota === 'ENVIADA';
+    const dias = diasDesde(row.registro);
+    const notaAtrasada = row.statusNota === 'NAO_EMITIDA' && dias != null && dias >= DIAS_ALERTA_NOTA;
+    return (
+      <span className="fin-nota-cell">
+        <span className={`fin-badge ${emitida ? 'fin-ok' : ''}`}>{STATUS_NOTA_LABEL[row.statusNota]}</span>
+        {notaAtrasada && <span className="fin-badge fin-atrasado" title={`Sem nota há ${dias} dias`}><i className="pi pi-exclamation-triangle" /> Atrasada</span>}
+      </span>
+    );
+  };
+  const recebimentoTemplate = (row: PublicidadeDTO) => {
+    if (row.statusPagamento === 'RECEBIDO') return <span className="fin-badge fin-ok">Recebido</span>;
+    const dias = diasAte(row.dataPrevistaRecebimento);
+    if (dias == null) return <span className="qtd-badge">—</span>;
+    if (dias < 0) return <span className="fin-badge fin-atrasado">{Math.abs(dias)}d em atraso</span>;
+    return <span className="qtd-badge">{dias === 0 ? 'hoje' : `em ${dias}d`}</span>;
+  };
+  const statusPagamentoTemplate = (row: PublicidadeDTO) => {
+    if (!row.statusPagamento) return <span className="qtd-badge">—</span>;
+    let cls = '';
+    if (row.statusPagamento === 'ATRASADO') cls = 'fin-atrasado';
+    else if (row.statusPagamento === 'RECEBIDO') cls = 'fin-ok';
+    return <span className={`fin-badge ${cls}`}>{STATUS_PAGAMENTO_LABEL[row.statusPagamento]}</span>;
   };
   const ativoTemplate = (row: PublicidadeDTO) => <StatusBadge status={row.ativo ? 'ATIVO' : 'INATIVO'} />;
-  const valorTemplate = (row: PublicidadeDTO) => formatarValor(row.valorTotal);
+  const valorTemplate = (row: PublicidadeDTO) => formatarMoeda(row.valorTotal, row.moeda);
   const entregaveisTemplate = (row: PublicidadeDTO) => <span className="qtd-badge">{row.qtdEntregaveis} entreg.</span>;
 
   const acoesTemplate = (row: PublicidadeDTO) => (
@@ -134,7 +169,7 @@ function Publicidade() {
     />
   );
 
-  const temFiltroAtivo = !!filtros.statusFinanceiro?.length || !!filtros.marca || !!filtros.parceiro;
+  const temFiltroAtivo = !!filtros.statusNota?.length || !!filtros.statusPagamento?.length || !!filtros.marca || !!filtros.parceiro;
 
   return (
     <div className="crud-page">
@@ -158,7 +193,9 @@ function Publicidade() {
           <Column field="influenciadorNome" header="Influenciador" sortable />
           <Column field="parceiro" header="Parceiro" body={(r: PublicidadeDTO) => r.parceiro || '—'} />
           <Column header="Entregáveis" body={entregaveisTemplate} style={{ width: '120px' }} />
-          <Column header="Financeiro" body={statusFinTemplate} style={{ width: '160px' }} />
+          <Column header="Nota" body={statusNotaTemplate} style={{ width: '160px' }} />
+          <Column header="Pagamento" body={statusPagamentoTemplate} style={{ width: '120px' }} />
+          <Column header="Recebimento" body={recebimentoTemplate} style={{ width: '120px' }} />
           <Column header="Valor" body={valorTemplate} style={{ width: '130px' }} />
           <Column header="Ativo" body={ativoTemplate} style={{ width: '110px' }} />
           <Column header="Ações" body={acoesTemplate} style={{ width: '160px' }} />
@@ -183,7 +220,7 @@ function Publicidade() {
 
       <HistoryDialog visible={historyVisible} onHide={() => setHistoryVisible(false)} entityId={historyId} servicePath="/publicidades" />
 
-      <FilterSidebar visible={filterVisible} onHide={() => setFilterVisible(false)} onClear={() => { setFiltros({ statusFinanceiro: [] }); setCurrentPage(0); }} clearDisabled={!temFiltroAtivo}>
+      <FilterSidebar visible={filterVisible} onHide={() => setFilterVisible(false)} onClear={() => { setFiltros({ statusNota: [], statusPagamento: [] }); setCurrentPage(0); }} clearDisabled={!temFiltroAtivo}>
         <div className="form-field">
           <label htmlFor="filter-marca">Marca</label>
           <InputText id="filter-marca" value={filtros.marca ?? ''} onChange={(e) => setFiltros({ ...filtros, marca: e.target.value || undefined })} placeholder="Filtrar por marca" className="w-full" />
@@ -193,8 +230,12 @@ function Publicidade() {
           <InputText id="filter-parceiro" value={filtros.parceiro ?? ''} onChange={(e) => setFiltros({ ...filtros, parceiro: e.target.value || undefined })} placeholder="Filtrar por parceiro" className="w-full" />
         </div>
         <div className="form-field">
-          <label htmlFor="filter-fin">Status financeiro</label>
-          <MultiSelect id="filter-fin" value={filtros.statusFinanceiro} options={STATUS_FIN_OPTIONS} onChange={(e) => setFiltros({ ...filtros, statusFinanceiro: e.value })} placeholder="Todos" className="w-full" display="chip" />
+          <label htmlFor="filter-nota">Status da nota</label>
+          <MultiSelect id="filter-nota" value={filtros.statusNota} options={STATUS_NOTA_OPTIONS} onChange={(e) => setFiltros({ ...filtros, statusNota: e.value })} placeholder="Todos" className="w-full" display="chip" />
+        </div>
+        <div className="form-field">
+          <label htmlFor="filter-pag">Status do pagamento</label>
+          <MultiSelect id="filter-pag" value={filtros.statusPagamento} options={STATUS_PAGAMENTO_OPTIONS} onChange={(e) => setFiltros({ ...filtros, statusPagamento: e.value })} placeholder="Todos" className="w-full" display="chip" />
         </div>
       </FilterSidebar>
     </div>
