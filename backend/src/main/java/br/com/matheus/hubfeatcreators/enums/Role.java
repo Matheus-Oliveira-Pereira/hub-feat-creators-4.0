@@ -44,7 +44,11 @@ public enum Role implements GrantedAuthority {
     TMEA,
     TMEB,
     TMEC,
-    TMED;
+    TMED,
+    META,
+    METB,
+    METC,
+    METD;
 
     @Override
     public String getAuthority() {

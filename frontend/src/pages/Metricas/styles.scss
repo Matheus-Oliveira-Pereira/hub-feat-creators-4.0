@@ -1,0 +1,293 @@
+@use '../../styles/variables' as *;
+
+.metricas-page {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: $gray-800;
+    }
+
+    p {
+      font-size: 0.85rem;
+      color: $gray-500;
+      margin-top: 0.15rem;
+    }
+  }
+
+  .btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    border: none;
+    border-radius: $border-radius-md;
+    background: linear-gradient(135deg, $brand-lime, $brand-lime-dark);
+    color: $on-lime;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: filter 0.15s;
+
+    &:hover:not(:disabled) { filter: brightness(1.05); }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+
+  .filtros-bar {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    background: $bg-card;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-lg;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+
+    .filtro {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 160px;
+
+      label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: $gray-500;
+      }
+    }
+
+    .filtro-grow { flex: 1 1 220px; }
+
+    .btn-limpar {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1rem;
+      border: 1px solid $gray-200;
+      border-radius: $border-radius-md;
+      background: $gray-50;
+      color: $gray-700;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+
+      &:hover {
+        background: rgba(194, 224, 0, 0.10);
+        border-color: rgba(194, 224, 0, 0.35);
+      }
+    }
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .kpi-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    background: $bg-card;
+    border: 1px solid $gray-200;
+    border-left: 3px solid $primary-color;
+    border-radius: $border-radius-md;
+    padding: 1rem 1.1rem;
+    box-shadow: $shadow-sm;
+
+    .kpi-value { font-size: 1.4rem; font-weight: 700; color: $gray-800; line-height: 1.2; }
+    .kpi-label { font-size: 0.78rem; color: $gray-500; font-weight: 500; }
+    .kpi-sub { font-size: 0.7rem; color: $gray-400; margin-top: 0.1rem; }
+  }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .chart-card {
+    background: $bg-card;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-lg;
+    padding: 1.1rem 1.25rem 1.25rem;
+    box-shadow: $shadow-sm;
+
+    h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: $gray-800;
+      margin-bottom: 0.9rem;
+    }
+
+    .chart-box { position: relative; height: 280px; }
+    .chart-box-tall { height: 420px; }
+  }
+
+  .chart-wide { grid-column: 1 / -1; }
+  .chart-full { margin-bottom: 1.25rem; }
+
+  .ranking-tabela {
+    background: $bg-card;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-lg;
+    overflow: hidden;
+
+    .ranking-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 160px;
+      padding: 0.7rem 1.1rem;
+      font-size: 0.85rem;
+      color: $gray-700;
+      border-top: 1px solid $gray-100;
+
+      span:nth-child(2), span:nth-child(3) { text-align: right; }
+
+      &:first-child { border-top: none; }
+    }
+
+    .ranking-head {
+      background: $gray-50;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: $gray-500;
+    }
+  }
+
+  .chart-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: $gray-400;
+    border: 1px dashed $gray-200;
+    border-radius: $border-radius-md;
+    background: $gray-50;
+
+    i { font-size: 1.6rem; opacity: 0.6; }
+    span { font-size: 0.85rem; font-weight: 500; }
+  }
+}
+
+// ─── TabView (tema PrimeReact fica em @layer, sem override; estilizamos aqui) ───
+.metricas-page {
+  .p-tabview .p-tabview-nav {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-bottom: 1px solid $gray-200;
+    background: transparent;
+
+    li {
+      margin: 0;
+
+      .p-tabview-nav-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.15rem;
+        border: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        background: transparent;
+        color: $gray-500;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: color 0.15s, border-color 0.15s;
+
+        &:hover { color: $gray-800; }
+        &:focus { box-shadow: none; outline: none; }
+      }
+
+      &.p-highlight .p-tabview-nav-link {
+        color: $gray-900;
+        border-bottom-color: $primary-color;
+      }
+    }
+  }
+
+  .p-tabview .p-tabview-panels {
+    padding: 1.5rem 0 0;
+    background: transparent;
+    border: none;
+    color: inherit;
+  }
+}
+
+// ─── Dark theme ───
+[data-theme="dark"] .metricas-page {
+  .page-header h1 { color: #f1f5f9; }
+  .page-header p { color: #94a3b8; }
+
+  .filtros-bar {
+    background: #181818;
+    border-color: #2e2e2e;
+    .filtro label { color: #94a3b8; }
+    .btn-limpar {
+      background: #262626;
+      border-color: #2e2e2e;
+      color: #cbd5e1;
+      &:hover { background: rgba(194, 224, 0, 0.14); border-color: rgba(194, 224, 0, 0.4); }
+    }
+  }
+
+  .kpi-card {
+    background: #181818;
+    border-color: #2e2e2e;
+    border-left-color: $primary-color;
+    .kpi-value { color: #f1f5f9; }
+    .kpi-label { color: #94a3b8; }
+    .kpi-sub { color: #64748b; }
+  }
+
+  .chart-card {
+    background: #181818;
+    border-color: #2e2e2e;
+    h3 { color: #f1f5f9; }
+  }
+
+  .chart-empty {
+    background: #141414;
+    border-color: #2e2e2e;
+    color: #64748b;
+  }
+
+  .ranking-tabela {
+    background: #181818;
+    border-color: #2e2e2e;
+    .ranking-row { color: #cbd5e1; border-top-color: #262626; }
+    .ranking-head { background: #141414; color: #94a3b8; }
+  }
+
+  .p-tabview .p-tabview-nav {
+    border-bottom-color: #2e2e2e;
+    li .p-tabview-nav-link {
+      color: #94a3b8;
+      &:hover { color: #f1f5f9; }
+    }
+    li.p-highlight .p-tabview-nav-link {
+      color: #f1f5f9;
+      border-bottom-color: $primary-color;
+    }
+  }
+}

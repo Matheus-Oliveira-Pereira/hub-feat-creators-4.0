@@ -17,6 +17,7 @@ export const MODULES = {
   PROSPECAO: { prefix: 'PSP', path: '/prospecao' },
   PUBLICIDADE: { prefix: 'PUB', path: '/publicidade' },
   TEMPLATES_EMAIL: { prefix: 'TME', path: '/templates-email' },
+  METRICAS: { prefix: 'MET', path: '/metricas' },
 } as const;
 
 export function hasRole(userRoles: string[], modulePrefix: string, action: string): boolean {
