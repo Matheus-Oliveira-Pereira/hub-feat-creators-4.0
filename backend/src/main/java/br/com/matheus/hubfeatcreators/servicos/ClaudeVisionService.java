@@ -100,8 +100,13 @@ public class ClaudeVisionService {
 
         return "Você analisa screenshots de redes sociais de influenciadores. " + especifico
                 + " Use os números exatos das imagens. Se um campo não aparecer, omita-o. "
-                + "Responda APENAS com um objeto JSON válido (sem markdown, sem texto fora do JSON), "
-                + "com chaves descritivas em snake_case e valores numéricos quando aplicável.";
+                + "Responda APENAS com um objeto JSON válido (sem markdown, sem texto fora do JSON). "
+                + "Chaves de métricas escalares em snake_case (sem acento), valores numéricos quando aplicável. "
+                + "TODO texto exibível — rótulos, descrições e nomes próprios (cidades, temas) — deve estar em "
+                + "português do Brasil correto, com acentuação, cedilha e pontuação adequada. "
+                + "Para rankings de nomes próprios (ex.: principais cidades), use um array de objetos com o nome "
+                + "acentuado e o valor, ex.: \"principais_cidades\": [{\"nome\": \"São Paulo\", \"percentual\": 8.7}], "
+                + "nunca chaves snake_case para os nomes próprios.";
     }
 
     private String promptPadrao(TipoSessao tipo) {

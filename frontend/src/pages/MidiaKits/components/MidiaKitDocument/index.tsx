@@ -1,5 +1,5 @@
-import { Document, Page, Text, View, StyleSheet, Image, Svg, Path, Link, Font } from '@react-pdf/renderer';
-import { MidiaKitTemplate, Sessao, InfluenciadorRef, RedeCapa, labelTipo, parseFotos, parseConfig, formatarValor, garantirUrl } from '../../service';
+import { Document, Page, Text, View, StyleSheet, Image, Svg, Path, Link, Font, pdf } from '@react-pdf/renderer';
+import { MidiaKitTemplate, Sessao, InfluenciadorRef, RedeCapa, EsteticaSessao, labelTipo, parseFotos, parseConfig, formatarValor, garantirUrl, rotularPt } from '../../service';
 import { SOCIAL_ICONS } from './socialIcons';
 import { LOGO_PATHS, LOGO_VIEWBOX } from './logo';
 
@@ -36,14 +36,53 @@ const TIPO_REDE: Record<string, { rede: string; nome: string }> = {
   INSIGHTS_YOUTUBE: { rede: 'YOUTUBE', nome: 'YouTube' },
 };
 
-const BG = '#0a0a0a';
-const CARD = '#1a1a1a';
-const LIME = '#C2E000';
-const TEXT = '#f5f5f5';
-const MUTED = '#9ca3af';
-const BORDER = '#3d3d3d';
+// Texto claro secundário (corpo do "Sobre" / pills de público). Não é temável.
+const SOFT = '#d1d5db';
 
-// Página mais baixa; insights expande para caber as métricas.
+type Align = 'left' | 'center' | 'right';
+
+/** Tema resolvido de uma seção (estética da seção sobre os padrões). */
+interface Tema {
+  bg: string;
+  card: string;
+  lime: string;
+  text: string;
+  muted: string;
+  border: string;
+  fonteTitulo: string;
+  tamNomeCapa: number;
+  tamTitulo: number;
+  tamTexto: number;
+  padding: number;
+  gap: number;
+  raio: number;
+  escala: number;
+  alinhTitulo: Align;
+  alinhConteudo: Align;
+  alturaPagina: number | null;
+}
+
+const TEMA_PADRAO: Tema = {
+  bg: '#0a0a0a',
+  card: '#1a1a1a',
+  lime: '#C2E000',
+  text: '#f5f5f5',
+  muted: '#9ca3af',
+  border: '#3d3d3d',
+  fonteTitulo: HEADING,
+  tamNomeCapa: 56,
+  tamTitulo: 40,
+  tamTexto: 13,
+  padding: 40,
+  gap: 12,
+  raio: 14,
+  escala: 1,
+  alinhTitulo: 'left',
+  alinhConteudo: 'left',
+  alturaPagina: null,
+};
+
+// Altura-base por tipo; a estética da seção pode sobrescrever.
 const PAGE_W = 842;
 const ALTURA_PAGINA: Record<string, number> = {
   CAPA: 540,
@@ -51,111 +90,157 @@ const ALTURA_PAGINA: Record<string, number> = {
   INSIGHTS_TIKTOK: 660,
   INSIGHTS_YOUTUBE: 660,
 };
-const alturaPagina = (tipo: string): number => ALTURA_PAGINA[tipo] ?? 500;
 
-const styles = StyleSheet.create({
-  page: { backgroundColor: BG, color: TEXT, padding: 40, fontFamily: 'Helvetica', fontSize: 11 },
-  topbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  logo: { width: 134, height: 36, objectFit: 'contain' },
-  topRight: { fontSize: 8, color: MUTED, letterSpacing: 1, textTransform: 'uppercase' },
+function normAlign(a?: string | null): Align {
+  return a === 'center' || a === 'right' ? a : 'left';
+}
+function flexAlign(a: Align): 'flex-start' | 'center' | 'flex-end' {
+  return a === 'center' ? 'center' : a === 'right' ? 'flex-end' : 'flex-start';
+}
 
-  titulo: { fontSize: 40, fontFamily: HEADING, color: TEXT },
-  tituloLime: { color: LIME },
-  subtitulo: { fontSize: 11.5, color: MUTED, marginTop: 12, marginBottom: 18 },
+/** Faz merge da estética da seção sobre os padrões (campos vazios usam o padrão). */
+function resolverEstetica(sessao: Sessao): Tema {
+  const e: EsteticaSessao = sessao.estetica ?? {};
+  const d = TEMA_PADRAO;
+  return {
+    bg: e.corFundo || d.bg,
+    card: e.corCard || d.card,
+    lime: e.corDestaque || d.lime,
+    text: e.corTexto || d.text,
+    muted: e.corTextoSecundario || d.muted,
+    border: e.corBorda || d.border,
+    fonteTitulo: e.fonteTitulo || d.fonteTitulo,
+    tamNomeCapa: e.tamanhoNomeCapa ?? d.tamNomeCapa,
+    tamTitulo: e.tamanhoTitulo ?? d.tamTitulo,
+    tamTexto: e.tamanhoTexto ?? d.tamTexto,
+    padding: e.paddingPagina ?? d.padding,
+    gap: e.gapCards ?? d.gap,
+    raio: e.raioBorda ?? d.raio,
+    escala: (e.escalaFotos ?? 100) / 100,
+    alinhTitulo: normAlign(e.alinhamentoTitulo),
+    alinhConteudo: normAlign(e.alinhamentoConteudo),
+    alturaPagina: e.alturaPagina ?? null,
+  };
+}
 
-  // Capa
-  capaBody: { flexGrow: 1, justifyContent: 'space-between', paddingBottom: 10 },
-  capaMain: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexGrow: 1 },
-  capaInfo: { flex: 1, paddingRight: 24 },
-  capaLabel: { fontSize: 10, color: LIME, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 14, fontFamily: 'Helvetica-Bold' },
-  capaNome: { fontSize: 56, fontFamily: HEADING, color: TEXT, lineHeight: 1.05 },
-  capaNicho: { fontSize: 12, color: LIME, marginTop: 16 },
-  capaFotoFrame: { backgroundColor: LIME, borderRadius: 13, padding: 1 },
-  capaFoto: { width: 212, height: 212, borderRadius: 10, objectFit: 'cover' },
-  pillsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8, maxWidth: '52%' },
-  pill: { backgroundColor: CARD, borderRadius: 12, paddingVertical: 7, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 6, border: `1 solid ${BORDER}`, textDecoration: 'none' },
-  pillIcon: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#242424', alignItems: 'center', justifyContent: 'center' },
-  pillVal: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: LIME, textDecoration: 'none' },
-  pillNome: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: LIME, textDecoration: 'none' },
+function alturaPagina(tipo: string, tema: Tema): number {
+  return tema.alturaPagina ?? ALTURA_PAGINA[tipo] ?? 500;
+}
 
-  // Sobre
-  sobreCenter: { flexGrow: 1, justifyContent: 'center' },
-  sobreWrap: { flexDirection: 'row', gap: 68, alignItems: 'center', marginTop: 14 },
-  sobreTexto: { flex: 1, fontSize: 13, lineHeight: 1.7, color: '#d1d5db' },
-  sobreFotoFrame: { backgroundColor: '#9ca3af', borderRadius: 12, padding: 0.5 },
-  sobreFoto: { width: 280, height: 280, borderRadius: 11.5, objectFit: 'cover' },
-  paragrafo: { marginBottom: 12 },
+/** Cria o StyleSheet da seção a partir do tema resolvido. */
+function criarStyles(t: Tema) {
+  const alTit = flexAlign(t.alinhTitulo);
+  const alCont = flexAlign(t.alinhConteudo);
+  const k = t.escala;
+  return StyleSheet.create({
+    page: { backgroundColor: t.bg, color: t.text, padding: t.padding, fontFamily: 'Helvetica', fontSize: 11 },
+    topbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+    logo: { width: 134, height: 36, objectFit: 'contain' },
+    topRight: { fontSize: 8, color: t.muted, letterSpacing: 1, textTransform: 'uppercase' },
 
-  conteudosCenter: { flexGrow: 1, justifyContent: 'center' },
-  cardsRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' },
-  conteudoCard: { width: 150, height: 250, borderRadius: 14, objectFit: 'cover' },
+    titulo: { fontSize: t.tamTitulo, fontFamily: t.fonteTitulo, color: t.text, textAlign: t.alinhTitulo },
+    tituloLime: { color: t.lime },
+    subtitulo: { fontSize: 11.5, color: t.muted, marginTop: 12, marginBottom: 18, textAlign: t.alinhConteudo },
 
-  insightsCenter: { flexGrow: 1, justifyContent: 'center' },
-  insightsHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
-  secaoHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 },
+    // Capa
+    capaBody: { flexGrow: 1, justifyContent: 'space-between', paddingBottom: 10 },
+    capaMain: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexGrow: 1 },
+    capaInfo: { flex: 1, paddingRight: 24 },
+    capaLabel: { fontSize: 10, color: t.lime, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 14, fontFamily: 'Helvetica-Bold' },
+    capaNome: { fontSize: t.tamNomeCapa, fontFamily: t.fonteTitulo, color: t.text, lineHeight: 1.05 },
+    capaNicho: { fontSize: 12, color: t.lime, marginTop: 16 },
+    // Raio externo = raio da foto + padding (senão a foto cobre a borda nos cantos/lados).
+    capaFotoFrame: { backgroundColor: t.lime, borderRadius: 13, padding: 3, alignSelf: 'center', flexShrink: 0 },
+    capaFoto: { width: 212 * k, height: 212 * k, borderRadius: 10, objectFit: 'cover' },
+    pillsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: 8, maxWidth: '52%' },
+    pill: { backgroundColor: t.card, borderRadius: 12, paddingVertical: 7, paddingHorizontal: 10, flexDirection: 'row', alignItems: 'center', gap: 6, border: `1 solid ${t.border}`, textDecoration: 'none' },
+    pillIcon: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#242424', alignItems: 'center', justifyContent: 'center' },
+    pillVal: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: t.lime, textDecoration: 'none' },
+    pillNome: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: t.lime, textDecoration: 'none' },
 
-  redeHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  redeNome: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: LIME },
+    // Sobre
+    sobreCenter: { flexGrow: 1, justifyContent: 'center' },
+    sobreWrap: { flexDirection: 'row', gap: 68, alignItems: 'center', marginTop: 14 },
+    sobreTexto: { flex: 1, fontSize: t.tamTexto, lineHeight: 1.7, color: SOFT, textAlign: t.alinhConteudo },
+    sobreFotoFrame: { backgroundColor: '#9ca3af', borderRadius: 13.5, padding: 2, alignSelf: 'center', flexShrink: 0 },
+    sobreFoto: { width: 280 * k, height: 280 * k, borderRadius: 11.5, objectFit: 'cover' },
+    paragrafo: { marginBottom: 12 },
 
-  metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 18, marginTop: 14 },
-  metricCard: { backgroundColor: CARD, borderRadius: 14, padding: 16, minWidth: 150, flexGrow: 1, border: `1 solid ${BORDER}` },
-  metricVal: { fontSize: 32, fontFamily: HEADING, color: LIME },
-  metricLabel: { fontSize: 11, color: MUTED, marginTop: 4, textTransform: 'capitalize' },
+    conteudosCenter: { flexGrow: 1, justifyContent: 'center' },
+    cardsRow: { flexDirection: 'row', gap: t.gap, flexWrap: 'wrap', alignItems: 'center', justifyContent: alCont },
+    conteudoCard: { width: 150 * k, height: 250 * k, borderRadius: t.raio, objectFit: 'cover' },
 
-  demoRow: { flexDirection: 'row', gap: 12 },
-  demoPanel: { flex: 1, backgroundColor: CARD, borderRadius: 14, padding: 14, border: `1 solid ${BORDER}` },
-  demoTitulo: { fontSize: 9.5, color: MUTED, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
-  demoItem: { marginBottom: 7 },
-  demoItemHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
-  demoKey: { fontSize: 10.5, color: TEXT, textTransform: 'capitalize' },
-  demoVal: { fontSize: 10.5, fontFamily: 'Helvetica-Bold', color: LIME },
-  barTrack: { height: 4, backgroundColor: '#262626', borderRadius: 2, marginTop: 2 },
-  barFill: { height: 4, backgroundColor: LIME, borderRadius: 2 },
-  subGrupo: { marginBottom: 6, marginTop: 2 },
-  subGrupoTit: { fontSize: 8, color: LIME, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+    insightsCenter: { flexGrow: 1, justifyContent: 'center' },
+    insightsHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4, justifyContent: alTit },
+    secaoHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2, justifyContent: alTit },
 
-  resumoWrap: { marginTop: 18 },
-  resumoTit: { fontSize: 9, color: LIME, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'Helvetica-Bold', marginBottom: 8 },
-  publicoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  publicoPill: { backgroundColor: CARD, borderRadius: 18, paddingVertical: 6, paddingHorizontal: 12, fontSize: 10.5, color: '#d1d5db', border: `1 solid ${BORDER}` },
+    redeHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+    redeNome: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: t.lime },
 
-  fotosGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 },
-  fotoItem: { width: 150, height: 150, borderRadius: 12, objectFit: 'cover' },
+    metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: t.gap, marginBottom: 18, marginTop: 14, justifyContent: alCont },
+    metricCard: { backgroundColor: t.card, borderRadius: t.raio, padding: 16, minWidth: 150, flexGrow: 1, border: `1 solid ${t.border}` },
+    metricVal: { fontSize: 32, fontFamily: t.fonteTitulo, color: t.lime },
+    metricLabel: { fontSize: 11, color: t.muted, marginTop: 4, textTransform: 'capitalize' },
 
-  // Marcas (logos)
-  marcasGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12 },
-  marcaCard: { width: 150, backgroundColor: '#f5f5f5', borderRadius: 14, padding: 12, alignItems: 'center', border: `1 solid ${BORDER}` },
-  marcaLogo: { width: 126, height: 90, objectFit: 'contain' },
-  marcaNome: { fontSize: 10, color: '#111', fontFamily: 'Helvetica-Bold', marginTop: 8, textAlign: 'center' },
+    demoRow: { flexDirection: 'row', gap: t.gap },
+    demoPanel: { flex: 1, backgroundColor: t.card, borderRadius: t.raio, padding: 14, border: `1 solid ${t.border}` },
+    demoTitulo: { fontSize: 9.5, color: t.muted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
+    demoItem: { marginBottom: 7 },
+    demoItemHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
+    demoKey: { fontSize: 10.5, color: t.text, textTransform: 'capitalize' },
+    demoVal: { fontSize: 10.5, fontFamily: 'Helvetica-Bold', color: t.lime },
+    barTrack: { height: 4, backgroundColor: '#262626', borderRadius: 2, marginTop: 2 },
+    barFill: { height: 4, backgroundColor: t.lime, borderRadius: 2 },
+    subGrupo: { marginBottom: 6, marginTop: 2 },
+    subGrupoTit: { fontSize: 8, color: t.lime, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
 
-  linkPrints: { fontSize: 10.5, color: LIME, textDecoration: 'none', marginBottom: 14 },
+    resumoWrap: { marginTop: 18 },
+    resumoTit: { fontSize: 9, color: t.lime, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'Helvetica-Bold', marginBottom: 8 },
+    publicoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    publicoPill: { backgroundColor: t.card, borderRadius: 18, paddingVertical: 6, paddingHorizontal: 12, fontSize: 10.5, color: SOFT, border: `1 solid ${t.border}` },
 
-  // Contato
-  contatoBody: { flexGrow: 1, justifyContent: 'center' },
-  contatoTitulo: { fontSize: 46, fontFamily: HEADING, color: TEXT, maxWidth: 480, marginBottom: 24, lineHeight: 1.1 },
-  contatoSub: { fontSize: 12.5, color: MUTED, marginTop: 18 },
-  contatoCards: { flexDirection: 'row', justifyContent: 'flex-start', gap: 14 },
-  contatoCard: { backgroundColor: CARD, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, border: `1 solid ${BORDER}` },
-  contatoLabel: { fontSize: 8, color: MUTED, marginBottom: 6, marginLeft: 21 },
-  contatoLinha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  contatoIcone: { width: 14, alignItems: 'center', justifyContent: 'center' },
-  contatoVal: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: TEXT, lineHeight: 1 },
+    fotosGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12, justifyContent: alCont },
+    fotoItem: { width: 150 * k, height: 150 * k, borderRadius: t.raio, objectFit: 'cover' },
 
-  rodape: { borderTop: `1 solid ${BORDER}`, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  rodapeTxt: { fontSize: 8, color: MUTED, maxWidth: 360 },
-  rodapeLinks: { flexDirection: 'row', gap: 18, marginLeft: 40 },
-  rodapeLink: { fontSize: 8, color: LIME, textDecoration: 'none' },
-});
+    // Marcas (logos)
+    marcasGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12, justifyContent: alCont },
+    marcaCard: { width: 150 * k, backgroundColor: '#f5f5f5', borderRadius: t.raio, padding: 12, alignItems: 'center', border: `1 solid ${t.border}` },
+    marcaLogo: { width: 126 * k, height: 90 * k, objectFit: 'contain' },
+    marcaNome: { fontSize: 10, color: '#111', fontFamily: 'Helvetica-Bold', marginTop: 8, textAlign: 'center' },
 
-function LogoFeat() {
+    linkPrints: { fontSize: 10.5, color: t.lime, textDecoration: 'none', marginBottom: 14 },
+
+    // Contato
+    contatoBody: { flexGrow: 1, justifyContent: 'center' },
+    contatoTitulo: { fontSize: 46, fontFamily: t.fonteTitulo, color: t.text, maxWidth: 480, marginBottom: 24, lineHeight: 1.1 },
+    contatoSub: { fontSize: 12.5, color: t.muted, marginTop: 18 },
+    contatoCards: { flexDirection: 'row', justifyContent: 'flex-start', gap: 14 },
+    contatoCard: { backgroundColor: t.card, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, border: `1 solid ${t.border}` },
+    contatoLabel: { fontSize: 8, color: t.muted, marginBottom: 6, marginLeft: 21 },
+    contatoLinha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    contatoIcone: { width: 14, alignItems: 'center', justifyContent: 'center' },
+    contatoVal: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: t.text, lineHeight: 1 },
+
+    rodape: { borderTop: `1 solid ${t.border}`, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    rodapeTxt: { fontSize: 8, color: t.muted, maxWidth: 360 },
+    rodapeLinks: { flexDirection: 'row', gap: 18, marginLeft: 40 },
+    rodapeLink: { fontSize: 8, color: t.lime, textDecoration: 'none' },
+  });
+}
+
+type Styles = ReturnType<typeof criarStyles>;
+
+const stylesPadrao = criarStyles(TEMA_PADRAO);
+
+function LogoFeat({ tema = TEMA_PADRAO }: Readonly<{ tema?: Tema }>) {
   return (
-    <Svg width={134} height={36} viewBox={LOGO_VIEWBOX} style={styles.logo}>
-      {LOGO_PATHS.map((p) => <Path key={p.d.slice(0, 24)} d={p.d} fill={p.lime ? LIME : TEXT} />)}
+    <Svg width={134} height={36} viewBox={LOGO_VIEWBOX} style={stylesPadrao.logo}>
+      {LOGO_PATHS.map((p) => <Path key={p.d.slice(0, 24)} d={p.d} fill={p.lime ? tema.lime : tema.text} />)}
     </Svg>
   );
 }
 
-function IconeRede({ rede, size = 14, color = LIME }: Readonly<{ rede: string; size?: number; color?: string }>) {
+function IconeRede({ rede, size = 14, color = TEMA_PADRAO.lime }: Readonly<{ rede: string; size?: number; color?: string }>) {
   const d = SOCIAL_ICONS[rede];
   if (!d) return null;
   return (
@@ -165,18 +250,19 @@ function IconeRede({ rede, size = 14, color = LIME }: Readonly<{ rede: string; s
   );
 }
 
-function TituloAcento({ texto, base = styles.titulo }: Readonly<{ texto: string; base?: typeof styles.titulo }>) {
+function TituloAcento({ texto, styles, base }: Readonly<{ texto: string; styles: Styles; base?: typeof styles.titulo }>) {
+  const estilo = base ?? styles.titulo;
   const palavras = (texto ?? '').trim().split(/\s+/).filter(Boolean);
-  if (palavras.length <= 1) return <Text style={base}>{texto}</Text>;
+  if (palavras.length <= 1) return <Text style={estilo}>{texto}</Text>;
   const ultima = palavras.pop();
-  return <Text style={base}>{palavras.join(' ')} <Text style={styles.tituloLime}>{ultima}</Text></Text>;
+  return <Text style={estilo}>{palavras.join(' ')} <Text style={styles.tituloLime}>{ultima}</Text></Text>;
 }
 
-function PillRede({ r }: Readonly<{ r: RedeCapa }>) {
+function PillRede({ r, styles, tema }: Readonly<{ r: RedeCapa; styles: Styles; tema: Tema }>) {
   const nomenclatura = NOME_SEGUIDORES[r.rede] ?? 'seguidores';
   const inner = (
     <>
-      <View style={styles.pillIcon}><IconeRede rede={r.rede} size={11} /></View>
+      <View style={styles.pillIcon}><IconeRede rede={r.rede} size={11} color={tema.lime} /></View>
       <Text style={styles.pillVal}>{r.seguidores || r.handle}</Text>
       {r.seguidores ? <Text style={styles.pillNome}>{nomenclatura}</Text> : null}
     </>
@@ -209,7 +295,7 @@ function parseAnalytics(json?: string | null): Record<string, unknown> {
 }
 
 function rotular(k: string): string {
-  return k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return rotularPt(k);
 }
 
 function larguraBarra(v: unknown): string {
@@ -236,6 +322,23 @@ function valorNum(v: unknown): number | null {
 
 function escalaresDe(obj: Record<string, unknown>): [string, unknown][] {
   return Object.entries(obj).filter(([, v]) => v !== null && typeof v !== 'object' && !Array.isArray(v));
+}
+
+/** Converte um array de objetos [{nome, percentual}] num Record { nome: valor } (nomes acentuados). */
+function arrayObjParaRecord(arr: unknown[]): Record<string, unknown> | null {
+  const rec: Record<string, unknown> = {};
+  for (const it of arr) {
+    if (!it || typeof it !== 'object' || Array.isArray(it)) return null;
+    const o = it as Record<string, unknown>;
+    const chaves = Object.keys(o);
+    if (!chaves.length) return null;
+    const nomeKey = chaves.find((k) => /nome|cidade|label|rotulo|regi|local|pais|estado/i.test(k)) ?? chaves[0];
+    const valKey = chaves.find((k) => k !== nomeKey && (typeof o[k] === 'number' || /percent|valor|value|pct|taxa|qtd|total/i.test(k)))
+      ?? chaves.find((k) => k !== nomeKey);
+    if (valKey == null) return null;
+    rec[String(o[nomeKey])] = o[valKey];
+  }
+  return Object.keys(rec).length ? rec : null;
 }
 
 /** True se os escalares do grupo são percentuais: têm '%', somam ~100 (gênero 76/23/1),
@@ -295,37 +398,40 @@ function resumoPublico(objetos: [string, Record<string, unknown>][]): string[] {
   return frases;
 }
 
-function Topo({ template }: Readonly<{ template: MidiaKitTemplate }>) {
+function Topo({ template, styles, tema }: Readonly<{ template: MidiaKitTemplate; styles: Styles; tema: Tema }>) {
   return (
     <View style={styles.topbar}>
-      <LogoFeat />
+      <LogoFeat tema={tema} />
       <Text style={styles.topRight}>Mídia Kit {template.influenciador?.nome ?? template.nome} {ANO}</Text>
     </View>
   );
 }
 
 function Capa({ template, sessao }: Readonly<{ template: MidiaKitTemplate; sessao: Sessao }>) {
+  const tema = resolverEstetica(sessao);
+  const styles = criarStyles(tema);
   const influ = template.influenciador;
   const fotoSessao = parseFotos(sessao.fotos)[0];
   const foto = fotoSessao ?? (ehUrl(influ?.foto) ? influ!.foto! : null); // #1 prioriza foto da seção
   const config = parseConfig(sessao.config);
   const redes = (config.redes ?? []).filter((r) => r.mostrar && (r.seguidores || r.handle));
   const nicho = [influ?.nicho, influ?.subnicho].filter(Boolean).join(' · ');
+  const nomeCapa = (config.nomeCapa?.trim() || influ?.nome || template.nome).toUpperCase();
 
   return (
-    <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
-      <Topo template={template} />
+    <Page size={[PAGE_W, alturaPagina(sessao.tipo, tema)]} style={styles.page}>
+      <Topo template={template} styles={styles} tema={tema} />
       <View style={styles.capaBody}>
         <View style={styles.capaMain}>
           <View style={styles.capaInfo}>
             <Text style={styles.capaLabel}>Mídia Kit {ANO}</Text>
-            <Text style={styles.capaNome}>{(influ?.nome ?? template.nome).toUpperCase()}</Text>
+            <Text style={styles.capaNome}>{nomeCapa}</Text>
             {nicho ? <Text style={styles.capaNicho}>{nicho}</Text> : null}
           </View>
           {foto && <View style={styles.capaFotoFrame}><Image src={foto} style={styles.capaFoto} /></View>}
         </View>
         <View style={styles.pillsRow}>
-          {redes.map((r) => <PillRede key={r.rede} r={r} />)}
+          {redes.map((r) => <PillRede key={r.rede} r={r} styles={styles} tema={tema} />)}
         </View>
       </View>
     </Page>
@@ -333,13 +439,15 @@ function Capa({ template, sessao }: Readonly<{ template: MidiaKitTemplate; sessa
 }
 
 function Sobre({ sessao }: Readonly<{ sessao: Sessao }>) {
+  const tema = resolverEstetica(sessao);
+  const styles = criarStyles(tema);
   const fotos = parseFotos(sessao.fotos);
   const paragrafos = (sessao.conteudo ?? '').split(/\n\s*\n/).filter(Boolean);
   return (
-    <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
+    <Page size={[PAGE_W, alturaPagina(sessao.tipo, tema)]} style={styles.page}>
       <View style={styles.sobreCenter}>
         <View style={styles.secaoHead}>
-          <TituloAcento texto={sessao.titulo || 'Sobre o influenciador'} />
+          <TituloAcento texto={sessao.titulo || 'Sobre o influenciador'} styles={styles} />
         </View>
         <View style={styles.sobreWrap}>
           <View style={styles.sobreTexto}>
@@ -355,12 +463,14 @@ function Sobre({ sessao }: Readonly<{ sessao: Sessao }>) {
 }
 
 function Conteudos({ sessao }: Readonly<{ sessao: Sessao }>) {
+  const tema = resolverEstetica(sessao);
+  const styles = criarStyles(tema);
   const fotos = parseFotos(sessao.fotos);
   const links = parseConfig(sessao.config).links ?? [];
   return (
-    <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
+    <Page size={[PAGE_W, alturaPagina(sessao.tipo, tema)]} style={styles.page}>
       <View style={styles.secaoHead}>
-        <TituloAcento texto={sessao.titulo || 'Conteúdos recentes'} />
+        <TituloAcento texto={sessao.titulo || 'Conteúdos recentes'} styles={styles} />
       </View>
       <Text style={styles.subtitulo}>{sessao.conteudo || 'Clique nas imagens para assistir aos vídeos.'}</Text>
       <View style={styles.conteudosCenter}>
@@ -376,12 +486,21 @@ function Conteudos({ sessao }: Readonly<{ sessao: Sessao }>) {
   );
 }
 
-function ConteudoObjeto({ obj }: Readonly<{ obj: Record<string, unknown> }>) {
+function ConteudoObjeto({ obj, styles }: Readonly<{ obj: Record<string, unknown>; styles: Styles }>) {
   const pctGrupo = ehPctGrupo(obj);
   return (
     <>
       {Object.entries(obj).map(([sk, sv]) => {
         if (Array.isArray(sv)) {
+          const rec = arrayObjParaRecord(sv);
+          if (rec) {
+            return (
+              <View key={sk} style={styles.subGrupo}>
+                <Text style={styles.subGrupoTit}>{rotular(sk)}</Text>
+                <ConteudoObjeto obj={rec} styles={styles} />
+              </View>
+            );
+          }
           return (
             <View key={sk} style={styles.demoItem}>
               <Text style={styles.demoKey}>{rotular(sk)}: {sv.map((x) => formatarValor(x)).join(', ')}</Text>
@@ -392,7 +511,7 @@ function ConteudoObjeto({ obj }: Readonly<{ obj: Record<string, unknown> }>) {
           return (
             <View key={sk} style={styles.subGrupo}>
               <Text style={styles.subGrupoTit}>{rotular(sk)}</Text>
-              <ConteudoObjeto obj={sv as Record<string, unknown>} />
+              <ConteudoObjeto obj={sv as Record<string, unknown>} styles={styles} />
             </View>
           );
         }
@@ -412,13 +531,18 @@ function ConteudoObjeto({ obj }: Readonly<{ obj: Record<string, unknown> }>) {
 }
 
 function Insights({ sessao }: Readonly<{ sessao: Sessao }>) {
+  const tema = resolverEstetica(sessao);
+  const styles = criarStyles(tema);
   const dados = parseAnalytics(sessao.analyticsJson);
   const escalares: [string, unknown][] = [];
   const objetos: [string, Record<string, unknown>][] = [];
   const listas: unknown[] = [];
   Object.entries(dados).forEach(([k, v]) => {
-    if (Array.isArray(v)) listas.push(...v);
-    else if (v && typeof v === 'object') objetos.push([k, v as Record<string, unknown>]);
+    if (Array.isArray(v)) {
+      const rec = arrayObjParaRecord(v);
+      if (rec) objetos.push([k, rec]);
+      else listas.push(...v);
+    } else if (v && typeof v === 'object') objetos.push([k, v as Record<string, unknown>]);
     else escalares.push([k, v]);
   });
 
@@ -427,16 +551,16 @@ function Insights({ sessao }: Readonly<{ sessao: Sessao }>) {
   const linkPrints = garantirUrl(parseConfig(sessao.config).linkPrints);
 
   return (
-    <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
+    <Page size={[PAGE_W, alturaPagina(sessao.tipo, tema)]} style={styles.page}>
       {redeInfo && (
         <View style={styles.redeHead}>
-          <IconeRede rede={redeInfo.rede} size={16} color={LIME} />
+          <IconeRede rede={redeInfo.rede} size={16} color={tema.lime} />
           <Text style={styles.redeNome}>{redeInfo.nome}</Text>
         </View>
       )}
       <View style={styles.insightsCenter}>
       <View style={styles.insightsHead}>
-        <TituloAcento texto={titulo} />
+        <TituloAcento texto={titulo} styles={styles} />
       </View>
       {sessao.conteudo ? <Text style={styles.subtitulo}>{sessao.conteudo}</Text> : <View style={{ height: 6 }} />}
       {linkPrints ? <Link src={linkPrints} style={styles.linkPrints}>Clique aqui para baixar os prints originais dos insights</Link> : null}
@@ -461,7 +585,7 @@ function Insights({ sessao }: Readonly<{ sessao: Sessao }>) {
           {objetos.slice(0, 3).map(([k, obj]) => (
             <View key={k} style={styles.demoPanel}>
               <Text style={styles.demoTitulo}>{rotular(k)}</Text>
-              <ConteudoObjeto obj={obj} />
+              <ConteudoObjeto obj={obj} styles={styles} />
             </View>
           ))}
         </View>
@@ -486,13 +610,15 @@ function Insights({ sessao }: Readonly<{ sessao: Sessao }>) {
 }
 
 function Marcas({ sessao }: Readonly<{ sessao: Sessao }>) {
+  const tema = resolverEstetica(sessao);
+  const styles = criarStyles(tema);
   const config = parseConfig(sessao.config);
   const marcas = (config.marcas ?? []).filter((m) => ehUrl(m.logotipo));
   const fotos = parseFotos(sessao.fotos); // imagens manuais extras (sem nome)
   return (
-    <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
+    <Page size={[PAGE_W, alturaPagina(sessao.tipo, tema)]} style={styles.page}>
       <View style={styles.secaoHead}>
-        <TituloAcento texto={sessao.titulo || labelTipo(sessao.tipo)} />
+        <TituloAcento texto={sessao.titulo || labelTipo(sessao.tipo)} styles={styles} />
       </View>
       {sessao.conteudo ? <Text style={styles.subtitulo}>{sessao.conteudo}</Text> : <View style={{ height: 12 }} />}
       {(marcas.length > 0 || fotos.length > 0) && (
@@ -515,11 +641,13 @@ function Marcas({ sessao }: Readonly<{ sessao: Sessao }>) {
 }
 
 function Galeria({ sessao }: Readonly<{ sessao: Sessao }>) {
+  const tema = resolverEstetica(sessao);
+  const styles = criarStyles(tema);
   const fotos = parseFotos(sessao.fotos);
   return (
-    <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
+    <Page size={[PAGE_W, alturaPagina(sessao.tipo, tema)]} style={styles.page}>
       <View style={styles.secaoHead}>
-        <TituloAcento texto={sessao.titulo || labelTipo(sessao.tipo)} />
+        <TituloAcento texto={sessao.titulo || labelTipo(sessao.tipo)} styles={styles} />
       </View>
       {sessao.conteudo ? <Text style={styles.subtitulo}>{sessao.conteudo}</Text> : <View style={{ height: 12 }} />}
       {fotos.length > 0 && (
@@ -532,6 +660,8 @@ function Galeria({ sessao }: Readonly<{ sessao: Sessao }>) {
 }
 
 function Contato({ template, sessao }: Readonly<{ template: MidiaKitTemplate; sessao: Sessao }>) {
+  const tema = resolverEstetica(sessao);
+  const styles = criarStyles(tema);
   const influ: InfluenciadorRef | null = template.influenciador;
   const config = parseConfig(sessao.config);
   const email = config.email ?? influ?.email ?? '';
@@ -539,8 +669,8 @@ function Contato({ template, sessao }: Readonly<{ template: MidiaKitTemplate; se
   const mostrarEmail = config.mostrarEmail !== false && !!email;
   const mostrarWhatsapp = config.mostrarWhatsapp !== false && !!whatsapp;
   return (
-    <Page size={[PAGE_W, alturaPagina(sessao.tipo)]} style={styles.page}>
-      <Topo template={template} />
+    <Page size={[PAGE_W, alturaPagina(sessao.tipo, tema)]} style={styles.page}>
+      <Topo template={template} styles={styles} tema={tema} />
       <View style={styles.contatoBody}>
         <Text style={styles.contatoTitulo}>E aí, bora{'\n'}fazer um <Text style={styles.tituloLime}>feat?</Text></Text>
         <View style={styles.contatoCards}>
@@ -548,7 +678,7 @@ function Contato({ template, sessao }: Readonly<{ template: MidiaKitTemplate; se
             <View style={styles.contatoCard}>
               <Text style={styles.contatoLabel}>Email</Text>
               <View style={styles.contatoLinha}>
-                <View style={styles.contatoIcone}><IconeRede rede="EMAIL" size={13} color={LIME} /></View>
+                <View style={styles.contatoIcone}><IconeRede rede="EMAIL" size={13} color={tema.lime} /></View>
                 <Text style={styles.contatoVal}>{email}</Text>
               </View>
             </View>
@@ -557,7 +687,7 @@ function Contato({ template, sessao }: Readonly<{ template: MidiaKitTemplate; se
             <View style={styles.contatoCard}>
               <Text style={styles.contatoLabel}>WhatsApp</Text>
               <View style={styles.contatoLinha}>
-                <View style={styles.contatoIcone}><IconeRede rede="WHATSAPP" size={13} color={LIME} /></View>
+                <View style={styles.contatoIcone}><IconeRede rede="WHATSAPP" size={13} color={tema.lime} /></View>
                 <Text style={styles.contatoVal}>{formatarTelefone(whatsapp)}</Text>
               </View>
             </View>
@@ -601,6 +731,17 @@ export function MidiaKitDocument({ template }: Readonly<{ template: MidiaKitTemp
       {sessoes.map((s, i) => renderSessao(template, s, s.id ?? `s-${i}`))}
     </Document>
   );
+}
+
+/** Gera o PDF do template e dispara o download no navegador. */
+export async function baixarPdf(template: MidiaKitTemplate): Promise<void> {
+  const blob = await pdf(<MidiaKitDocument template={template} />).toBlob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `midia-kit-${(template.nome || 'template').replace(/\s+/g, '-').toLowerCase()}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export default MidiaKitDocument;

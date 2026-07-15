@@ -1,9 +1,11 @@
 package br.com.matheus.hubfeatcreators.entidades;
 
 import br.com.matheus.hubfeatcreators.entidades.superclasses.Entidade;
+import br.com.matheus.hubfeatcreators.entidades.superclasses.EsteticaSessao;
 import br.com.matheus.hubfeatcreators.enums.TipoSessao;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -54,4 +56,8 @@ public class SessaoMidiaKit extends Entidade {
     /** JSON estruturado por tipo (redes da capa, links das fotos, comando de extração, contatos). */
     @Column(columnDefinition = "TEXT")
     private String config;
+
+    /** Estética opcional da seção (cores, tipografia, layout). Campos null = padrão do template. */
+    @Embedded
+    private EsteticaSessao estetica;
 }

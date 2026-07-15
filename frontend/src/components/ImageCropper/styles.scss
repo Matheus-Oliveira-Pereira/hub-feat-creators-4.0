@@ -1,0 +1,56 @@
+@use '../../styles/variables' as *;
+
+.image-cropper-dialog {
+  .cropper-ajuda {
+    margin: 0 0 12px;
+    font-size: 0.8rem;
+    color: $gray-500;
+  }
+
+  .cropper-viewport {
+    position: relative;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: $border-radius-md;
+    background: repeating-conic-gradient(#e5e7eb 0% 25%, #f3f4f6 0% 50%) 50% / 20px 20px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+
+    &:active { cursor: grabbing; }
+
+    img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      max-width: none;
+      pointer-events: none;
+    }
+
+    // Moldura guia (quadrado = área final)
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid rgba($primary-color, 0.9);
+      border-radius: $border-radius-md;
+      pointer-events: none;
+    }
+  }
+
+  .cropper-zoom {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    color: $gray-500;
+
+    .cropper-slider { flex: 1; }
+  }
+
+  .cropper-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+}

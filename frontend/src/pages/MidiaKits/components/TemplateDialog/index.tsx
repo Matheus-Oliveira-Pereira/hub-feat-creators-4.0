@@ -4,10 +4,9 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
-import { pdf } from '@react-pdf/renderer';
 import StatusDropdown from '../../../../components/StatusDropdown';
 import SessoesEditor, { sessaoVazia } from '../SessoesEditor';
-import MidiaKitDocument from '../MidiaKitDocument';
+import { baixarPdf } from '../MidiaKitDocument';
 import { midiaKitService, MidiaKitTemplate, Sessao, InfluenciadorRef, sessoesPadrao, semearInfluenciador } from '../../service';
 import './styles.scss';
 
@@ -114,13 +113,7 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
         nome: form.nome,
         sessoes: form.sessoes.map((s, i) => ({ ...s, ordem: i })),
       };
-      const blob = await pdf(<MidiaKitDocument template={docTemplate} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `midia-kit-${form.nome.replace(/\s+/g, '-').toLowerCase()}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
+      await baixarPdf(docTemplate);
     } catch {
       onToast('error', 'Falha ao gerar PDF');
     } finally {
@@ -146,7 +139,7 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
   );
 
   return (
-    <Dialog visible={visible} onHide={onHide} header={header} footer={footer} style={{ width: '760px' }} modal draggable={false} className="template-dialog">
+    <Dialog visible={visible} onHide={onHide} header={header} footer={footer} style={{ width: '90vw', maxWidth: '1200px' }} modal draggable={false} className="template-dialog">
       <div className={`form-field ${submitted && !form.nome.trim() ? 'field-error' : ''}`}>
         <label htmlFor="nome">Nome do template <span className="required">*</span></label>
         <InputText id="nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="w-full" />

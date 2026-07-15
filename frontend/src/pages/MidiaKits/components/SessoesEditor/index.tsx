@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { MultiSelect } from 'primereact/multiselect';
 import { InputText } from 'primereact/inputtext';
@@ -6,10 +6,23 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Button } from 'primereact/button';
 import {
-  midiaKitService, Sessao, SessaoConfig, RedeCapa, InfluenciadorRef, MarcaRef, TIPOS_SESSAO, REDES_CAPA,
-  labelTipo, requerPrint, comprimirImagem, parseFotos, parseConfig, configPadrao, tituloPadrao, conteudoPadrao,
+  midiaKitService, Sessao, SessaoConfig, RedeCapa, EsteticaSessao, InfluenciadorRef, MarcaRef, TIPOS_SESSAO, REDES_CAPA,
+  labelTipo, requerPrint, comprimirImagem, parseFotos, parseConfig, configPadrao, tituloPadrao, conteudoPadrao, formatarValor, rotularPt,
 } from '../../service';
+import AssistenteIa from '../../../../components/AssistenteIa';
+import ImageCropper from '../../../../components/ImageCropper';
+import EsteticaDialog from '../EsteticaDialog';
 import './styles.scss';
+
+/** Lê um File como data URL (para alimentar o recortador). */
+function lerDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
 
 const TIPOS_AUTO = ['CAPA', 'CONTATO'];
 
@@ -33,6 +46,77 @@ interface SessoesEditorProps {
   onToast: (severity: 'success' | 'error', detail: string) => void;
 }
 
+/** Reduz um array de objetos [{nome, valor}] a pares "nome → valor" para preview. */
+function paresDeArray(arr: unknown[]): [string, unknown][] | null {
+  const pares: [string, unknown][] = [];
+  for (const it of arr) {
+    if (!it || typeof it !== 'object' || Array.isArray(it)) return null;
+    const o = it as Record<string, unknown>;
+    const chaves = Object.keys(o);
+    if (!chaves.length) return null;
+    const nomeKey = chaves.find((k) => /nome|cidade|label|rotulo|regi|local|pais|estado/i.test(k)) ?? chaves[0];
+    const valKey = chaves.find((k) => k !== nomeKey && (typeof o[k] === 'number' || /percent|valor|value|pct|taxa|qtd|total/i.test(k)))
+      ?? chaves.find((k) => k !== nomeKey);
+    if (valKey == null) return null;
+    pares.push([rotularPt(String(o[nomeKey])), o[valKey]]);
+  }
+  return pares.length ? pares : null;
+}
+
+function Par({ chave, valor }: { chave: string; valor: unknown }) {
+  return (
+    <div className="analytics-item">
+      <span className="analytics-key">{chave}</span>
+      <span className="analytics-val">{formatarValor(valor)}</span>
+    </div>
+  );
+}
+
+/** Grupo (objeto/lista de objetos) recolhível — começa fechado. */
+function Colapsavel({ titulo, children, qtd }: { titulo: string; children: ReactNode; qtd: number }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <div className="analytics-bloco">
+      <button type="button" className="analytics-bloco-tit" onClick={() => setAberto((a) => !a)}>
+        <i className={aberto ? 'pi pi-chevron-down' : 'pi pi-chevron-right'} />
+        <span>{titulo}</span>
+        <span className="analytics-bloco-qtd">{qtd}</span>
+      </button>
+      {aberto && <div className="analytics-bloco-corpo">{children}</div>}
+    </div>
+  );
+}
+
+/** Renderiza recursivamente escalares/listas/objetos dos analytics de forma legível. */
+function AnalyticsNode({ dados }: { dados: Record<string, unknown> }) {
+  return (
+    <div className="analytics-grupo">
+      {Object.entries(dados).map(([k, v]) => {
+        if (Array.isArray(v)) {
+          const pares = paresDeArray(v);
+          if (pares) {
+            return (
+              <Colapsavel key={k} titulo={rotularPt(k)} qtd={pares.length}>
+                {pares.map(([nome, val]) => <Par key={nome} chave={nome} valor={val} />)}
+              </Colapsavel>
+            );
+          }
+          return <Par key={k} chave={rotularPt(k)} valor={v.map((x) => formatarValor(x)).join(', ')} />;
+        }
+        if (v && typeof v === 'object') {
+          const sub = v as Record<string, unknown>;
+          return (
+            <Colapsavel key={k} titulo={rotularPt(k)} qtd={Object.keys(sub).length}>
+              <AnalyticsNode dados={sub} />
+            </Colapsavel>
+          );
+        }
+        return <Par key={k} chave={rotularPt(k)} valor={v} />;
+      })}
+    </div>
+  );
+}
+
 function AnalyticsView({ json }: { json?: string | null }) {
   if (!json) return null;
   let obj: Record<string, unknown>;
@@ -41,16 +125,7 @@ function AnalyticsView({ json }: { json?: string | null }) {
   } catch {
     return <div className="analytics-raw">{json}</div>;
   }
-  return (
-    <div className="analytics-grid">
-      {Object.entries(obj).map(([k, v]) => (
-        <div key={k} className="analytics-item">
-          <span className="analytics-key">{k.replace(/_/g, ' ')}</span>
-          <span className="analytics-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
-        </div>
-      ))}
-    </div>
-  );
+  return <AnalyticsNode dados={obj} />;
 }
 
 function CapaRedes({ config, influ, patchConfig }: { config: SessaoConfig; influ: InfluenciadorRef | null; patchConfig: (p: Partial<SessaoConfig>) => void }) {
@@ -59,7 +134,13 @@ function CapaRedes({ config, influ, patchConfig }: { config: SessaoConfig; influ
     patchConfig({ redes: redes.map((r, idx) => (idx === i ? { ...r, ...patch } : r)) });
   };
   return (
-    <div className="bloco-config">
+    <div className="bloco-config sem-divisor">
+      <div className="form-field">
+        <label>Nome na capa</label>
+        <InputText value={config.nomeCapa ?? ''} onChange={(e) => patchConfig({ nomeCapa: e.target.value })}
+          className="w-full" placeholder={influ?.nome ?? 'Nome exibido na capa'} />
+        <small className="campo-ajuda">Aparece em destaque na capa. Independe do cadastro do influenciador.</small>
+      </div>
       <div className="bloco-head">
         <span>Redes na capa</span>
         {influ && <button type="button" className="btn-puxar" onClick={() => patchConfig({ redes: configPadrao('CAPA', influ).redes })}><i className="pi pi-refresh" /> Puxar do cadastro</button>}
@@ -109,6 +190,9 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
   const fotoRef = useRef<HTMLInputElement>(null);
   const [prints, setPrints] = useState<File[]>([]);
   const [analisando, setAnalisando] = useState(false);
+  const [esteticaAberta, setEsteticaAberta] = useState(false);
+  const [cropper, setCropper] = useState<{ src: string; alvo: number | null } | null>(null);
+  const usaRecorte = sessao.tipo === 'CAPA' || sessao.tipo === 'SOBRE_INFLUENCIADOR';
   const precisaPrint = requerPrint(sessao.tipo);
   const isInsight = sessao.tipo.startsWith('INSIGHTS_');
   const isConteudos = sessao.tipo === 'CONTEUDOS';
@@ -144,12 +228,25 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
   const adicionarFotos = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     try {
-      const novas = await Promise.all(Array.from(files).map((f) => comprimirImagem(f)));
-      onPatch({ fotos: JSON.stringify([...fotos, ...novas]) });
+      if (usaRecorte) {
+        // Capa/Sobre: recorta a 1ª foto em quadrado antes de guardar.
+        const src = await lerDataUrl(files[0]);
+        setCropper({ src, alvo: null });
+      } else {
+        const novas = await Promise.all(Array.from(files).map((f) => comprimirImagem(f)));
+        onPatch({ fotos: JSON.stringify([...fotos, ...novas]) });
+      }
     } catch {
       onToast('error', 'Falha ao carregar imagem');
     }
     if (fotoRef.current) fotoRef.current.value = '';
+  };
+
+  const aplicarRecorte = (dataUrl: string) => {
+    const alvo = cropper?.alvo ?? null;
+    const novas = alvo == null ? [...fotos, dataUrl] : fotos.map((f, i) => (i === alvo ? dataUrl : f));
+    onPatch({ fotos: JSON.stringify(novas) });
+    setCropper(null);
   };
 
   const removerFoto = (i: number) => {
@@ -180,6 +277,7 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
             <InputSwitch checked={ativa} onChange={(e) => onPatch({ ativa: e.value })} />
           </label>
           <div className="sessao-acoes">
+            <button type="button" className={sessao.estetica ? 'sessao-estetica ativa' : 'sessao-estetica'} onClick={() => setEsteticaAberta(true)} title="Estética da seção"><i className="pi pi-palette" /></button>
             <button type="button" disabled={index === 0} onClick={() => onMove(-1)} title="Subir"><i className="pi pi-chevron-up" /></button>
             <button type="button" disabled={index === total - 1} onClick={() => onMove(1)} title="Descer"><i className="pi pi-chevron-down" /></button>
             <button type="button" className="sessao-remover" onClick={onRemove} title="Remover"><i className="pi pi-trash" /></button>
@@ -189,15 +287,22 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
 
       {vazia && <div className="sessao-aviso"><i className="pi pi-exclamation-triangle" /> Seção sem conteúdo — adicione texto, fotos ou analytics.</div>}
 
-      <div className="form-field">
-        <label>Título</label>
-        <InputText value={sessao.titulo ?? ''} onChange={(e) => onPatch({ titulo: e.target.value })} className="w-full" />
-      </div>
+      {sessao.tipo !== 'CAPA' && (
+        <div className="form-field">
+          <label>Título</label>
+          <InputText value={sessao.titulo ?? ''} onChange={(e) => onPatch({ titulo: e.target.value })} className="w-full" />
+        </div>
+      )}
 
-      <div className="form-field">
-        <label>Conteúdo</label>
-        <InputTextarea value={sessao.conteudo ?? ''} onChange={(e) => onPatch({ conteudo: e.target.value })} rows={3} className="w-full" autoResize />
-      </div>
+      {sessao.tipo !== 'CAPA' && (
+        <div className="form-field">
+          <div className="label-com-acao">
+            <label>Conteúdo</label>
+            <AssistenteIa value={sessao.conteudo ?? ''} onResult={(t) => onPatch({ conteudo: t })} label="Editar com IA" />
+          </div>
+          <InputTextarea value={sessao.conteudo ?? ''} onChange={(e) => onPatch({ conteudo: e.target.value })} rows={3} className="w-full" autoResize />
+        </div>
+      )}
 
       {sessao.tipo === 'CAPA' && <CapaRedes config={config} influ={influenciador} patchConfig={patchConfig} />}
       {sessao.tipo === 'CONTATO' && <ContatoEditor config={config} patchConfig={patchConfig} />}
@@ -217,20 +322,30 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
       )}
 
       <div className="sessao-fotos">
-        <label>Fotos</label>
+        <label>{usaRecorte ? 'Foto' : 'Fotos'}</label>
         <div className="fotos-grid">
           {fotos.map((src, i) => (
             <div key={i} className="foto-thumb">
               <img src={src} alt={`Foto ${i + 1}`} />
-              <button type="button" onClick={() => removerFoto(i)} title="Remover"><i className="pi pi-times" /></button>
+              {usaRecorte && (
+                <button type="button" className="foto-recortar" onClick={() => setCropper({ src, alvo: i })} title="Recortar"><i className="pi pi-crop" /></button>
+              )}
+              <button type="button" className="foto-remover" onClick={() => removerFoto(i)} title="Remover"><i className="pi pi-times" /></button>
             </div>
           ))}
           <label className="foto-add">
             <i className="pi pi-plus" />
-            <input ref={fotoRef} type="file" accept="image/*" multiple onChange={(e) => adicionarFotos(e.target.files)} />
+            <input ref={fotoRef} type="file" accept="image/*" multiple={!usaRecorte} onChange={(e) => adicionarFotos(e.target.files)} />
           </label>
         </div>
       </div>
+
+      <ImageCropper
+        visible={!!cropper}
+        src={cropper?.src ?? null}
+        onCrop={aplicarRecorte}
+        onCancel={() => setCropper(null)}
+      />
 
       {usaLinks && fotos.length > 0 && (
         <div className="bloco-config">
@@ -245,24 +360,26 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
       )}
 
       {isInsight && (
-        <>
-          <div className="form-field">
-            <label>Campos a extrair (comando para a IA)</label>
-            <InputTextarea value={config.comando ?? ''} onChange={(e) => patchConfig({ comando: e.target.value })} rows={2} className="w-full"
-              placeholder="Ex: extraia apenas seguidores, alcance, engajamento e faixa etária" />
-          </div>
-          <div className="form-field">
-            <label>Link dos prints originais</label>
-            <InputText value={config.linkPrints ?? ''} onChange={(e) => patchConfig({ linkPrints: e.target.value })} className="w-full"
-              placeholder="https://drive.google.com/..." />
-            <small className="campo-ajuda">Se preenchido, o PDF mostra um link para baixar os prints originais dos insights.</small>
-          </div>
-        </>
+        <div className="form-field">
+          <label>Link dos prints originais</label>
+          <InputText value={config.linkPrints ?? ''} onChange={(e) => patchConfig({ linkPrints: e.target.value })} className="w-full"
+            placeholder="https://drive.google.com/..." />
+          <small className="campo-ajuda">Se preenchido, o PDF mostra um link para baixar os prints originais dos insights.</small>
+        </div>
       )}
 
       {precisaPrint && (
         <div className="sessao-print">
-          <label>Analisar prints (extrai métricas) {!podeAnalisar && <small>(salve o template para habilitar)</small>}</label>
+          <div className="print-titulo">
+            <span><i className="pi pi-sparkles" /> Analisar prints</span>
+            <small>Envie os prints e a IA extrai as métricas automaticamente.</small>
+          </div>
+          {!podeAnalisar && <small className="print-aviso"><i className="pi pi-info-circle" /> Salve o template para habilitar a análise.</small>}
+          <div className="print-campo">
+            <span className="print-campo-label">Instrução para a IA (opcional)</span>
+            <InputTextarea value={config.comando ?? ''} onChange={(e) => patchConfig({ comando: e.target.value })} rows={2} className="w-full"
+              placeholder="Ex: extraia apenas seguidores, alcance, engajamento e faixa etária" />
+          </div>
           <div className="print-row">
             <input ref={printRef} type="file" accept="image/*" multiple disabled={!podeAnalisar}
               onChange={(e) => setPrints(Array.from(e.target.files ?? []))} />
@@ -277,6 +394,14 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
           )}
         </div>
       )}
+
+      <EsteticaDialog
+        visible={esteticaAberta}
+        onHide={() => setEsteticaAberta(false)}
+        estetica={sessao.estetica}
+        onChange={(estetica: EsteticaSessao | null) => onPatch({ estetica })}
+        tituloSecao={labelTipo(sessao.tipo)}
+      />
     </div>
   );
 }

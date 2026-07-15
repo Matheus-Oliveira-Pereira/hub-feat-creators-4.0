@@ -145,14 +145,23 @@ public class MidiaKitTemplateService extends EntidadeService<MidiaKitTemplate, M
         for (SessaoMidiaKit origem : original.getSessoes()) {
             SessaoMidiaKit nova = new SessaoMidiaKit();
             nova.setTemplate(copia);
-            nova.setTipo(origem.getTipo());
-            nova.setOrdem(origem.getOrdem());
-            nova.setTitulo(origem.getTitulo());
-            nova.setConteudo(origem.getConteudo());
-            nova.setAnalyticsJson(origem.getAnalyticsJson());
+            copiarConteudoSessao(origem, nova);
             copia.getSessoes().add(nova);
         }
 
         return super.salvar(copia);
+    }
+
+    /** Replica TODOS os campos de conteúdo/config/estética de uma seção (evita perda de dados na cópia). */
+    private void copiarConteudoSessao(SessaoMidiaKit origem, SessaoMidiaKit destino) {
+        destino.setTipo(origem.getTipo());
+        destino.setOrdem(origem.getOrdem());
+        destino.setTitulo(origem.getTitulo());
+        destino.setAtiva(origem.getAtiva());
+        destino.setConteudo(origem.getConteudo());
+        destino.setAnalyticsJson(origem.getAnalyticsJson());
+        destino.setFotos(origem.getFotos());
+        destino.setConfig(origem.getConfig());
+        destino.setEstetica(origem.getEstetica());
     }
 }

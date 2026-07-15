@@ -15,6 +15,7 @@ import HistoryDialog from '../../components/HistoryDialog';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import DeleteDialog from '../../components/DeleteDialog';
 import TemplateDialog from './components/TemplateDialog';
+import { baixarPdf } from './components/MidiaKitDocument';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificacoes } from '../../contexts/WebSocketContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
@@ -40,6 +41,7 @@ function MidiaKits() {
   const [mostrarInativos, setMostrarInativos] = useState(false);
   const [deactivateTarget, setDeactivateTarget] = useState<MidiaKitTemplateDTO | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MidiaKitTemplateDTO | null>(null);
+  const [exportandoId, setExportandoId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryFiltros: MidiaKitFiltros = { ...filtros, textoDeBusca: debouncedBusca || undefined, mostrarInativos };
@@ -93,12 +95,27 @@ function MidiaKits() {
   const abrirNovo = () => { setEditId(null); setDialogVisible(true); };
   const abrirEdicao = (row: MidiaKitTemplateDTO) => { setEditId(row.id); setDialogVisible(true); };
 
+  const exportarPdf = async (row: MidiaKitTemplateDTO) => {
+    setExportandoId(row.id);
+    try {
+      const template = await midiaKitService.buscar(row.id);
+      await baixarPdf(template);
+    } catch {
+      mostrar('error', 'Falha ao gerar PDF');
+    } finally {
+      setExportandoId(null);
+    }
+  };
+
   const statusTemplate = (row: MidiaKitTemplateDTO) => <StatusBadge status={row.status} />;
   const influTemplate = (row: MidiaKitTemplateDTO) => row.influenciadorNome || <span className="text-muted">&mdash;</span>;
   const sessoesTemplate = (row: MidiaKitTemplateDTO) => <span className="qtd-badge">{row.qtdSessoes} seções</span>;
 
   const acoesTemplate = (row: MidiaKitTemplateDTO) => (
     <div className="midiakit-acoes">
+      <button type="button" className="acao-pdf" title="Exportar PDF" onClick={() => exportarPdf(row)} disabled={exportandoId === row.id}>
+        <i className={exportandoId === row.id ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'} />
+      </button>
       <button type="button" className="acao-copiar" title="Copiar template" onClick={() => copiarMutation.mutate(row.id)} disabled={!podeAdicionar}>
         <i className="pi pi-copy" />
       </button>
@@ -141,7 +158,7 @@ function MidiaKits() {
           <Column field="influenciadorNome" header="Influenciador" body={influTemplate} sortable />
           <Column header="Seções" body={sessoesTemplate} style={{ width: '120px' }} />
           <Column field="status" header="Status" body={statusTemplate} sortable style={{ width: '130px' }} />
-          <Column header="Ações" body={acoesTemplate} style={{ width: '200px' }} />
+          <Column header="Ações" body={acoesTemplate} style={{ width: '240px' }} />
         </DataTable>
       </div>
 

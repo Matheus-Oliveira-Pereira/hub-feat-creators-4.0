@@ -36,6 +36,30 @@ export interface Sessao {
   fotos?: string | null;
   /** JSON estruturado por tipo (redes da capa, links das fotos, comando, contatos). */
   config?: string | null;
+  /** Estética opcional da seção; campos vazios usam o padrão do template. */
+  estetica?: EsteticaSessao | null;
+}
+
+/** Estética opcional de uma seção. Todo campo vazio/undefined = usa o padrão. */
+export interface EsteticaSessao {
+  corFundo?: string | null;
+  corDestaque?: string | null;
+  corTexto?: string | null;
+  corTextoSecundario?: string | null;
+  corCard?: string | null;
+  corBorda?: string | null;
+  fonteTitulo?: string | null;
+  tamanhoNomeCapa?: number | null;
+  tamanhoTitulo?: number | null;
+  tamanhoTexto?: number | null;
+  paddingPagina?: number | null;
+  alturaPagina?: number | null;
+  gapCards?: number | null;
+  raioBorda?: number | null;
+  /** Escala das fotos da seção em % (100 = padrão). */
+  escalaFotos?: number | null;
+  alinhamentoTitulo?: string | null;
+  alinhamentoConteudo?: string | null;
 }
 
 export interface RedeCapa {
@@ -64,6 +88,8 @@ export interface SessaoConfig {
   marcas?: MarcaRef[];
   /** Link para baixar os prints originais (seções de insights). */
   linkPrints?: string;
+  /** Nome exibido na capa (independente do cadastro do influenciador). */
+  nomeCapa?: string;
 }
 
 export interface MidiaKitTemplate {
@@ -101,7 +127,7 @@ export interface TipoSessaoDef {
 export const TIPOS_SESSAO: TipoSessaoDef[] = [
   { tipo: 'CAPA', label: 'Capa', requerPrint: false },
   { tipo: 'SOBRE_INFLUENCIADOR', label: 'Sobre o influenciador', requerPrint: false },
-  { tipo: 'CONTEUDOS', label: 'Conteúdos', requerPrint: true },
+  { tipo: 'CONTEUDOS', label: 'Conteúdos', requerPrint: false },
   { tipo: 'INSIGHTS_INSTAGRAM', label: 'Insights — Instagram', requerPrint: true },
   { tipo: 'INSIGHTS_TIKTOK', label: 'Insights — TikTok', requerPrint: true },
   { tipo: 'INSIGHTS_YOUTUBE', label: 'Insights — YouTube', requerPrint: true },
@@ -198,6 +224,37 @@ export function formatarValor(v: unknown): string {
   return s;
 }
 
+/** Dicionário ascii→acentuado (pt-BR) para rótulos/nomes vindos de chaves snake_case sem acento. */
+const PT_ACENTOS: Record<string, string> = {
+  // métricas / demografia
+  visualizacoes: 'visualizações', visualizacao: 'visualização', interacoes: 'interações', interacao: 'interação',
+  impressoes: 'impressões', impressao: 'impressão', inscricoes: 'inscrições', inscricao: 'inscrição',
+  comentarios: 'comentários', comentario: 'comentário', reacoes: 'reações', genero: 'gênero',
+  etaria: 'etária', etario: 'etário', periodo: 'período', regiao: 'região', regioes: 'regiões', pais: 'país',
+  publico: 'público', audiencia: 'audiência', medio: 'médio', media: 'média', exibicao: 'exibição',
+  video: 'vídeo', videos: 'vídeos', conteudo: 'conteúdo', conteudos: 'conteúdos', metricas: 'métricas',
+  metrica: 'métrica', usuarios: 'usuários', usuario: 'usuário', numero: 'número', demografico: 'demográfico',
+  demograficos: 'demográficos',
+  // cidades / nomes próprios comuns
+  sao: 'são', luis: 'luís', jose: 'josé', joao: 'joão', andre: 'andré', goncalo: 'gonçalo',
+  brasilia: 'brasília', goiania: 'goiânia', belem: 'belém', vitoria: 'vitória', maceio: 'maceió',
+  florianopolis: 'florianópolis', cuiaba: 'cuiabá', macapa: 'macapá', niteroi: 'niterói',
+  guaruja: 'guarujá', maua: 'mauá', ribeirao: 'ribeirão', petropolis: 'petrópolis', uberlandia: 'uberlândia',
+  maringa: 'maringá', anapolis: 'anápolis', jundiai: 'jundiaí',
+};
+const PT_CONECTORES = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+
+/** Rótulo pt-BR a partir de uma chave (snake_case/espaços): aplica acentos conhecidos e capitaliza. */
+export function rotularPt(chave: string): string {
+  const palavras = chave.split(/[\s_]+/).filter(Boolean);
+  return palavras.map((w, i) => {
+    const low = w.toLowerCase();
+    const base = PT_ACENTOS[low] ?? w;
+    if (i > 0 && PT_CONECTORES.has(base.toLowerCase())) return base.toLowerCase();
+    return base.charAt(0).toUpperCase() + base.slice(1);
+  }).join(' ');
+}
+
 /** Garante URL absoluta (PDF abre no navegador). */
 export function garantirUrl(u?: string | null): string {
   const s = (u ?? '').trim();
@@ -211,7 +268,7 @@ export function configPadrao(tipo: string, influ?: InfluenciadorRef | null): Ses
       const handle = (influ?.[r.rede.toLowerCase() as keyof InfluenciadorRef] as string) ?? '';
       return { rede: r.rede, mostrar: !!handle, handle: handle ?? '', seguidores: '', url: handle ? urlRede(r.rede, handle) : '' };
     });
-    return { redes };
+    return { redes, nomeCapa: influ?.nome ?? '' };
   }
   if (tipo === 'CONTATO') {
     return { email: influ?.email ?? '', mostrarEmail: true, whatsapp: influ?.telefone ?? '', mostrarWhatsapp: true };
@@ -246,7 +303,7 @@ export function semearInfluenciador(sessoes: Sessao[], influ: InfluenciadorRef):
         const handleFinal = r.handle || handle || '';
         return { ...r, handle: handleFinal, url: r.url || (handleFinal ? urlRede(r.rede, handleFinal) : ''), mostrar: r.mostrar ?? !!handleFinal };
       });
-      return { ...s, config: JSON.stringify({ ...atual, redes }) };
+      return { ...s, config: JSON.stringify({ ...atual, redes, nomeCapa: atual.nomeCapa || influ.nome || '' }) };
     }
     return { ...s, config: JSON.stringify({
       email: atual.email || influ.email || '',

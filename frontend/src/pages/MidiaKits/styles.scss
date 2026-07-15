@@ -6,7 +6,8 @@
     align-items: center;
     gap: 0.25rem;
 
-    .acao-copiar {
+    .acao-copiar,
+    .acao-pdf {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -21,6 +22,9 @@
       &:hover:not(:disabled) { background: rgba($primary-color, 0.1); color: $primary-color; }
       &:disabled { opacity: 0.4; cursor: not-allowed; }
     }
+
+    .acao-pdf { color: #dc2626; }
+    .acao-pdf:hover:not(:disabled) { background: rgba(#dc2626, 0.1); color: #b91c1c; }
   }
 
   .qtd-badge {

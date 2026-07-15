@@ -3,7 +3,7 @@ package br.com.matheus.hubfeatcreators.enums;
 public enum TipoSessao {
     CAPA("Capa", false),
     SOBRE_INFLUENCIADOR("Sobre o influenciador", false),
-    CONTEUDOS("Conteúdos", true),
+    CONTEUDOS("Conteúdos", false),
     INSIGHTS_INSTAGRAM("Insights — Instagram", true),
     INSIGHTS_TIKTOK("Insights — TikTok", true),
     INSIGHTS_YOUTUBE("Insights — YouTube", true),
