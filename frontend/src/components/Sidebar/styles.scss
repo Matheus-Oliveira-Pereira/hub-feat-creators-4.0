@@ -26,7 +26,7 @@ $sidebar-expanded: 240px;
     .sidebar-menu .menu-item .menu-label { opacity: 1; visibility: visible; }
     .sidebar-footer .sidebar-footer-text { opacity: 1; transform: translateX(0); }
 
-    .sidebar-header .sidebar-logo-mini { opacity: 0; transform: scale(0.85); }
+    .sidebar-header .sidebar-logo-mini { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
     .sidebar-header .sidebar-logo-full { opacity: 1; transform: translateY(-50%) scale(1); }
   }
 
@@ -63,6 +63,10 @@ $sidebar-expanded: 240px;
       height: 22px;
       opacity: 1;
       transform: scale(1);
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
     }
   }
 
