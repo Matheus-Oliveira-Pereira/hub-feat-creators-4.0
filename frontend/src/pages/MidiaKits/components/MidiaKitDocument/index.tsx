@@ -1,12 +1,13 @@
 import { Document, Page, Text, View, StyleSheet, Image, Svg, Path, Link, Font, pdf } from '@react-pdf/renderer';
-import { MidiaKitTemplate, Sessao, InfluenciadorRef, RedeCapa, EsteticaSessao, labelTipo, parseFotos, parseConfig, formatarValor, garantirUrl, rotularPt } from '../../service';
+import { MidiaKitTemplate, Sessao, InfluenciadorRef, RedeCapa, EsteticaSessao, ESTETICA_PADRAO, labelTipo, parseFotos, parseConfig, formatarValor, garantirUrl, rotularPt } from '../../service';
 import { SOCIAL_ICONS } from './socialIcons';
 import { LOGO_PATHS, LOGO_VIEWBOX } from './logo';
+import archivoBlackUrl from '../../../../assets/fonts/ArchivoBlack-Regular.ttf';
 
-// Fonte de títulos (grotesca pesada, próxima do print de referência). TTF (react-pdf não aceita woff).
+// Fonte de títulos (grotesca pesada) embutida no bundle — sem dependência de rede na exportação.
 Font.register({
   family: 'Heading',
-  src: 'https://raw.githubusercontent.com/google/fonts/main/ofl/archivoblack/ArchivoBlack-Regular.ttf',
+  src: archivoBlackUrl,
 });
 const HEADING = 'Heading';
 
@@ -62,20 +63,21 @@ interface Tema {
   alturaPagina: number | null;
 }
 
+// Derivado de ESTETICA_PADRAO (fonte única compartilhada com o EsteticaDialog).
 const TEMA_PADRAO: Tema = {
-  bg: '#0a0a0a',
-  card: '#1a1a1a',
-  lime: '#C2E000',
-  text: '#f5f5f5',
-  muted: '#9ca3af',
-  border: '#3d3d3d',
+  bg: ESTETICA_PADRAO.corFundo,
+  card: ESTETICA_PADRAO.corCard,
+  lime: ESTETICA_PADRAO.corDestaque,
+  text: ESTETICA_PADRAO.corTexto,
+  muted: ESTETICA_PADRAO.corTextoSecundario,
+  border: ESTETICA_PADRAO.corBorda,
   fonteTitulo: HEADING,
-  tamNomeCapa: 56,
-  tamTitulo: 40,
-  tamTexto: 13,
-  padding: 40,
-  gap: 12,
-  raio: 14,
+  tamNomeCapa: ESTETICA_PADRAO.tamanhoNomeCapa,
+  tamTitulo: ESTETICA_PADRAO.tamanhoTitulo,
+  tamTexto: ESTETICA_PADRAO.tamanhoTexto,
+  padding: ESTETICA_PADRAO.paddingPagina,
+  gap: ESTETICA_PADRAO.gapCards,
+  raio: ESTETICA_PADRAO.raioBorda,
   escala: 1,
   alinhTitulo: 'left',
   alinhConteudo: 'left',
@@ -160,7 +162,7 @@ function criarStyles(t: Tema) {
 
     // Sobre
     sobreCenter: { flexGrow: 1, justifyContent: 'center' },
-    sobreWrap: { flexDirection: 'row', gap: 68, alignItems: 'center', marginTop: 14 },
+    sobreWrap: { flexDirection: 'row', gap: 68, alignItems: 'center', marginTop: 30 },
     sobreTexto: { flex: 1, fontSize: t.tamTexto, lineHeight: 1.7, color: SOFT, textAlign: t.alinhConteudo },
     sobreFotoFrame: { backgroundColor: '#9ca3af', borderRadius: 13.5, padding: 2, alignSelf: 'center', flexShrink: 0 },
     sobreFoto: { width: 280 * k, height: 280 * k, borderRadius: 11.5, objectFit: 'cover' },
@@ -209,6 +211,7 @@ function criarStyles(t: Tema) {
     marcaNome: { fontSize: 10, color: '#111', fontFamily: 'Helvetica-Bold', marginTop: 8, textAlign: 'center' },
 
     linkPrints: { fontSize: 10.5, color: t.lime, textDecoration: 'none', marginBottom: 14 },
+    linkPrintsUnderline: { textDecoration: 'underline' },
 
     // Contato
     contatoBody: { flexGrow: 1, justifyContent: 'center' },
@@ -563,7 +566,7 @@ function Insights({ sessao }: Readonly<{ sessao: Sessao }>) {
         <TituloAcento texto={titulo} styles={styles} />
       </View>
       {sessao.conteudo ? <Text style={styles.subtitulo}>{sessao.conteudo}</Text> : <View style={{ height: 6 }} />}
-      {linkPrints ? <Link src={linkPrints} style={styles.linkPrints}>Clique aqui para baixar os prints originais dos insights</Link> : null}
+      {linkPrints ? <Link src={linkPrints} style={styles.linkPrints}>Clique <Text style={styles.linkPrintsUnderline}>aqui</Text> para baixar os prints originais dos insights</Link> : null}
 
       {escalares.length > 0 && (
         <View style={styles.metricGrid}>

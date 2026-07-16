@@ -32,9 +32,24 @@ public class ClaudeVisionService {
 
     private final ConfiguracaoService configuracaoService;
 
+    private static final int MAX_PRINTS = 10;
+    private static final long MAX_BYTES_POR_PRINT = 10L * 1024 * 1024; // 10MB
+
     public String analisarPrints(TipoSessao tipo, List<MultipartFile> prints, String comando) {
         if (prints == null || prints.isEmpty()) {
             throw new ConfiguracaoInvalidaException("Envie ao menos um print para análise.");
+        }
+        if (prints.size() > MAX_PRINTS) {
+            throw new ConfiguracaoInvalidaException("Envie no máximo " + MAX_PRINTS + " prints por análise.");
+        }
+        for (MultipartFile print : prints) {
+            String ct = print.getContentType();
+            if (ct == null || !ct.toLowerCase().startsWith("image/")) {
+                throw new ConfiguracaoInvalidaException("Arquivo \"" + print.getOriginalFilename() + "\" não é uma imagem.");
+            }
+            if (print.getSize() > MAX_BYTES_POR_PRINT) {
+                throw new ConfiguracaoInvalidaException("Print \"" + print.getOriginalFilename() + "\" excede 10MB.");
+            }
         }
 
         AnthropicClient client = configuracaoService.obterClienteAnthropic();

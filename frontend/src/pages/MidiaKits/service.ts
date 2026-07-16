@@ -62,6 +62,53 @@ export interface EsteticaSessao {
   alinhamentoConteudo?: string | null;
 }
 
+/** Valores padrão da estética — fonte única usada pelo PDF (tema) e pelo EsteticaDialog (placeholders). */
+export const ESTETICA_PADRAO = {
+  corFundo: '#0a0a0a',
+  corDestaque: '#C2E000',
+  corTexto: '#f5f5f5',
+  corTextoSecundario: '#9ca3af',
+  corCard: '#1a1a1a',
+  corBorda: '#3d3d3d',
+  fonteTitulo: 'Heading',
+  tamanhoNomeCapa: 56,
+  tamanhoTitulo: 40,
+  tamanhoTexto: 13,
+  paddingPagina: 40,
+  alturaPagina: 500,
+  gapCards: 12,
+  raioBorda: 14,
+  escalaFotos: 100,
+  alinhamentoTitulo: 'left',
+  alinhamentoConteudo: 'left',
+} as const;
+
+/** Presets de tema aplicáveis ao template inteiro (estetica=null volta ao padrão dark/lime). */
+export const TEMAS_TEMPLATE: { nome: string; estetica: EsteticaSessao | null }[] = [
+  { nome: 'Padrão (dark/lime)', estetica: null },
+  {
+    nome: 'Claro',
+    estetica: {
+      corFundo: '#ffffff', corCard: '#f3f4f6', corDestaque: '#16a34a',
+      corTexto: '#111827', corTextoSecundario: '#6b7280', corBorda: '#e5e7eb',
+    },
+  },
+  {
+    nome: 'Azul noite',
+    estetica: {
+      corFundo: '#0b1220', corCard: '#131f38', corDestaque: '#38bdf8',
+      corTexto: '#f1f5f9', corTextoSecundario: '#94a3b8', corBorda: '#27395e',
+    },
+  },
+  {
+    nome: 'Roxo',
+    estetica: {
+      corFundo: '#150022', corCard: '#241238', corDestaque: '#c084fc',
+      corTexto: '#faf5ff', corTextoSecundario: '#a78bfa', corBorda: '#3b2757',
+    },
+  },
+];
+
 export interface RedeCapa {
   rede: string;
   mostrar: boolean;
@@ -90,6 +137,8 @@ export interface SessaoConfig {
   linkPrints?: string;
   /** Nome exibido na capa (independente do cadastro do influenciador). */
   nomeCapa?: string;
+  /** ISO da última extração de analytics (exibido no editor). */
+  analisadoEm?: string;
 }
 
 export interface MidiaKitTemplate {
@@ -327,6 +376,18 @@ export function parseFotos(fotos?: string | null): string[] {
   }
 }
 
+/** Tipos preenchidos automaticamente a partir do influenciador (não exigem conteúdo próprio). */
+export const TIPOS_AUTO = ['CAPA', 'CONTATO'];
+
+/** Seção sem nenhum conteúdo (texto, foto ou analytics); CAPA/CONTATO são isentos. */
+export function sessaoVazia(s: Sessao): boolean {
+  if (TIPOS_AUTO.includes(s.tipo)) return false;
+  const temFoto = parseFotos(s.fotos).length > 0;
+  const temTexto = !!s.conteudo && s.conteudo.trim().length > 0;
+  const temAnalytics = !!s.analyticsJson && s.analyticsJson.trim().length > 0;
+  return !temFoto && !temTexto && !temAnalytics;
+}
+
 const baseService = new BaseService<MidiaKitTemplateDTO>('/midiakit-templates');
 
 function buildQuery(page: number, size: number, filtros: MidiaKitFiltros): string[] {
@@ -350,7 +411,7 @@ export const midiaKitService = {
     baseService.getPage(buildQuery(page, size, filtros)),
 
   buscar: (id: string): Promise<MidiaKitTemplate> =>
-    baseService.getById(id) as Promise<MidiaKitTemplate>,
+    baseService.getById(id) as unknown as Promise<MidiaKitTemplate>,
 
   salvar: (data: MidiaKitForm) => baseService.create(data),
 

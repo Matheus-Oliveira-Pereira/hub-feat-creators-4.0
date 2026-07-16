@@ -6,29 +6,11 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
 import { SelectButton } from 'primereact/selectbutton';
 import { Accordion, AccordionTab } from 'primereact/accordion';
-import { EsteticaSessao } from '../../service';
+import { EsteticaSessao, ESTETICA_PADRAO } from '../../service';
 import './styles.scss';
 
-/** Valores padrão (espelham o TEMA_PADRAO do PDF) — usados como placeholder quando o campo está vazio. */
-const PADRAO = {
-  corFundo: '#0a0a0a',
-  corDestaque: '#C2E000',
-  corTexto: '#f5f5f5',
-  corTextoSecundario: '#9ca3af',
-  corCard: '#1a1a1a',
-  corBorda: '#3d3d3d',
-  fonteTitulo: 'Heading',
-  tamanhoNomeCapa: 56,
-  tamanhoTitulo: 40,
-  tamanhoTexto: 13,
-  paddingPagina: 40,
-  alturaPagina: 500,
-  gapCards: 12,
-  raioBorda: 14,
-  escalaFotos: 100,
-  alinhamentoTitulo: 'left',
-  alinhamentoConteudo: 'left',
-};
+/** Valores padrão compartilhados com o PDF — placeholders quando o campo está vazio. */
+const PADRAO = ESTETICA_PADRAO;
 
 const FONTES = [
   { label: 'Archivo Black (padrão)', value: 'Heading' },

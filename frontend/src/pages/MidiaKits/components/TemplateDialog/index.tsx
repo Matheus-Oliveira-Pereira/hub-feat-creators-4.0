@@ -4,17 +4,18 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
+import { pdf } from '@react-pdf/renderer';
 import StatusDropdown from '../../../../components/StatusDropdown';
 import SessoesEditor, { sessaoVazia } from '../SessoesEditor';
-import { baixarPdf } from '../MidiaKitDocument';
-import { midiaKitService, MidiaKitTemplate, Sessao, InfluenciadorRef, sessoesPadrao, semearInfluenciador } from '../../service';
+import MidiaKitDocument, { baixarPdf } from '../MidiaKitDocument';
+import { midiaKitService, MidiaKitTemplate, Sessao, InfluenciadorRef, sessoesPadrao, semearInfluenciador, TEMAS_TEMPLATE } from '../../service';
 import './styles.scss';
 
 interface TemplateDialogProps {
   visible: boolean;
   templateId: string | null;
   onHide: () => void;
-  onToast: (severity: 'success' | 'error', detail: string) => void;
+  onToast: (severity: 'success' | 'error' | 'warn', detail: string) => void;
 }
 
 interface FormState {
@@ -32,6 +33,8 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
   const [form, setForm] = useState<FormState>(VAZIO);
   const [submitted, setSubmitted] = useState(false);
   const [exportando, setExportando] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [gerandoPreview, setGerandoPreview] = useState(false);
 
   const { data: influenciadores = [] } = useQuery({
     queryKey: ['influenciadores-ativos'],
@@ -104,21 +107,53 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
     salvarMutation.mutate();
   };
 
+  /** Documento com o estado ATUAL do form (funciona também para template ainda não salvo). */
+  const docAtual = (): MidiaKitTemplate => ({
+    id: templateId ?? 'novo',
+    nome: form.nome || 'Mídia Kit',
+    influenciador: influSelecionado,
+    status: form.status,
+    sessoes: form.sessoes.map((s, i) => ({ ...s, ordem: i })),
+  });
+
   const exportarPdf = async () => {
-    if (!template) return;
     setExportando(true);
     try {
-      const docTemplate: MidiaKitTemplate = {
-        ...template,
-        nome: form.nome,
-        sessoes: form.sessoes.map((s, i) => ({ ...s, ordem: i })),
-      };
-      await baixarPdf(docTemplate);
+      await baixarPdf(docAtual());
     } catch {
       onToast('error', 'Falha ao gerar PDF');
     } finally {
       setExportando(false);
     }
+  };
+
+  /** Preview inline: gera o blob e abre num Dialog com iframe. */
+  const visualizar = async () => {
+    setGerandoPreview(true);
+    try {
+      const blob = await pdf(<MidiaKitDocument template={docAtual()} />).toBlob();
+      setPreviewUrl((antiga) => {
+        if (antiga) URL.revokeObjectURL(antiga);
+        return URL.createObjectURL(blob);
+      });
+    } catch {
+      onToast('error', 'Falha ao gerar preview');
+    } finally {
+      setGerandoPreview(false);
+    }
+  };
+
+  const fecharPreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  };
+
+  /** Aplica um preset de tema a todas as seções (null = volta ao padrão). */
+  const aplicarTema = (nome: string) => {
+    const tema = TEMAS_TEMPLATE.find((t) => t.nome === nome);
+    if (!tema) return;
+    setForm((f) => ({ ...f, sessoes: f.sessoes.map((s) => ({ ...s, estetica: tema.estetica ? { ...tema.estetica } : null })) }));
+    onToast('success', `Tema "${nome}" aplicado a todas as seções`);
   };
 
   const header = (
@@ -129,6 +164,7 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
 
   const footer = (
     <div className="template-footer">
+      <Button label="Visualizar" icon="pi pi-eye" className="btn-preview" onClick={visualizar} loading={gerandoPreview} />
       {editando && (
         <Button label="Exportar PDF" icon="pi pi-file-pdf" className="btn-pdf" onClick={exportarPdf} loading={exportando} disabled={!template} />
       )}
@@ -158,9 +194,26 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
       </div>
 
       <div className="form-field">
-        <label>Seções do mídia kit</label>
+        <div className="secoes-head">
+          <label>Seções do mídia kit</label>
+          <Dropdown value={null} options={TEMAS_TEMPLATE} optionLabel="nome" optionValue="nome"
+            onChange={(e) => aplicarTema(e.value)} placeholder="Aplicar tema..." className="tema-drop" baseZIndex={10000} />
+        </div>
         <SessoesEditor sessoes={form.sessoes} onChange={(sessoes) => setForm({ ...form, sessoes })} templateId={templateId} influenciador={influSelecionado} onToast={onToast} />
       </div>
+
+      <Dialog
+        header={<span><i className="pi pi-eye" /> Preview — {form.nome || 'Mídia Kit'}</span>}
+        visible={!!previewUrl}
+        onHide={fecharPreview}
+        style={{ width: '92vw', height: '92vh' }}
+        modal
+        draggable={false}
+        baseZIndex={10001}
+        className="preview-pdf-dialog"
+      >
+        {previewUrl && <iframe src={previewUrl} title="Preview do mídia kit" className="preview-pdf-frame" />}
+      </Dialog>
     </Dialog>
   );
 }

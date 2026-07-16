@@ -52,8 +52,10 @@ function MidiaKits() {
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['midia-kits'] });
-  const mostrar = (severity: 'success' | 'error', detail: string) =>
-    toast.current?.show({ severity, summary: severity === 'success' ? 'Sucesso' : 'Erro', detail });
+  const mostrar = (severity: 'success' | 'error' | 'warn', detail: string) => {
+    const summary = severity === 'success' ? 'Sucesso' : severity === 'warn' ? 'Atenção' : 'Erro';
+    toast.current?.show({ severity, summary, detail });
+  };
 
   const desativarMutation = useMutation({
     mutationFn: (id: string) => midiaKitService.desativar(id),

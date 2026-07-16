@@ -40,13 +40,25 @@
   .sessao-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.5rem;
+
+    .sessao-arrastar {
+      display: inline-flex;
+      align-items: center;
+      color: $gray-400;
+      cursor: grab;
+
+      &:hover { color: $primary-color; }
+      &:active { cursor: grabbing; }
+    }
 
     .sessao-tipo {
       font-weight: 600;
       font-size: 0.85rem;
       color: $gray-700;
     }
+
+    .sessao-head-right { margin-left: auto; }
   }
 
   .sessao-head-right {
@@ -280,6 +292,19 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+
+    .label-acoes {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+  }
+
+  .analytics-data {
+    margin-left: 0.4rem;
+    font-weight: 400;
+    font-size: 0.68rem;
+    color: #10b981;
   }
 
   .print-comando {

@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 @Entity
 @Table(name = "SESSAO_MIDIA_KIT")
@@ -49,12 +50,15 @@ public class SessaoMidiaKit extends Entidade {
     @Column(name = "analytics_json", columnDefinition = "TEXT")
     private String analyticsJson;
 
-    /** JSON array de imagens (data URLs base64) anexadas à seção. */
+    /** JSON array de imagens (data URLs base64) anexadas à seção. Fora da auditoria (payload gigante inflaria a _AUD). */
     @Column(columnDefinition = "TEXT")
+    @NotAudited
     private String fotos;
 
-    /** JSON estruturado por tipo (redes da capa, links das fotos, comando de extração, contatos). */
+    /** JSON estruturado por tipo (redes da capa, links das fotos, comando de extração, contatos).
+     *  Fora da auditoria — pode carregar snapshots de logos em base64. */
     @Column(columnDefinition = "TEXT")
+    @NotAudited
     private String config;
 
     /** Estética opcional da seção (cores, tipografia, layout). Campos null = padrão do template. */

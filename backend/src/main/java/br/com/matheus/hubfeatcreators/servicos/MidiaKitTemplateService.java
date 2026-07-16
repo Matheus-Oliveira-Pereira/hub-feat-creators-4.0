@@ -7,6 +7,8 @@ import br.com.matheus.hubfeatcreators.enums.StatusMidiaKitTemplate;
 import br.com.matheus.hubfeatcreators.exceptions.EntidadeNaoEncontradaException;
 import br.com.matheus.hubfeatcreators.repositorios.InfluenciadorRepository;
 import br.com.matheus.hubfeatcreators.repositorios.MidiaKitTemplateRepository;
+import br.com.matheus.hubfeatcreators.repositorios.SessaoMidiaKitRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.MidiaKitTemplateDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.midiakit.MidiaKitTemplateDTO;
@@ -31,6 +33,11 @@ public class MidiaKitTemplateService extends EntidadeService<MidiaKitTemplate, M
     @Autowired
     private ClaudeVisionService visionService;
 
+    @Autowired
+    private SessaoMidiaKitRepository sessaoRepository;
+
+    private static final ObjectMapper JSON = new ObjectMapper();
+
     public PaginatedResponse<MidiaKitTemplateDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);
     }
@@ -39,7 +46,8 @@ public class MidiaKitTemplateService extends EntidadeService<MidiaKitTemplate, M
         return repository.findByStatus(StatusMidiaKitTemplate.ATIVO);
     }
 
-    /** Fluxo "enviar só os prints novos": roda vision na seção e salva o JSON de analytics. */
+    /** Fluxo "enviar só os prints novos": roda vision na seção e salva SÓ a sessão
+     *  (evita reescrever o template inteiro e conflitar com edições concorrentes). */
     public SessaoMidiaKit analisarSessao(UUID templateId, UUID sessaoId, List<MultipartFile> prints, String comando) {
         MidiaKitTemplate template = buscar(templateId);
         SessaoMidiaKit sessao = template.getSessoes().stream()
@@ -49,8 +57,7 @@ public class MidiaKitTemplateService extends EntidadeService<MidiaKitTemplate, M
 
         String json = visionService.analisarPrints(sessao.getTipo(), prints, comando);
         sessao.setAnalyticsJson(json);
-        super.salvar(template);
-        return sessao;
+        return sessaoRepository.save(sessao);
     }
 
     /** Tipos cuja seção é preenchida a partir do influenciador (não exigem conteúdo próprio). */
@@ -69,16 +76,24 @@ public class MidiaKitTemplateService extends EntidadeService<MidiaKitTemplate, M
         return super.salvar(entidade);
     }
 
-    /** Bloqueia seção sem nenhum conteúdo (texto, fotos ou analytics); CAPA/CONTATO são isentos. */
-    private void validarSessoes(MidiaKitTemplate template) {
+    /** Bloqueia seção sem nenhum conteúdo (texto, fotos ou analytics) e config JSON inválido; CAPA/CONTATO isentos de conteúdo. */
+    void validarSessoes(MidiaKitTemplate template) {
         if (template.getSessoes() == null) return;
         for (SessaoMidiaKit s : template.getSessoes()) {
+            String label = s.getTitulo() != null && !s.getTitulo().isBlank() ? s.getTitulo() : s.getTipo().getLabel();
+            if (s.getConfig() != null && !s.getConfig().isBlank()) {
+                try {
+                    JSON.readTree(s.getConfig());
+                } catch (Exception e) {
+                    throw new br.com.matheus.hubfeatcreators.exceptions.ConfiguracaoInvalidaException(
+                            "A configuração da seção \"" + label + "\" está corrompida (JSON inválido).");
+                }
+            }
             if (TIPOS_AUTO.contains(s.getTipo())) continue;
             boolean temConteudo = (s.getConteudo() != null && !s.getConteudo().isBlank())
                     || (s.getAnalyticsJson() != null && !s.getAnalyticsJson().isBlank())
                     || (s.getFotos() != null && !s.getFotos().isBlank() && !s.getFotos().equals("[]"));
             if (!temConteudo) {
-                String label = s.getTitulo() != null && !s.getTitulo().isBlank() ? s.getTitulo() : s.getTipo().getLabel();
                 throw new br.com.matheus.hubfeatcreators.exceptions.ConfiguracaoInvalidaException(
                         "A seção \"" + label + "\" está sem conteúdo. Adicione texto, fotos ou analytics, ou remova a seção.");
             }
@@ -97,20 +112,35 @@ public class MidiaKitTemplateService extends EntidadeService<MidiaKitTemplate, M
 
     /**
      * Atualização: copia campos simples e sincroniza as sessões DENTRO da coleção gerenciada
-     * (orphanRemoval exige mutar a mesma instância, não substituí-la). Filhos recriados a cada
-     * update (id=null) — o frontend recarrega o template com os ids novos após salvar.
+     * (orphanRemoval exige mutar a mesma instância, não substituí-la). Sessões existentes são
+     * casadas por id e atualizadas in-place (preserva id/versão/auditoria); as que não vierem
+     * no payload são removidas (órfãs); sem id entram como novas.
      */
     @Override
     public void copyProperties(MidiaKitTemplate source, MidiaKitTemplate target) {
         org.springframework.beans.BeanUtils.copyProperties(source, target, "id", "versao", "registro", "criadoPor", "sessoes");
-        target.getSessoes().clear();
+
+        java.util.Map<UUID, SessaoMidiaKit> existentes = new java.util.HashMap<>();
+        for (SessaoMidiaKit s : target.getSessoes()) {
+            if (s.getId() != null) existentes.put(s.getId(), s);
+        }
+
+        List<SessaoMidiaKit> resultado = new ArrayList<>();
         if (source.getSessoes() != null) {
-            for (SessaoMidiaKit s : source.getSessoes()) {
-                s.setId(null);
-                s.setTemplate(target);
-                target.getSessoes().add(s);
+            for (SessaoMidiaKit enviada : source.getSessoes()) {
+                SessaoMidiaKit alvo = enviada.getId() != null ? existentes.get(enviada.getId()) : null;
+                if (alvo != null) {
+                    copiarConteudoSessao(enviada, alvo);
+                    resultado.add(alvo);
+                } else {
+                    enviada.setId(null);
+                    enviada.setTemplate(target);
+                    resultado.add(enviada);
+                }
             }
         }
+        target.getSessoes().clear();
+        target.getSessoes().addAll(resultado);
     }
 
     /** Garante template setado em cada sessão e ordem sequencial. */
@@ -153,7 +183,7 @@ public class MidiaKitTemplateService extends EntidadeService<MidiaKitTemplate, M
     }
 
     /** Replica TODOS os campos de conteúdo/config/estética de uma seção (evita perda de dados na cópia). */
-    private void copiarConteudoSessao(SessaoMidiaKit origem, SessaoMidiaKit destino) {
+    void copiarConteudoSessao(SessaoMidiaKit origem, SessaoMidiaKit destino) {
         destino.setTipo(origem.getTipo());
         destino.setOrdem(origem.getOrdem());
         destino.setTitulo(origem.getTitulo());
