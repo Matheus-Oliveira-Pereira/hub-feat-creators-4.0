@@ -12,17 +12,21 @@ public class LogEmailDTO {
     private UUID id;
     private String titulo;
     private String destinatarios;
+    private String copia;
+    private String copiaOculta;
     private String conta;
     private LogEmail.Status status;
     private String erro;
     private LocalDateTime registro;
     private String criadoPor;
 
-    public LogEmailDTO(UUID id, String titulo, String destinatarios, String conta, LogEmail.Status status,
-                       String erro, LocalDateTime registro, String criadoPor) {
+    public LogEmailDTO(UUID id, String titulo, String destinatarios, String copia, String copiaOculta,
+                       String conta, LogEmail.Status status, String erro, LocalDateTime registro, String criadoPor) {
         this.id = id;
         this.titulo = titulo;
         this.destinatarios = destinatarios;
+        this.copia = copia;
+        this.copiaOculta = copiaOculta;
         this.conta = conta;
         this.status = status;
         this.erro = erro;

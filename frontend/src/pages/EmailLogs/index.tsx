@@ -49,8 +49,16 @@ function EmailLogs() {
   const dataTemplate = (row: LogEmailDTO) =>
     row.registro ? new Date(row.registro).toLocaleString('pt-BR') : <span className="text-muted">&mdash;</span>;
 
-  const destinatariosTemplate = (row: LogEmailDTO) =>
-    row.destinatarios || <span className="text-muted">&mdash;</span>;
+  const destinatariosTemplate = (row: LogEmailDTO) => {
+    if (!row.destinatarios && !row.copia && !row.copiaOculta) return <span className="text-muted">&mdash;</span>;
+    return (
+      <span>
+        {row.destinatarios}
+        {row.copia && <><br /><small style={{ color: '#6b7280' }}>CC: {row.copia}</small></>}
+        {row.copiaOculta && <><br /><small style={{ color: '#6b7280' }}>CCO: {row.copiaOculta}</small></>}
+      </span>
+    );
+  };
 
   const contaTemplate = (row: LogEmailDTO) =>
     row.conta || <span className="text-muted">&mdash;</span>;

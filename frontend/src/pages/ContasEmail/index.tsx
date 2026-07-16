@@ -5,6 +5,7 @@ import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
+import { Chips } from 'primereact/chips';
 import { MultiSelect } from 'primereact/multiselect';
 import { Calendar } from 'primereact/calendar';
 import { Dialog } from 'primereact/dialog';
@@ -31,8 +32,15 @@ import './styles.scss';
 interface FormErrors { nome?: string; host?: string; usuario?: string; senha?: string; }
 
 const FORM_VAZIO: ContaEmailForm = {
-  nome: '', host: '', porta: 587, usuario: '', remetenteNome: '', senha: '', tls: true, sistema: false, status: 'ATIVO',
+  nome: '', host: '', porta: 587, usuario: '', remetenteNome: '', senha: '', tls: true,
+  imapHost: '', imapPorta: null, salvarEnviados: true, copiaOculta: '',
+  sistema: false, status: 'ATIVO',
 };
+
+/** CSV → chips e vice-versa (campo copiaOculta guarda string no backend). */
+const csvParaChips = (csv?: string | null): string[] =>
+  (csv ?? '').split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+const chipsParaCsv = (chips: string[]): string => chips.map((s) => s.trim()).filter(Boolean).join(', ');
 
 function ContasEmail() {
   const queryClient = useQueryClient();
@@ -141,6 +149,8 @@ function ContasEmail() {
       setForm({
         nome: data.nome, host: data.host, porta: data.porta, usuario: data.usuario,
         remetenteNome: data.remetenteNome ?? '', senha: '', tls: data.tls ?? true,
+        imapHost: data.imapHost ?? '', imapPorta: data.imapPorta,
+        salvarEnviados: data.salvarEnviados ?? true, copiaOculta: data.copiaOculta ?? '',
         sistema: data.sistema, status: data.status,
       });
       setSenhaConfigurada(true);
@@ -155,6 +165,8 @@ function ContasEmail() {
       setForm({
         nome: '', host: data.host, porta: data.porta, usuario: '',
         remetenteNome: data.remetenteNome ?? '', senha: '', tls: data.tls ?? true,
+        imapHost: data.imapHost ?? '', imapPorta: data.imapPorta,
+        salvarEnviados: data.salvarEnviados ?? true, copiaOculta: data.copiaOculta ?? '',
         sistema: false, status: 'ATIVO',
       });
       setSenhaConfigurada(false);
@@ -289,6 +301,35 @@ function ContasEmail() {
             <label htmlFor="sistema">Conta do sistema (padrão)</label>
           </div>
         </div>
+
+        <div className="bloco-avancado">
+          <span className="bloco-avancado-titulo"><i className="pi pi-inbox" /> Pasta Enviados e cópias</span>
+          <div className="form-field switch-field">
+            <InputSwitch id="salvarEnviados" checked={form.salvarEnviados} onChange={(e) => setForm({ ...form, salvarEnviados: !!e.value })} />
+            <label htmlFor="salvarEnviados">Salvar cópia na pasta Enviados (IMAP)</label>
+          </div>
+          <small className="config-hint">Gmail/Google Workspace já salvam automaticamente — desative para evitar duplicados.</small>
+          {form.salvarEnviados && (
+            <div className="form-grid-2">
+              <div className="form-field">
+                <label htmlFor="imapHost">Servidor IMAP</label>
+                <InputText id="imapHost" value={form.imapHost} onChange={(e) => setForm({ ...form, imapHost: e.target.value })} className="w-full"
+                  placeholder={form.host.trim() ? `auto: ${form.host.trim().toLowerCase().startsWith('smtp.') ? 'imap.' + form.host.trim().slice(5) : 'imap.' + form.host.trim()}` : 'auto (derivado do SMTP)'} />
+              </div>
+              <div className="form-field">
+                <label htmlFor="imapPorta">Porta IMAP</label>
+                <InputNumber id="imapPorta" value={form.imapPorta} onValueChange={(e) => setForm({ ...form, imapPorta: e.value ?? null })} useGrouping={false} className="w-full" placeholder="993" />
+              </div>
+            </div>
+          )}
+          <div className="form-field">
+            <label htmlFor="copiaOculta">Cópia oculta automática (CCO)</label>
+            <Chips id="copiaOculta" value={csvParaChips(form.copiaOculta)} onChange={(e) => setForm({ ...form, copiaOculta: chipsParaCsv(e.value ?? []) })}
+              separator="," className="w-full" placeholder="Digite o e-mail e Enter" />
+            <small className="config-hint">Todo e-mail enviado por esta conta copia oculto estes endereços.</small>
+          </div>
+        </div>
+
         <div className="form-field">
           <label htmlFor="status">Status <span className="required">*</span></label>
           <StatusDropdown id="status" value={form.status} onChange={(e) => setForm({ ...form, status: e.value })} className="w-full" baseZIndex={10000} />

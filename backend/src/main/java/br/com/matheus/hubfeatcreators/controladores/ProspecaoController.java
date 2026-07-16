@@ -35,11 +35,13 @@ public class ProspecaoController extends EntidadeController<Prospecao, Prospecao
 
     @PostMapping("/{id}/follow-up")
     public ResponseEntity<FollowUp> registrarFollowUp(@PathVariable UUID id, @RequestBody EnvioEmailRequest body) {
-        return ResponseEntity.ok(service.registrarFollowUp(id, body.getAssunto(), body.getCorpo(), body.getObservacoes()));
+        return ResponseEntity.ok(service.registrarFollowUp(
+                id, body.getAssunto(), body.getCorpo(), body.getObservacoes(), body.getCc(), body.getCco()));
     }
 
     @PostMapping("/{id}/email")
     public ResponseEntity<LogEmail> enviarEmailContato(@PathVariable UUID id, @RequestBody EnvioEmailRequest body) {
-        return ResponseEntity.ok(service.enviarEmailContato(id, body.getAssunto(), body.getCorpo()));
+        return ResponseEntity.ok(service.enviarEmailContato(
+                id, body.getAssunto(), body.getCorpo(), body.getCc(), body.getCco()));
     }
 }

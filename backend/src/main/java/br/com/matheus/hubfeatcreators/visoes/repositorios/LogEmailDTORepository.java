@@ -17,7 +17,7 @@ public class LogEmailDTORepository extends EntidadeDTORepository {
 
     private static final String HQL_LISTAR = """
             select new br.com.matheus.hubfeatcreators.visoes.telas.email.LogEmailDTO(
-                l.id, l.titulo, l.destinatarios, l.contaNome, l.status, l.erro, l.registro, l.criadoPor
+                l.id, l.titulo, l.destinatarios, l.copia, l.copiaOculta, l.contaNome, l.status, l.erro, l.registro, l.criadoPor
             ) from LogEmail l where 1 = 1
             """;
 

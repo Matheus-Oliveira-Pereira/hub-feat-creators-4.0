@@ -95,6 +95,12 @@ public class ProspecaoService extends EntidadeService<Prospecao, ProspecaoReposi
 
     /** Registra um follow-up e dispara e-mail ao contato da marca (assunto/corpo vindos do painel). */
     public FollowUp registrarFollowUp(UUID prospecaoId, String assunto, String corpo, String observacoes) {
+        return registrarFollowUp(prospecaoId, assunto, corpo, observacoes, null, null);
+    }
+
+    /** Follow-up com CC/BCC opcionais. */
+    public FollowUp registrarFollowUp(UUID prospecaoId, String assunto, String corpo, String observacoes,
+                                      List<String> cc, List<String> cco) {
         Prospecao prospecao = buscar(prospecaoId);
         String destino = validarContatoEmail(prospecao);
 
@@ -113,6 +119,7 @@ public class ProspecaoService extends EntidadeService<Prospecao, ProspecaoReposi
                         + prospecao.getInfluenciador().getNome() + ".</p>";
 
         Email email = new Email(tituloFinal, conteudoFinal, List.of(destino));
+        aplicarCopias(email, cc, cco);
         LogEmail logEmail = emailService.enviarSync(email, prospecao.getInfluenciador());
         followUp.setLogEmail(logEmail);
 
@@ -123,12 +130,18 @@ public class ProspecaoService extends EntidadeService<Prospecao, ProspecaoReposi
 
     /** Envia e-mail de contato inicial ao contato da marca (não registra histórico de follow-up). */
     public LogEmail enviarEmailContato(UUID prospecaoId, String assunto, String corpo) {
+        return enviarEmailContato(prospecaoId, assunto, corpo, null, null);
+    }
+
+    /** Contato inicial com CC/BCC opcionais. */
+    public LogEmail enviarEmailContato(UUID prospecaoId, String assunto, String corpo, List<String> cc, List<String> cco) {
         Prospecao prospecao = buscar(prospecaoId);
         String destino = validarContatoEmail(prospecao);
         Email email = new Email(
                 assunto != null ? assunto : "Contato — " + prospecao.getMarca().getNome(),
                 corpo != null ? corpo : "",
                 List.of(destino));
+        aplicarCopias(email, cc, cco);
         LogEmail logEmail = emailService.enviarSync(email, prospecao.getInfluenciador());
 
         // Confirma o contato inicial e guarda a data (base da regra de follow-up).
@@ -140,6 +153,16 @@ public class ProspecaoService extends EntidadeService<Prospecao, ProspecaoReposi
             super.salvar(prospecao);
         }
         return logEmail;
+    }
+
+    /** Aplica CC/BCC opcionais ao e-mail (listas limpas de vazios). */
+    private void aplicarCopias(Email email, List<String> cc, List<String> cco) {
+        if (cc != null) {
+            email.setCopia(cc.stream().filter(e -> e != null && !e.isBlank()).map(String::trim).toList());
+        }
+        if (cco != null) {
+            email.setCopiaOculta(cco.stream().filter(e -> e != null && !e.isBlank()).map(String::trim).toList());
+        }
     }
 
     private String validarContatoEmail(Prospecao prospecao) {

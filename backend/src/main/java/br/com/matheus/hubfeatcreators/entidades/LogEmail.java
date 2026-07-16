@@ -48,4 +48,12 @@ public class LogEmail extends Entidade {
 
     @Column(length = 2048)
     private String destinatarios;
+
+    /** CC efetivo do envio (join por vírgula). */
+    @Column(length = 2048)
+    private String copia;
+
+    /** BCC efetivo do envio — informado + fixo da conta (join por vírgula). */
+    @Column(length = 2048)
+    private String copiaOculta;
 }

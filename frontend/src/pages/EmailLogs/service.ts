@@ -4,6 +4,8 @@ export interface LogEmailDTO {
   id: string;
   titulo: string;
   destinatarios: string;
+  copia: string | null;
+  copiaOculta: string | null;
   conta: string | null;
   status: 'SUCESSO' | 'FALHA' | 'CANCELADO';
   erro: string | null;

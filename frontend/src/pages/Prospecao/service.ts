@@ -171,12 +171,12 @@ export const prospecaoService = {
     return r.data;
   },
 
-  registrarFollowUp: async (id: string, payload: { assunto: string; corpo: string; observacoes?: string }): Promise<FollowUp> => {
+  registrarFollowUp: async (id: string, payload: { assunto: string; corpo: string; observacoes?: string; cc?: string[]; cco?: string[] }): Promise<FollowUp> => {
     const r = await api.post<FollowUp>(`/prospecoes/${id}/follow-up`, payload);
     return r.data;
   },
 
-  enviarEmailContato: async (id: string, payload: { assunto: string; corpo: string }): Promise<{ status: string }> => {
+  enviarEmailContato: async (id: string, payload: { assunto: string; corpo: string; cc?: string[]; cco?: string[] }): Promise<{ status: string }> => {
     const r = await api.post<{ status: string }>(`/prospecoes/${id}/email`, payload);
     return r.data;
   },

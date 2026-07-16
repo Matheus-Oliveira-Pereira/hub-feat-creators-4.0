@@ -95,11 +95,15 @@ public class EmailService extends EntidadeService<Email, EmailRepository> {
     private LogEmail enviarComConta(Email email, ContaEmail conta) {
         Email persistido = repository.save(email);
         if (conta == null) {
-            return salvarLog(persistido, null, LogEmail.Status.FALHA,
+            return salvarLog(persistido, null, LogEmail.Status.FALHA, null,
                     "Nenhuma conta de e-mail configurada (influenciador sem conta e sem conta do sistema).");
         }
+        List<String> bcc = mesclarCopiaOculta(persistido.getCopiaOculta(), conta.getCopiaOculta());
         try {
             validarDestinatarios(persistido.getDestinatarios());
+            List<String> cc = persistido.getCopia() != null ? persistido.getCopia() : List.of();
+            validarEnderecos(cc);
+            validarEnderecos(bcc);
 
             JavaMailSender mailSender = contaEmailService.construirMailSender(conta);
             MimeMessage mensagem = mailSender.createMimeMessage();
@@ -111,15 +115,47 @@ public class EmailService extends EntidadeService<Email, EmailRepository> {
                 helper.setFrom(conta.getUsuario());
             }
             helper.setTo(persistido.getDestinatarios().toArray(new String[0]));
+            if (!cc.isEmpty()) helper.setCc(cc.toArray(new String[0]));
+            if (!bcc.isEmpty()) helper.setBcc(bcc.toArray(new String[0]));
             helper.setSubject(persistido.getTitulo());
             helper.setText(persistido.getConteudo() != null ? persistido.getConteudo() : "", true);
 
             mailSender.send(mensagem);
-            return salvarLog(persistido, conta, LogEmail.Status.SUCESSO, null);
+
+            // Melhor esforço: envio já ocorreu; falha aqui não derruba o status.
+            String avisoEnviados = null;
+            try {
+                contaEmailService.salvarEmEnviados(conta, mensagem);
+            } catch (Exception e) {
+                log.warn("E-mail enviado, mas falhou ao gravar em Enviados (conta '{}'): {}", conta.getNome(), e.getMessage());
+                avisoEnviados = "Enviado com sucesso, mas não foi possível gravar na pasta Enviados: " + e.getMessage();
+            }
+            return salvarLog(persistido, conta, LogEmail.Status.SUCESSO, bcc, avisoEnviados);
         } catch (Exception e) {
             log.error("Falha ao enviar e-mail '{}' pela conta '{}': {}",
                     email.getTitulo(), conta.getNome(), e.getMessage());
-            return salvarLog(persistido, conta, LogEmail.Status.FALHA, e.getMessage());
+            return salvarLog(persistido, conta, LogEmail.Status.FALHA, bcc, e.getMessage());
+        }
+    }
+
+    /** BCC efetivo = informados no envio + fixos da conta (CSV), sem duplicatas (case-insensitive). */
+    static List<String> mesclarCopiaOculta(List<String> doEnvio, String daContaCsv) {
+        java.util.LinkedHashMap<String, String> porChave = new java.util.LinkedHashMap<>();
+        if (doEnvio != null) {
+            doEnvio.forEach(e -> { if (e != null && !e.isBlank()) porChave.putIfAbsent(e.trim().toLowerCase(), e.trim()); });
+        }
+        ContaEmailService.separarEmails(daContaCsv)
+                .forEach(e -> porChave.putIfAbsent(e.toLowerCase(), e));
+        return List.copyOf(porChave.values());
+    }
+
+    private void validarEnderecos(List<String> enderecos) {
+        for (String endereco : enderecos) {
+            try {
+                new InternetAddress(endereco.trim(), true).validate();
+            } catch (AddressException ex) {
+                throw new IllegalArgumentException("Endereço de e-mail inválido: " + endereco);
+            }
         }
     }
 
@@ -136,7 +172,7 @@ public class EmailService extends EntidadeService<Email, EmailRepository> {
         }
     }
 
-    private LogEmail salvarLog(Email email, ContaEmail conta, LogEmail.Status status, String erro) {
+    private LogEmail salvarLog(Email email, ContaEmail conta, LogEmail.Status status, List<String> bccEfetivo, String erro) {
         LogEmail logEmail = new LogEmail();
         logEmail.setStatus(status);
         logEmail.setEmail(email);
@@ -145,6 +181,12 @@ public class EmailService extends EntidadeService<Email, EmailRepository> {
         logEmail.setTitulo(email.getTitulo());
         logEmail.setErro(erro);
         logEmail.setDestinatarios(String.join(", ", email.getDestinatarios()));
+        if (email.getCopia() != null && !email.getCopia().isEmpty()) {
+            logEmail.setCopia(String.join(", ", email.getCopia()));
+        }
+        if (bccEfetivo != null && !bccEfetivo.isEmpty()) {
+            logEmail.setCopiaOculta(String.join(", ", bccEfetivo));
+        }
         return logEmailService.salvar(logEmail);
     }
 }

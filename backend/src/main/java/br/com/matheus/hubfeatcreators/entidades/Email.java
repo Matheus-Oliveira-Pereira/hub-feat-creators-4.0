@@ -34,6 +34,14 @@ public class Email extends Entidade {
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> destinatarios = new ArrayList<>();
 
+    /** Destinatários em cópia (CC). */
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> copia = new ArrayList<>();
+
+    /** Destinatários em cópia oculta (BCC) informados no envio (além dos fixos da conta). */
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> copiaOculta = new ArrayList<>();
+
     public Email(String titulo, String conteudo, List<String> destinatarios) {
         this.titulo = titulo;
         this.conteudo = conteudo;

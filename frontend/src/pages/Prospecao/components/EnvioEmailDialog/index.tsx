@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
+import { Chips } from 'primereact/chips';
 import { Editor } from 'primereact/editor';
 import FormDialog from '../../../../components/FormDialog';
 import ConfirmDialog from '../../../../components/ConfirmDialog';
@@ -29,6 +30,9 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
   const [assunto, setAssunto] = useState('');
   const [corpo, setCorpo] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [cc, setCc] = useState<string[]>([]);
+  const [cco, setCco] = useState<string[]>([]);
+  const [mostrarCopias, setMostrarCopias] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
 
   const { data: templates = [] } = useQuery({
@@ -45,6 +49,9 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
     setAssunto('');
     setCorpo('');
     setObservacoes('');
+    setCc([]);
+    setCco([]);
+    setMostrarCopias(false);
     setTemplateId(null);
     setConfirmVisible(false);
   }, [visible]);
@@ -68,10 +75,11 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
 
   const mutation = useMutation({
     mutationFn: () => {
+      const copias = { cc: cc.length ? cc : undefined, cco: cco.length ? cco : undefined };
       if (registrarComoFollowUp) {
-        return prospecaoService.registrarFollowUp(prospecao!.id, { assunto, corpo, observacoes: observacoes.trim() || undefined });
+        return prospecaoService.registrarFollowUp(prospecao!.id, { assunto, corpo, observacoes: observacoes.trim() || undefined, ...copias });
       }
-      return prospecaoService.enviarEmailContato(prospecao!.id, { assunto, corpo });
+      return prospecaoService.enviarEmailContato(prospecao!.id, { assunto, corpo, ...copias });
     },
     onSuccess: (res: unknown) => {
       const status = (res as { logEmail?: { status: string }; status?: string }).logEmail?.status
@@ -120,7 +128,28 @@ function EnvioEmailDialog({ visible, onHide, onSaved, onToast, prospecao, tipo, 
         </p>
       )}
       {destino && (
-        <p className="followup-info">Destinatário: <strong>{destino}</strong></p>
+        <p className="followup-info">
+          Destinatário: <strong>{destino}</strong>
+          {!mostrarCopias && (
+            <button type="button" className="btn-add-copias" onClick={() => setMostrarCopias(true)}
+              style={{ marginLeft: '0.6rem', border: 'none', background: 'none', color: 'var(--primary-color, #6366f1)', cursor: 'pointer', fontSize: '0.82rem' }}>
+              + CC/CCO
+            </button>
+          )}
+        </p>
+      )}
+
+      {mostrarCopias && (
+        <div className="form-grid-2">
+          <div className="form-field">
+            <label htmlFor="ee-cc">CC</label>
+            <Chips id="ee-cc" value={cc} onChange={(e) => setCc(e.value ?? [])} separator="," className="w-full" placeholder="E-mail e Enter" />
+          </div>
+          <div className="form-field">
+            <label htmlFor="ee-cco">CCO (cópia oculta)</label>
+            <Chips id="ee-cco" value={cco} onChange={(e) => setCco(e.value ?? [])} separator="," className="w-full" placeholder="E-mail e Enter" />
+          </div>
+        </div>
       )}
 
       <div className="form-field">

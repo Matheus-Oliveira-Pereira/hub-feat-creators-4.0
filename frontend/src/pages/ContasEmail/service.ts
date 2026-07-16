@@ -19,6 +19,14 @@ export interface ContaEmail {
   usuario: string;
   remetenteNome: string | null;
   tls: boolean | null;
+  /** Host IMAP (vazio = derivado do SMTP: smtp.x → imap.x). */
+  imapHost: string | null;
+  /** Porta IMAP (vazio = 993). */
+  imapPorta: number | null;
+  /** Grava cópia na pasta Enviados via IMAP após o envio. */
+  salvarEnviados: boolean | null;
+  /** E-mails em cópia oculta automática (CSV). */
+  copiaOculta: string | null;
   sistema: boolean;
   status: string;
 }
@@ -31,6 +39,10 @@ export interface ContaEmailForm {
   remetenteNome: string;
   senha?: string;
   tls: boolean;
+  imapHost: string;
+  imapPorta: number | null;
+  salvarEnviados: boolean;
+  copiaOculta: string;
   sistema: boolean;
   status: string;
 }

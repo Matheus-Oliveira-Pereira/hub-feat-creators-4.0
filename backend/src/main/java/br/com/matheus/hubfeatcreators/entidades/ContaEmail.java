@@ -49,6 +49,19 @@ public class ContaEmail extends Entidade implements Desativavel {
 
     private Boolean tls = true;
 
+    /** Host IMAP para gravar em "Enviados". Vazio = derivado do host SMTP (smtp.x → imap.x). */
+    private String imapHost;
+
+    /** Porta IMAP; vazio = 993 (IMAPS). */
+    private Integer imapPorta;
+
+    /** Grava cópia na pasta Enviados via IMAP após envio. Gmail já salva sozinho — desligar lá evita duplicata. */
+    private Boolean salvarEnviados = true;
+
+    /** Endereços em cópia oculta automática em TODO envio desta conta (separados por vírgula). */
+    @Column(length = 2048)
+    private String copiaOculta;
+
     @Column(nullable = false)
     private boolean sistema = false;
 

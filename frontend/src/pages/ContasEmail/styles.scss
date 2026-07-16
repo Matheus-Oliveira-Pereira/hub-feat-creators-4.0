@@ -92,3 +92,33 @@
     background: $gray-100;
   }
 }
+
+.bloco-avancado {
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  background: $gray-50;
+  padding: 0.8rem 0.9rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+
+  .bloco-avancado-titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $gray-700;
+
+    i { color: $primary-color; }
+  }
+
+  .form-field { margin-bottom: 0; }
+
+  .p-chips {
+    width: 100%;
+
+    .p-chips-multiple-container { width: 100%; }
+  }
+}
