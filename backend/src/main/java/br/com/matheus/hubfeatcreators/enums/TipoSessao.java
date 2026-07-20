@@ -7,6 +7,8 @@ public enum TipoSessao {
     INSIGHTS_INSTAGRAM("Insights — Instagram", true),
     INSIGHTS_TIKTOK("Insights — TikTok", true),
     INSIGHTS_YOUTUBE("Insights — YouTube", true),
+    INSIGHTS_LINKEDIN("Insights — LinkedIn", true),
+    INSIGHTS_LINKEDIN_NEWSLETTER("Insights — Newsletter LinkedIn", true),
     MARCAS("Marcas que já trabalhou", false),
     EXEMPLOS_PUBLIS("Exemplos de publis", false),
     CONTATO("Contato", false);

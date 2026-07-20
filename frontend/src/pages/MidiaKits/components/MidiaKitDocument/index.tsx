@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image, Svg, Path, Link, Font, pdf } from '@react-pdf/renderer';
-import { MidiaKitTemplate, Sessao, InfluenciadorRef, RedeCapa, EsteticaSessao, ESTETICA_PADRAO, labelTipo, parseFotos, parseConfig, formatarValor, garantirUrl, rotularPt } from '../../service';
+import { MidiaKitTemplate, Sessao, InfluenciadorRef, RedeCapa, EsteticaSessao, FormatoFoto, ESTETICA_PADRAO, labelTipo, parseFotos, parseConfig, formatarValor, garantirUrl, rotularPt, formatoDaFoto } from '../../service';
 import { SOCIAL_ICONS } from './socialIcons';
 import { LOGO_PATHS, LOGO_VIEWBOX } from './logo';
 import archivoBlackUrl from '../../../../assets/fonts/ArchivoBlack-Regular.ttf';
@@ -35,6 +35,8 @@ const TIPO_REDE: Record<string, { rede: string; nome: string }> = {
   INSIGHTS_INSTAGRAM: { rede: 'INSTAGRAM', nome: 'Instagram' },
   INSIGHTS_TIKTOK: { rede: 'TIKTOK', nome: 'TikTok' },
   INSIGHTS_YOUTUBE: { rede: 'YOUTUBE', nome: 'YouTube' },
+  INSIGHTS_LINKEDIN: { rede: 'LINKEDIN', nome: 'LinkedIn' },
+  INSIGHTS_LINKEDIN_NEWSLETTER: { rede: 'LINKEDIN', nome: 'Newsletter LinkedIn' },
 };
 
 // Texto claro secundário (corpo do "Sobre" / pills de público). Não é temável.
@@ -91,6 +93,15 @@ const ALTURA_PAGINA: Record<string, number> = {
   INSIGHTS_INSTAGRAM: 660,
   INSIGHTS_TIKTOK: 660,
   INSIGHTS_YOUTUBE: 660,
+  INSIGHTS_LINKEDIN: 660,
+  INSIGHTS_LINKEDIN_NEWSLETTER: 660,
+};
+
+// Dimensões-base das fotos de conteúdo por formato (escala da seção multiplica).
+const DIM_FORMATO: Record<FormatoFoto, { w: number; h: number }> = {
+  VERTICAL: { w: 150, h: 250 },
+  HORIZONTAL: { w: 240, h: 135 },
+  QUADRADO: { w: 180, h: 180 },
 };
 
 function normAlign(a?: string | null): Align {
@@ -469,7 +480,8 @@ function Conteudos({ sessao }: Readonly<{ sessao: Sessao }>) {
   const tema = resolverEstetica(sessao);
   const styles = criarStyles(tema);
   const fotos = parseFotos(sessao.fotos);
-  const links = parseConfig(sessao.config).links ?? [];
+  const config = parseConfig(sessao.config);
+  const links = config.links ?? [];
   return (
     <Page size={[PAGE_W, alturaPagina(sessao.tipo, tema)]} style={styles.page}>
       <View style={styles.secaoHead}>
@@ -479,7 +491,8 @@ function Conteudos({ sessao }: Readonly<{ sessao: Sessao }>) {
       <View style={styles.conteudosCenter}>
         <View style={styles.cardsRow}>
           {fotos.map((src, i) => {
-            const card = <Image src={src} style={styles.conteudoCard} />;
+            const dim = DIM_FORMATO[formatoDaFoto(config, i)];
+            const card = <Image src={src} style={[styles.conteudoCard, { width: dim.w * tema.escala, height: dim.h * tema.escala }]} />;
             const url = garantirUrl(links[i]);
             return url ? <Link key={src.slice(-16)} src={url}>{card}</Link> : <View key={src.slice(-16)}>{card}</View>;
           })}
@@ -718,7 +731,9 @@ function renderSessao(template: MidiaKitTemplate, sessao: Sessao, key: string) {
     case 'EXEMPLOS_PUBLIS': return <Conteudos key={key} sessao={sessao} />;
     case 'INSIGHTS_INSTAGRAM':
     case 'INSIGHTS_TIKTOK':
-    case 'INSIGHTS_YOUTUBE': return <Insights key={key} sessao={sessao} />;
+    case 'INSIGHTS_YOUTUBE':
+    case 'INSIGHTS_LINKEDIN':
+    case 'INSIGHTS_LINKEDIN_NEWSLETTER': return <Insights key={key} sessao={sessao} />;
     case 'MARCAS': return <Marcas key={key} sessao={sessao} />;
     case 'CONTATO': return <Contato key={key} template={template} sessao={sessao} />;
     default: return <Galeria key={key} sessao={sessao} />;

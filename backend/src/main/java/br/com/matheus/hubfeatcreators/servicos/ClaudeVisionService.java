@@ -132,6 +132,11 @@ public class ClaudeVisionService {
                     + "compartilhamentos, tempo médio de exibição, taxa de engajamento, período.";
             case INSIGHTS_YOUTUBE -> "Extraia métricas de YouTube: inscritos, visualizações, tempo de exibição (horas), "
                     + "duração média, curtidas, comentários, impressões, CTR, período.";
+            case INSIGHTS_LINKEDIN -> "Extraia métricas de LinkedIn: seguidores, impressões, visualizações de perfil, "
+                    + "alcance, reações, comentários, compartilhamentos, taxa de engajamento, período.";
+            case INSIGHTS_LINKEDIN_NEWSLETTER -> "Extraia métricas de newsletter do LinkedIn: inscritos, "
+                    + "artigos publicados, visualizações de artigos, impressões, reações, comentários, "
+                    + "taxa de abertura, taxa de cliques, período.";
             case CONTEUDOS -> "Descreva os conteúdos mostrados: tipo/formato, temas, descrição breve e qualquer métrica visível.";
             default -> "Extraia todas as métricas e informações relevantes visíveis na imagem.";
         };

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { MultiSelect } from 'primereact/multiselect';
+import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { InputSwitch } from 'primereact/inputswitch';
@@ -7,6 +8,7 @@ import { Button } from 'primereact/button';
 import {
   midiaKitService, Sessao, SessaoConfig, EsteticaSessao, InfluenciadorRef, MarcaRef,
   labelTipo, requerPrint, comprimirImagem, parseFotos, parseConfig, sessaoVazia,
+  LAYOUTS_FOTOS, FORMATOS_FOTO,
 } from '../../service';
 import { iaService } from '../../../../services/iaService';
 import AssistenteIa from '../../../../components/AssistenteIa';
@@ -78,6 +80,9 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
   const fotos = parseFotos(sessao.fotos);
   const config = parseConfig(sessao.config);
   const links = config.links ?? [];
+  const layoutFotos = config.layoutFotos ?? 'VERTICAL';
+  const formatosFotos = config.formatosFotos ?? [];
+  const layoutHibrido = layoutFotos === 'HIBRIDO';
   const marcasSelecionadas = config.marcas ?? [];
   const vazia = sessaoVazia(sessao);
   const ativa = sessao.ativa !== false;
@@ -143,7 +148,18 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
 
   const removerFoto = (i: number) => {
     onPatch({ fotos: JSON.stringify(fotos.filter((_, idx) => idx !== i)) });
-    if (usaLinks) patchConfig({ links: links.filter((_, idx) => idx !== i) });
+    if (usaLinks) {
+      patchConfig({
+        links: links.filter((_, idx) => idx !== i),
+        formatosFotos: formatosFotos.filter((_, idx) => idx !== i),
+      });
+    }
+  };
+
+  const setFormatoFoto = (i: number, valor: string) => {
+    const arr = fotos.map((_, idx) => formatosFotos[idx] ?? 'VERTICAL');
+    arr[i] = valor;
+    patchConfig({ formatosFotos: arr });
   };
 
   const setMarcas = (ids: string[]) => {
@@ -261,6 +277,19 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
         </div>
       )}
 
+      {usaLinks && (
+        <div className="form-field">
+          <label>Layout das fotos</label>
+          <Dropdown
+            value={layoutFotos} options={LAYOUTS_FOTOS}
+            optionLabel="label" optionValue="valor"
+            onChange={(e) => patchConfig({ layoutFotos: e.value })}
+            className="w-full" baseZIndex={10000}
+          />
+          <small className="campo-ajuda">Define a proporção das fotos no PDF. Híbrido permite escolher o formato de cada foto.</small>
+        </div>
+      )}
+
       <div className="sessao-fotos">
         <label>{usaRecorte ? 'Foto' : 'Fotos'}</label>
         <div className="fotos-grid">
@@ -289,11 +318,19 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
 
       {usaLinks && fotos.length > 0 && (
         <div className="bloco-config">
-          <div className="bloco-head"><span>Link por foto</span></div>
+          <div className="bloco-head"><span>{layoutHibrido ? 'Link e formato por foto' : 'Link por foto'}</span></div>
           {fotos.map((src, i) => (
             <div key={i} className="link-foto-linha">
               <img src={src} alt={`Foto ${i + 1}`} />
               <InputText value={links[i] ?? ''} onChange={(e) => setLink(i, e.target.value)} placeholder="https://..." className="w-full" />
+              {layoutHibrido && (
+                <Dropdown
+                  value={formatosFotos[i] ?? 'VERTICAL'} options={FORMATOS_FOTO}
+                  optionLabel="label" optionValue="valor"
+                  onChange={(e) => setFormatoFoto(i, e.value)}
+                  className="formato-foto-dropdown" baseZIndex={10000}
+                />
+              )}
             </div>
           ))}
         </div>

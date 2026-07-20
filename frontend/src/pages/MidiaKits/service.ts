@@ -135,6 +135,10 @@ export interface SessaoConfig {
   marcas?: MarcaRef[];
   /** Link para baixar os prints originais (seções de insights). */
   linkPrints?: string;
+  /** Layout das fotos (CONTEUDOS/EXEMPLOS_PUBLIS): VERTICAL | HORIZONTAL | QUADRADO | HIBRIDO. */
+  layoutFotos?: string;
+  /** Formato por foto quando layoutFotos = HIBRIDO (índice casa com o array de fotos). */
+  formatosFotos?: string[];
   /** Nome exibido na capa (independente do cadastro do influenciador). */
   nomeCapa?: string;
   /** ISO da última extração de analytics (exibido no editor). */
@@ -180,6 +184,8 @@ export const TIPOS_SESSAO: TipoSessaoDef[] = [
   { tipo: 'INSIGHTS_INSTAGRAM', label: 'Insights — Instagram', requerPrint: true },
   { tipo: 'INSIGHTS_TIKTOK', label: 'Insights — TikTok', requerPrint: true },
   { tipo: 'INSIGHTS_YOUTUBE', label: 'Insights — YouTube', requerPrint: true },
+  { tipo: 'INSIGHTS_LINKEDIN', label: 'Insights — LinkedIn', requerPrint: true },
+  { tipo: 'INSIGHTS_LINKEDIN_NEWSLETTER', label: 'Insights — Newsletter LinkedIn', requerPrint: true },
   { tipo: 'MARCAS', label: 'Marcas que já trabalhou', requerPrint: false },
   { tipo: 'EXEMPLOS_PUBLIS', label: 'Exemplos de publis', requerPrint: false },
   { tipo: 'CONTATO', label: 'Contato', requerPrint: false },
@@ -191,6 +197,34 @@ export function labelTipo(tipo: string): string {
 
 export function requerPrint(tipo: string): boolean {
   return TIPOS_SESSAO.find((t) => t.tipo === tipo)?.requerPrint ?? false;
+}
+
+/** Formato de foto nas seções de conteúdo. */
+export type FormatoFoto = 'VERTICAL' | 'HORIZONTAL' | 'QUADRADO';
+
+export const FORMATOS_FOTO: { valor: FormatoFoto; label: string }[] = [
+  { valor: 'VERTICAL', label: 'Vertical (9:16)' },
+  { valor: 'HORIZONTAL', label: 'Horizontal (16:9)' },
+  { valor: 'QUADRADO', label: 'Quadrado (1:1)' },
+];
+
+/** Layouts das seções CONTEUDOS/EXEMPLOS_PUBLIS. HIBRIDO = formato escolhido por foto. */
+export const LAYOUTS_FOTOS: { valor: string; label: string }[] = [
+  { valor: 'VERTICAL', label: 'Vertical (9:16) — Reels/TikTok' },
+  { valor: 'HORIZONTAL', label: 'Horizontal (16:9) — YouTube' },
+  { valor: 'QUADRADO', label: 'Quadrado (1:1) — feed/LinkedIn' },
+  { valor: 'HIBRIDO', label: 'Híbrido — formato por foto' },
+];
+
+function normFormato(f?: string | null): FormatoFoto {
+  return f === 'HORIZONTAL' || f === 'QUADRADO' ? f : 'VERTICAL';
+}
+
+/** Resolve o formato da foto i a partir do layout da seção (HIBRIDO usa formatosFotos[i]). */
+export function formatoDaFoto(config: SessaoConfig, i: number): FormatoFoto {
+  const layout = config.layoutFotos ?? 'VERTICAL';
+  if (layout === 'HIBRIDO') return normFormato(config.formatosFotos?.[i]);
+  return normFormato(layout);
 }
 
 export const REDES_CAPA = [
@@ -239,6 +273,8 @@ export function tituloPadrao(tipo: string, influ?: InfluenciadorRef | null): str
     case 'INSIGHTS_INSTAGRAM': return 'Insights — Instagram';
     case 'INSIGHTS_TIKTOK': return 'Insights — TikTok';
     case 'INSIGHTS_YOUTUBE': return 'Insights — YouTube';
+    case 'INSIGHTS_LINKEDIN': return 'Insights — LinkedIn';
+    case 'INSIGHTS_LINKEDIN_NEWSLETTER': return 'Insights — Newsletter LinkedIn';
     case 'MARCAS': return 'Marcas que já trabalhou';
     case 'EXEMPLOS_PUBLIS': return 'Exemplos de publis';
     case 'CONTATO': return 'E aí, bora fazer um feat?';
