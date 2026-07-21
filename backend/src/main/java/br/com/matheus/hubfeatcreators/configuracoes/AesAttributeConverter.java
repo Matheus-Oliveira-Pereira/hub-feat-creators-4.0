@@ -2,6 +2,7 @@ package br.com.matheus.hubfeatcreators.configuracoes;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
@@ -15,6 +16,7 @@ import java.util.Base64;
  * Criptografa atributos sensíveis (ex: chave da API do Claude) em repouso.
  * AES/GCM com chave derivada de CONFIG_ENCRYPTION_KEY (env). Fallback só para desenvolvimento.
  */
+@Slf4j
 @Converter
 public class AesAttributeConverter implements AttributeConverter<String, String> {
 
@@ -73,7 +75,7 @@ public class AesAttributeConverter implements AttributeConverter<String, String>
             cipher.init(Cipher.DECRYPT_MODE, chave, new GCMParameterSpec(TAG_BITS, iv));
             return new String(cipher.doFinal(cifrado), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            // Valor legado/corrompido — retorna como está para não quebrar boot
+            log.warn("Falha ao descriptografar valor (legado/corrompido?) — retornando valor bruto para não quebrar o boot: {}", e.getMessage());
             return valorBanco;
         }
     }

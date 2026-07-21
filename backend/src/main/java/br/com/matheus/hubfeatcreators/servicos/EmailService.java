@@ -64,21 +64,13 @@ public class EmailService extends EntidadeService<Email, EmailRepository> {
                 List.of(destino)
         );
         ContaEmail conta = contaId != null
-                ? buscarConta(contaId)
+                ? contaEmailService.buscar(contaId)
                 : contaEmailService.obterContaSistema().orElse(null);
         return enviarComConta(email, conta);
     }
 
     public PaginatedResponse<LogEmailDTO> listarLogs(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);
-    }
-
-    private ContaEmail buscarConta(UUID contaId) {
-        try {
-            return contaEmailService.buscar(contaId);
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     /**

@@ -19,15 +19,28 @@ api.interceptors.request.use(
 );
 
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshSubscribers: { resolve: (token: string) => void; reject: (error: unknown) => void }[] = [];
 
 function onTokenRefreshed(token: string) {
-  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers.forEach(({ resolve }) => resolve(token));
   refreshSubscribers = [];
 }
 
-function addRefreshSubscriber(cb: (token: string) => void) {
-  refreshSubscribers.push(cb);
+function onRefreshFailed(error: unknown) {
+  refreshSubscribers.forEach(({ reject }) => reject(error));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(resolve: (token: string) => void, reject: (error: unknown) => void) {
+  refreshSubscribers.push({ resolve, reject });
+}
+
+type TokenRefreshListener = (token: string) => void;
+let tokenRefreshListener: TokenRefreshListener | null = null;
+
+/** Permite que código fora do axios (ex: AuthContext) saiba quando um refresh silencioso troca o token. */
+export function onApiTokenRefreshed(listener: TokenRefreshListener | null) {
+  tokenRefreshListener = listener;
 }
 
 api.interceptors.response.use(
@@ -46,11 +59,14 @@ api.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          addRefreshSubscriber((token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            resolve(api(originalRequest));
-          });
+        return new Promise((resolve, reject) => {
+          addRefreshSubscriber(
+            (token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            },
+            reject
+          );
         });
       }
 
@@ -66,10 +82,12 @@ api.interceptors.response.use(
 
         api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
         onTokenRefreshed(newToken);
+        tokenRefreshListener?.(newToken);
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
-      } catch {
+      } catch (refreshError) {
+        onRefreshFailed(refreshError);
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         globalThis.location.href = '/login';

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import api from '../services/api';
+import api, { onApiTokenRefreshed } from '../services/api';
 
 interface User {
   id: string;
@@ -77,6 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('refreshToken');
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    onApiTokenRefreshed((newToken) => {
+      setToken(newToken);
+      setUser(buildUserFromToken(newToken));
+    });
+    return () => onApiTokenRefreshed(null);
   }, []);
 
   const login = useCallback(async (email: string, senha: string) => {

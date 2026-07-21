@@ -12,8 +12,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -25,7 +23,6 @@ import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -64,14 +61,6 @@ public class Usuario extends Entidade implements UserDetails, br.com.matheus.hub
     )
     @org.hibernate.envers.NotAudited
     private Set<Perfil> perfis = new HashSet<>();
-
-    @PrePersist
-    @PreUpdate
-    private void encriptarSenha() {
-        if (senha != null && !senha.startsWith("$2a$") && !senha.startsWith("$2b$")) {
-            senha = new BCryptPasswordEncoder().encode(senha);
-        }
-    }
 
     @Override
     public void desativar() {

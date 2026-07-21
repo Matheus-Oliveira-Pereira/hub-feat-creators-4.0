@@ -13,6 +13,7 @@ import br.com.matheus.hubfeatcreators.repositorios.PerfilRepository;
 import br.com.matheus.hubfeatcreators.repositorios.PublicidadeEntregaveisFormatoRepository;
 import br.com.matheus.hubfeatcreators.repositorios.TemplateEmailRepository;
 import br.com.matheus.hubfeatcreators.repositorios.UsuarioRepository;
+import br.com.matheus.hubfeatcreators.servicos.UsuarioService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ import java.util.Set;
 public class DataInitializer implements CommandLineRunner {
 
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
     private final PerfilRepository perfilRepository;
     private final PublicidadeEntregaveisFormatoRepository formatoRepository;
     private final TemplateEmailRepository templateEmailRepository;
@@ -76,7 +78,7 @@ public class DataInitializer implements CommandLineRunner {
         admin.setSenha("1234");
         admin.setStatus(StatusUsuario.ATIVO);
         admin.setPerfis(Set.of(perfilAdmin));
-        usuarioRepository.save(admin);
+        usuarioService.salvar(admin);
 
         log.info("Usuário administrador criado: admin@mop.com");
     }

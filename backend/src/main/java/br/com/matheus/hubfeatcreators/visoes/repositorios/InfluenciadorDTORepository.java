@@ -74,8 +74,8 @@ public class InfluenciadorDTORepository extends EntidadeDTORepository {
     }
 
     public PaginatedResponse<InfluenciadorDTO> listar(Map<String, String[]> requestParams) {
-        int page = requestParams.containsKey("page") ? Integer.parseInt(requestParams.get("page")[0]) : 0;
-        int size = requestParams.containsKey("size") ? Integer.parseInt(requestParams.get("size")[0]) : 10;
+        int page = parsePage(requestParams);
+        int size = parseSize(requestParams);
 
         var builder = new StringBuilder(HQL_LISTAR);
         var params = consulta(requestParams, builder);

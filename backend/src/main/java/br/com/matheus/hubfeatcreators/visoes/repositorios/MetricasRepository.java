@@ -178,7 +178,7 @@ public class MetricasRepository extends EntidadeDTORepository {
         b.append(" group by ").append(dimensao).append(".id, ").append(dimensao).append(".nome ");
         b.append(" order by 3 desc ");
 
-        int limite = req.containsKey("limite") ? Integer.parseInt(req.get("limite")[0]) : 10;
+        int limite = parseInteiro(req, "limite", 10, 100);
 
         var q = entityManager.createQuery(b.toString());
         params.forEach(q::setParameter);

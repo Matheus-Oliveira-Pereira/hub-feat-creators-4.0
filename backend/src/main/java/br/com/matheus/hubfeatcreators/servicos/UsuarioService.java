@@ -7,6 +7,7 @@ import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.UsuarioDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.usuario.UsuarioDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -17,6 +18,9 @@ public class UsuarioService extends EntidadeService<Usuario, UsuarioRepository> 
     @Autowired
     private UsuarioDTORepository dtoRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     public Usuario findByEmail(String email) {
         return repository.findByEmail(email)
                 .orElseThrow(() -> new EntidadeNaoEncontradaException("Usuário não encontrado com email: " + email));
@@ -24,5 +28,18 @@ public class UsuarioService extends EntidadeService<Usuario, UsuarioRepository> 
 
     public PaginatedResponse<UsuarioDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);
+    }
+
+    /** Hasheia a senha antes de salvar. Em edição, o campo já chega hasheado (copyProperties exclui "senha" do PUT). */
+    @Override
+    public Usuario salvar(Usuario entidade) {
+        if (entidade.getSenha() != null && !isHashBcrypt(entidade.getSenha())) {
+            entidade.setSenha(passwordEncoder.encode(entidade.getSenha()));
+        }
+        return super.salvar(entidade);
+    }
+
+    private boolean isHashBcrypt(String senha) {
+        return senha.startsWith("$2a$") || senha.startsWith("$2b$");
     }
 }

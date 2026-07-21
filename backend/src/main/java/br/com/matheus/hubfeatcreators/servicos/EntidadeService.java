@@ -28,20 +28,22 @@ public abstract class EntidadeService<T extends Entidade, R extends EntidadeRepo
         return repository.save(entidade);
     }
 
-    public void desativar(UUID id) {
+    public T desativar(UUID id) {
         T entidade = buscar(id);
         if (entidade instanceof Desativavel desativavel) {
             desativavel.desativar();
             repository.save(entidade);
         }
+        return entidade;
     }
 
-    public void restaurar(UUID id) {
+    public T restaurar(UUID id) {
         T entidade = buscar(id);
         if (entidade instanceof Desativavel desativavel) {
             desativavel.restaurar();
             repository.save(entidade);
         }
+        return entidade;
     }
 
     public void excluir(UUID id) {

@@ -72,16 +72,16 @@ public abstract class EntidadeController<T extends Entidade, S extends EntidadeS
     @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'C')")
     @PatchMapping("/{id}/desativar")
     public ResponseEntity<Void> desativar(@PathVariable UUID id) {
-        service.desativar(id);
-        notificacaoService.alteracao(service.buscar(id).getClass().getSimpleName(), id.toString());
+        T entidade = service.desativar(id);
+        notificacaoService.alteracao(entidade.getClass().getSimpleName(), id.toString());
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'C')")
     @PatchMapping("/{id}/restaurar")
     public ResponseEntity<Void> restaurar(@PathVariable UUID id) {
-        service.restaurar(id);
-        notificacaoService.alteracao(service.buscar(id).getClass().getSimpleName(), id.toString());
+        T entidade = service.restaurar(id);
+        notificacaoService.alteracao(entidade.getClass().getSimpleName(), id.toString());
         return ResponseEntity.noContent().build();
     }
 

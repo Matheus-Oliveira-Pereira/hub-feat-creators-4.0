@@ -10,6 +10,7 @@ vi.mock('../../services/api', () => ({
     put: vi.fn(),
     delete: vi.fn(),
   },
+  onApiTokenRefreshed: vi.fn(),
 }));
 
 import api from '../../services/api';
