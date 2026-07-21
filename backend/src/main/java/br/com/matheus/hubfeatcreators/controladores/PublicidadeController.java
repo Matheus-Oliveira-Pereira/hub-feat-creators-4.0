@@ -9,6 +9,7 @@ import br.com.matheus.hubfeatcreators.visoes.telas.publicidade.PublicidadeDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,11 +23,18 @@ public class PublicidadeController extends EntidadeController<Publicidade, Publi
     @Autowired
     private PublicidadeEntregaveisFormatoService formatoService;
 
+    @Override
+    public String getModulo() {
+        return "PUB";
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_PUBB')")
     @GetMapping("/listar")
     public ResponseEntity<PaginatedResponse<PublicidadeDTO>> listarDTO(HttpServletRequest request) {
         return ResponseEntity.ok(service.listarDTO(request.getParameterMap()));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_PUBB')")
     @GetMapping("/formatos")
     public ResponseEntity<List<PublicidadeEntregaveisFormato>> listarFormatos() {
         return ResponseEntity.ok(formatoService.listarTodos());

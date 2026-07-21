@@ -7,6 +7,7 @@ import br.com.matheus.hubfeatcreators.servicos.NotificacaoService;
 import br.com.matheus.hubfeatcreators.visoes.dtos.AuditoriaDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -19,6 +20,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * CRUD genérico. Cada subclasse informa seu prefixo de módulo (ex: "USR") via
+ * {@link #getModulo()}, usado nas expressões {@code @PreAuthorize} abaixo para
+ * exigir a role ABCD correspondente (ex: ROLE_USRB para buscar/listar).
+ */
 public abstract class EntidadeController<T extends Entidade, S extends EntidadeService<T, ?>> {
 
     @Autowired
@@ -30,16 +36,22 @@ public abstract class EntidadeController<T extends Entidade, S extends EntidadeS
     @Autowired
     private NotificacaoService notificacaoService;
 
+    /** Prefixo de 3 letras do módulo (ex: "USR", "PRF") — usado para montar as roles ABCD. */
+    public abstract String getModulo();
+
+    @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'B')")
     @GetMapping("/{id}")
     public ResponseEntity<T> buscar(@PathVariable UUID id) {
         return ResponseEntity.ok(service.buscar(id));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'B')")
     @GetMapping
     public ResponseEntity<List<T>> listar() {
         return ResponseEntity.ok(service.listar());
     }
 
+    @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'A')")
     @PostMapping
     public ResponseEntity<T> salvar(@Valid @RequestBody T entity) {
         T saved = service.salvar(entity);
@@ -47,6 +59,7 @@ public abstract class EntidadeController<T extends Entidade, S extends EntidadeS
         return ResponseEntity.ok(saved);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'C')")
     @PutMapping("/{id}")
     public ResponseEntity<T> atualizar(@PathVariable UUID id, @Valid @RequestBody T entity) {
         T existing = service.buscar(id);
@@ -56,6 +69,7 @@ public abstract class EntidadeController<T extends Entidade, S extends EntidadeS
         return ResponseEntity.ok(updated);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'C')")
     @PatchMapping("/{id}/desativar")
     public ResponseEntity<Void> desativar(@PathVariable UUID id) {
         service.desativar(id);
@@ -63,6 +77,7 @@ public abstract class EntidadeController<T extends Entidade, S extends EntidadeS
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'C')")
     @PatchMapping("/{id}/restaurar")
     public ResponseEntity<Void> restaurar(@PathVariable UUID id) {
         service.restaurar(id);
@@ -70,6 +85,7 @@ public abstract class EntidadeController<T extends Entidade, S extends EntidadeS
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'D')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable UUID id) {
         T entity = service.buscar(id);
@@ -78,6 +94,7 @@ public abstract class EntidadeController<T extends Entidade, S extends EntidadeS
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAuthority('ROLE_' + this.getModulo() + 'B')")
     @GetMapping("/{id}/historico")
     public ResponseEntity<List<AuditoriaDTO>> historico(@PathVariable UUID id) {
         T entidade = service.buscar(id);

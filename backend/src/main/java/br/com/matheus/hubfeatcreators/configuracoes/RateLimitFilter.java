@@ -1,5 +1,7 @@
 package br.com.matheus.hubfeatcreators.configuracoes;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
@@ -12,13 +14,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    /** Expira por inatividade e tem teto de tamanho — evita crescimento sem limite do mapa de buckets. */
+    private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
+            .expireAfterAccess(1, TimeUnit.HOURS)
+            .maximumSize(50_000)
+            .build();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -32,7 +37,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         String key = resolveKey(request, path);
-        Bucket bucket = buckets.computeIfAbsent(key, k -> createBucket(path));
+        Bucket bucket = buckets.get(key, k -> createBucket(path));
 
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
@@ -45,13 +50,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private boolean isRateLimited(String path) {
         return path.startsWith("/api/auth/login")
-                || path.startsWith("/api/auth/registro")
                 || path.startsWith("/api/auth/refresh");
     }
 
     private String resolveKey(HttpServletRequest request, String path) {
-        String ip = getClientIp(request);
-        return ip + ":" + path;
+        return request.getRemoteAddr() + ":" + path;
     }
 
     private Bucket createBucket(String path) {
@@ -65,13 +68,5 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return Bucket.builder()
                 .addLimit(Bandwidth.simple(10, Duration.ofMinutes(1)))
                 .build();
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String xForwarded = request.getHeader("X-Forwarded-For");
-        if (xForwarded != null && !xForwarded.isEmpty()) {
-            return xForwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }

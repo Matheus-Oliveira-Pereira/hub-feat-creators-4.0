@@ -29,6 +29,11 @@ public class ContaEmailController extends EntidadeController<ContaEmail, ContaEm
     @Autowired
     private ImportacaoContaEmailService importacaoService;
 
+    @Override
+    public String getModulo() {
+        return "CTE";
+    }
+
     @GetMapping("/listar")
     @PreAuthorize("hasAuthority('ROLE_CTEB')")
     public ResponseEntity<PaginatedResponse<ContaEmailDTO>> listarDTO(HttpServletRequest request) {
@@ -36,6 +41,7 @@ public class ContaEmailController extends EntidadeController<ContaEmail, ContaEm
     }
 
     @GetMapping("/ativos")
+    @PreAuthorize("hasAuthority('ROLE_CTEB')")
     public ResponseEntity<List<ContaEmail>> listarAtivos() {
         return ResponseEntity.ok(service.listarAtivos());
     }
@@ -47,6 +53,7 @@ public class ContaEmailController extends EntidadeController<ContaEmail, ContaEm
     }
 
     @GetMapping("/importacao/template")
+    @PreAuthorize("hasAuthority('ROLE_CTEB')")
     public ResponseEntity<byte[]> downloadTemplate() {
         byte[] content = importacaoService.gerarTemplate().getBytes(StandardCharsets.UTF_8);
         return ResponseEntity.ok()

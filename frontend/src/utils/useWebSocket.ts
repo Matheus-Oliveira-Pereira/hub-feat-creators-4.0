@@ -30,6 +30,7 @@ export function useWebSocket() {
     try {
       client = new Client({
         webSocketFactory: () => new SockJS('/ws'),
+        connectHeaders: { Authorization: `Bearer ${token}` },
         reconnectDelay: 10000,
         connectionTimeout: 5000,
         onConnect: () => {

@@ -8,6 +8,7 @@ import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.telas.midiakit.MidiaKitTemplateDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,22 +25,31 @@ import java.util.UUID;
 @RequestMapping("/api/midiakit-templates")
 public class MidiaKitTemplateController extends EntidadeController<MidiaKitTemplate, MidiaKitTemplateService> {
 
+    @Override
+    public String getModulo() {
+        return "MDK";
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_MDKB')")
     @GetMapping("/listar")
     public ResponseEntity<PaginatedResponse<MidiaKitTemplateDTO>> listarDTO(HttpServletRequest request) {
         return ResponseEntity.ok(service.listarDTO(request.getParameterMap()));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_MDKB')")
     @GetMapping("/ativos")
     public ResponseEntity<List<MidiaKitTemplate>> listarAtivos() {
         return ResponseEntity.ok(service.listarAtivos());
     }
 
+    @PreAuthorize("hasAuthority('ROLE_MDKA')")
     @PostMapping("/{id}/copiar")
     public ResponseEntity<MidiaKitTemplate> copiar(@PathVariable UUID id, @RequestBody(required = false) CopiarTemplateRequest body) {
         UUID novoInfluenciadorId = body != null ? body.getNovoInfluenciadorId() : null;
         return ResponseEntity.ok(service.copiar(id, novoInfluenciadorId));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_MDKC')")
     @PostMapping("/{id}/sessoes/{sessaoId}/analisar")
     public ResponseEntity<SessaoMidiaKit> analisarSessao(@PathVariable UUID id,
                                                          @PathVariable UUID sessaoId,

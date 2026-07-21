@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,21 +28,30 @@ public class InfluenciadorController extends EntidadeController<Influenciador, I
     @Autowired
     private ImportacaoInfluenciadorService importacaoService;
 
+    @Override
+    public String getModulo() {
+        return "INF";
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_INFB')")
     @GetMapping("/listar")
     public ResponseEntity<PaginatedResponse<InfluenciadorDTO>> listarDTO(HttpServletRequest request) {
         return ResponseEntity.ok(service.listarDTO(request.getParameterMap()));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_INFB')")
     @GetMapping("/ativos")
     public ResponseEntity<java.util.List<Influenciador>> listarAtivos() {
         return ResponseEntity.ok(service.listarAtivos());
     }
 
+    @PreAuthorize("hasAuthority('ROLE_INFA')")
     @PostMapping(value = "/importacao", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ImportacaoResultadoDTO> importar(@RequestParam("arquivo") MultipartFile arquivo) {
         return ResponseEntity.ok(importacaoService.importar(arquivo));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_INFB')")
     @GetMapping("/importacao/template")
     public ResponseEntity<byte[]> downloadTemplate() {
         byte[] content = importacaoService.gerarTemplate().getBytes(StandardCharsets.UTF_8);

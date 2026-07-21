@@ -9,6 +9,7 @@ import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.telas.prospecao.ProspecaoDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,22 +24,31 @@ import java.util.UUID;
 @RequestMapping("/api/prospecoes")
 public class ProspecaoController extends EntidadeController<Prospecao, ProspecaoService> {
 
+    @Override
+    public String getModulo() {
+        return "PSP";
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_PSPB')")
     @GetMapping("/listar")
     public ResponseEntity<PaginatedResponse<ProspecaoDTO>> listarDTO(HttpServletRequest request) {
         return ResponseEntity.ok(service.listarDTO(request.getParameterMap()));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_PSPB')")
     @GetMapping("/por-influenciador/{influenciadorId}")
     public ResponseEntity<List<Prospecao>> porInfluenciador(@PathVariable UUID influenciadorId) {
         return ResponseEntity.ok(service.listarPorInfluenciador(influenciadorId));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_PSPC')")
     @PostMapping("/{id}/follow-up")
     public ResponseEntity<FollowUp> registrarFollowUp(@PathVariable UUID id, @RequestBody EnvioEmailRequest body) {
         return ResponseEntity.ok(service.registrarFollowUp(
                 id, body.getAssunto(), body.getCorpo(), body.getObservacoes(), body.getCc(), body.getCco()));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_PSPC')")
     @PostMapping("/{id}/email")
     public ResponseEntity<LogEmail> enviarEmailContato(@PathVariable UUID id, @RequestBody EnvioEmailRequest body) {
         return ResponseEntity.ok(service.enviarEmailContato(
