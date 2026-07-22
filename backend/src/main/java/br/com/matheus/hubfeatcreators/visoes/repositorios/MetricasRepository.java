@@ -7,6 +7,7 @@ import br.com.matheus.hubfeatcreators.visoes.dtos.metricas.DistribuicaoDTO;
 import br.com.matheus.hubfeatcreators.visoes.dtos.metricas.MetricasResumoDTO;
 import br.com.matheus.hubfeatcreators.visoes.dtos.metricas.RankingItemDTO;
 import br.com.matheus.hubfeatcreators.visoes.dtos.metricas.SerieTemporalDTO;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +71,7 @@ public class MetricasRepository extends EntidadeDTORepository {
 
     // ---------------------------------------------------------------- resumo
 
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public MetricasResumoDTO resumo(Map<String, String[]> req) {
         // Financeiro — left join para incluir deals sem financeiro nos totais
         var fb = new StringBuilder("""
@@ -135,6 +137,7 @@ public class MetricasRepository extends EntidadeDTORepository {
 
     // -------------------------------------------------------- faturamento mensal
 
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public List<SerieTemporalDTO> faturamentoMensal(Map<String, String[]> req) {
         var b = new StringBuilder("""
                 select year(f.dataEnvioNota), month(f.dataEnvioNota),
@@ -160,10 +163,12 @@ public class MetricasRepository extends EntidadeDTORepository {
 
     // ------------------------------------------------------------- rankings
 
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public List<RankingItemDTO> rankingInfluenciadores(Map<String, String[]> req) {
         return ranking(req, "p.influenciador");
     }
 
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public List<RankingItemDTO> rankingMarcas(Map<String, String[]> req) {
         return ranking(req, "p.marca");
     }
@@ -194,6 +199,7 @@ public class MetricasRepository extends EntidadeDTORepository {
 
     // ----------------------------------------------------------- distribuições
 
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public List<DistribuicaoDTO> funilProspecao(Map<String, String[]> req) {
         var b = new StringBuilder("""
                 select p.status, count(p.id), coalesce(sum(p.valorProposto), 0)
@@ -205,6 +211,7 @@ public class MetricasRepository extends EntidadeDTORepository {
         return distribuicao(b.toString(), params);
     }
 
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public List<DistribuicaoDTO> distribuicaoStatusPagamento(Map<String, String[]> req) {
         var b = new StringBuilder("""
                 select f.statusPagamento, count(f.id), coalesce(sum(f.valorTotal), 0)
@@ -216,6 +223,7 @@ public class MetricasRepository extends EntidadeDTORepository {
         return distribuicao(b.toString(), params);
     }
 
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public List<DistribuicaoDTO> distribuicaoFormatos(Map<String, String[]> req) {
         var b = new StringBuilder("""
                 select fmt.descricao, count(e.id), 0
@@ -227,6 +235,7 @@ public class MetricasRepository extends EntidadeDTORepository {
         return distribuicao(b.toString(), params);
     }
 
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public List<DistribuicaoDTO> distribuicaoStatusEntregaveis(Map<String, String[]> req) {
         var b = new StringBuilder("""
                 select e.status, count(e.id), 0
@@ -255,6 +264,7 @@ public class MetricasRepository extends EntidadeDTORepository {
      * Agrupa recebíveis em aberto (PENDENTE/ATRASADO) por faixa de dias relativos à data de
      * vencimento. Faixas negativas = a vencer; positivas = vencido há N dias.
      */
+    @Cacheable(cacheNames = "metricas", keyGenerator = "metricasKeyGenerator")
     public List<DistribuicaoDTO> agingRecebiveis(Map<String, String[]> req) {
         var b = new StringBuilder("""
                 select f.dataVencimentoNota, f.valorTotal

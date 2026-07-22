@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DataTable, DataTablePageEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
@@ -7,6 +7,7 @@ import { MultiSelect } from 'primereact/multiselect';
 import { Calendar } from 'primereact/calendar';
 import { Tag } from 'primereact/tag';
 import { Tooltip } from 'primereact/tooltip';
+import { Toast } from 'primereact/toast';
 import PageHeader from '../../components/PageHeader';
 import CrudHeader from '../../components/CrudHeader';
 import FilterSidebar from '../../components/FilterSidebar';
@@ -27,12 +28,25 @@ function EmailLogs() {
   const [pageSize, setPageSize] = useState(10);
   const [debouncedBusca, setDebouncedBusca] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toast = useRef<Toast>(null);
+  const queryClient = useQueryClient();
 
   const queryFiltros: LogEmailFiltros = { ...filtros, textoDeBusca: debouncedBusca || undefined };
 
   const { data: paginatedData, isLoading } = useQuery({
     queryKey: ['email-logs', currentPage, pageSize, queryFiltros],
     queryFn: () => emailLogService.listar(currentPage, pageSize, queryFiltros),
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: (id: string) => emailLogService.retry(id),
+    onSuccess: () => {
+      toast.current?.show({ severity: 'success', summary: 'Reenvio', detail: 'E-mail reprocessado.' });
+      queryClient.invalidateQueries({ queryKey: ['email-logs'] });
+    },
+    onError: () => {
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao reenviar o e-mail.' });
+    },
   });
 
   useEffect(() => {
@@ -77,10 +91,35 @@ function EmailLogs() {
       <span className="text-muted">&mdash;</span>
     );
 
+  const abertoTemplate = (row: LogEmailDTO) =>
+    row.aberto ? (
+      <Tag
+        icon="pi pi-eye"
+        value={row.dataAbertura ? new Date(row.dataAbertura).toLocaleString('pt-BR') : 'Aberto'}
+        severity="success"
+      />
+    ) : (
+      <span className="text-muted">&mdash;</span>
+    );
+
+  const acoesTemplate = (row: LogEmailDTO) =>
+    row.status === 'FALHA' ? (
+      <button
+        type="button"
+        className="action-btn"
+        title="Reenviar"
+        disabled={retryMutation.isPending}
+        onClick={() => retryMutation.mutate(row.id)}
+      >
+        <i className="pi pi-refresh" />
+      </button>
+    ) : null;
+
   const temFiltroAtivo = !!filtros.status?.length || !!filtros.titulo || !!filtros.destinatario || !!filtros.criadoPor || !!filtros.registroDe || !!filtros.registroAte;
 
   return (
     <div className="crud-page">
+      <Toast ref={toast} />
       <PageHeader title="Logs de E-mail" subtitle="Rastreabilidade dos envios" />
 
       <div className="content-card">
@@ -100,8 +139,10 @@ function EmailLogs() {
           <Column field="destinatarios" header="Destinatários" body={destinatariosTemplate} />
           <Column field="conta" header="Conta" body={contaTemplate} style={{ width: '150px' }} />
           <Column field="status" header="Status" body={statusTemplate} style={{ width: '120px' }} />
+          <Column field="aberto" header="Aberto" body={abertoTemplate} style={{ width: '170px' }} />
           <Column field="erro" header="Erro" body={erroTemplate} />
           <Column field="criadoPor" header="Enviado por" style={{ width: '180px' }} />
+          <Column header="Ações" body={acoesTemplate} style={{ width: '80px' }} />
         </DataTable>
       </div>
 

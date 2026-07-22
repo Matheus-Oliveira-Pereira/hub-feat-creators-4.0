@@ -19,9 +19,13 @@ public class LogEmailDTO {
     private String erro;
     private LocalDateTime registro;
     private String criadoPor;
+    private boolean aberto;
+    private LocalDateTime dataAbertura;
+    private int tentativas;
 
     public LogEmailDTO(UUID id, String titulo, String destinatarios, String copia, String copiaOculta,
-                       String conta, LogEmail.Status status, String erro, LocalDateTime registro, String criadoPor) {
+                       String conta, LogEmail.Status status, String erro, LocalDateTime registro, String criadoPor,
+                       boolean aberto, LocalDateTime dataAbertura, int tentativas) {
         this.id = id;
         this.titulo = titulo;
         this.destinatarios = destinatarios;
@@ -32,5 +36,8 @@ public class LogEmailDTO {
         this.erro = erro;
         this.registro = registro;
         this.criadoPor = criadoPor;
+        this.aberto = aberto;
+        this.dataAbertura = dataAbertura;
+        this.tentativas = tentativas;
     }
 }

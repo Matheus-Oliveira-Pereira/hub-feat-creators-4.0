@@ -61,7 +61,7 @@ class EmailCopiaEnviadosTest {
 
     @Test
     void validaCopiaOcultaDaConta() {
-        ContaEmailService service = new ContaEmailService();
+        ContaEmailService service = new ContaEmailService(null);
         assertDoesNotThrow(() -> service.validarCopiaOculta("a@x.com, b@y.com"));
         assertDoesNotThrow(() -> service.validarCopiaOculta(null));
         assertThrows(ConfiguracaoInvalidaException.class, () -> service.validarCopiaOculta("nao-e-email"));

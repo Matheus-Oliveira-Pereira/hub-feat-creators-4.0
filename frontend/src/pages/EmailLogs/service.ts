@@ -1,4 +1,5 @@
 import BaseService, { PaginatedResponse } from '../../services/baseService';
+import api from '../../services/api';
 
 export interface LogEmailDTO {
   id: string;
@@ -11,6 +12,9 @@ export interface LogEmailDTO {
   erro: string | null;
   registro: string;
   criadoPor: string;
+  aberto: boolean;
+  dataAbertura: string | null;
+  tentativas: number;
 }
 
 export interface LogEmailFiltros {
@@ -40,6 +44,7 @@ function buildQuery(page: number, size: number, filtros: LogEmailFiltros): strin
 export const emailLogService = {
   listar: (page: number, size: number, filtros: LogEmailFiltros): Promise<PaginatedResponse<LogEmailDTO>> =>
     baseService.getPage(buildQuery(page, size, filtros)),
+  retry: (id: string): Promise<void> => api.post(`/emails/${id}/retry`).then(() => undefined),
 };
 
 export const STATUS_EMAIL_OPTIONS = [

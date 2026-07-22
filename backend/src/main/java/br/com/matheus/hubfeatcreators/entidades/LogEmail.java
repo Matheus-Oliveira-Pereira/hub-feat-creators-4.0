@@ -14,6 +14,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "LOG_EMAIL")
@@ -56,4 +59,18 @@ public class LogEmail extends Entidade {
     /** BCC efetivo do envio — informado + fixo da conta (join por vírgula). */
     @Column(length = 2048)
     private String copiaOculta;
+
+    /** Nº de tentativas de reenvio (0 = envio original). Limitado pelo job de auto-retry. */
+    @NotAudited
+    @Column(name = "tentativas")
+    private int tentativas = 0;
+
+    /** Marcado quando o pixel de rastreio é carregado pelo cliente do destinatário. */
+    @NotAudited
+    @Column(name = "aberto")
+    private boolean aberto = false;
+
+    @NotAudited
+    @Column(name = "data_abertura")
+    private LocalDateTime dataAbertura;
 }

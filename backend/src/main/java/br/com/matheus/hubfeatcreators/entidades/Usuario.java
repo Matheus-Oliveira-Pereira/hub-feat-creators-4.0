@@ -53,6 +53,10 @@ public class Usuario extends Entidade implements UserDetails, br.com.matheus.hub
     @Enumerated(EnumType.STRING)
     private StatusUsuario status;
 
+    @org.hibernate.envers.NotAudited
+    @Column(name = "ultimo_login")
+    private java.time.LocalDateTime ultimoLogin;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "USUARIO_PERFIL",

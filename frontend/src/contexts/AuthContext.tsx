@@ -11,6 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  ultimoLogin: string | null;
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, senha: string) => Promise<void>;
@@ -22,6 +23,7 @@ interface LoginResponse {
   refreshToken: string;
   email: string;
   nome: string;
+  ultimoLogin: string | null;
 }
 
 interface DecodedToken {
@@ -63,6 +65,7 @@ function buildUserFromToken(token: string): User | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [ultimoLogin, setUltimoLogin] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isAuthenticated = !!token && !!user;
@@ -72,9 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedToken && !isTokenExpired(storedToken)) {
       setToken(storedToken);
       setUser(buildUserFromToken(storedToken));
+      setUltimoLogin(localStorage.getItem('ultimoLogin'));
     } else {
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('ultimoLogin');
     }
     setLoading(false);
   }, []);
@@ -89,19 +94,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, senha: string) => {
     const response = await api.post<LoginResponse>('/auth/login', { email, senha });
-    const { token: receivedToken, refreshToken } = response.data;
+    const { token: receivedToken, refreshToken, ultimoLogin: recebidoUltimoLogin } = response.data;
 
     localStorage.setItem('token', receivedToken);
     localStorage.setItem('refreshToken', refreshToken);
+    if (recebidoUltimoLogin) {
+      localStorage.setItem('ultimoLogin', recebidoUltimoLogin);
+    } else {
+      localStorage.removeItem('ultimoLogin');
+    }
     setToken(receivedToken);
     setUser(buildUserFromToken(receivedToken));
+    setUltimoLogin(recebidoUltimoLogin);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('ultimoLogin');
     setToken(null);
     setUser(null);
+    setUltimoLogin(null);
   }, []);
 
   // Desloga proativamente quando o token expira com a aba aberta e ociosa (sem nenhuma
@@ -117,8 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token, logout]);
 
   const value = useMemo(() => ({
-    user, token, isAuthenticated, loading, login, logout,
-  }), [user, token, isAuthenticated, loading, login, logout]);
+    user, token, ultimoLogin, isAuthenticated, loading, login, logout,
+  }), [user, token, ultimoLogin, isAuthenticated, loading, login, logout]);
 
   return (
     <AuthContext.Provider value={value}>
