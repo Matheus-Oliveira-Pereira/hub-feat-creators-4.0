@@ -7,15 +7,31 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class NotificacaoService {
+
+    /** Nome amigável por classe de entidade (chave = entity.getClass().getSimpleName()). */
+    private static final Map<String, String> NOMES_AMIGAVEIS = Map.of(
+            "Usuario", "Usuário",
+            "Perfil", "Perfil",
+            "Influenciador", "Influenciador",
+            "Marca", "Marca",
+            "MidiaKitTemplate", "Mídia Kit",
+            "Prospecao", "Prospecção",
+            "Publicidade", "Publicidade",
+            "TemplateEmail", "Template de E-mail",
+            "ContaEmail", "Conta de E-mail"
+    );
 
     private final SimpMessagingTemplate messagingTemplate;
 
     public void notificar(String tipo, String entidade, String mensagem) {
         String usuario = getUsuarioAtual();
-        NotificacaoDTO notificacao = new NotificacaoDTO(tipo, entidade, mensagem, usuario);
+        String entidadeAmigavel = NOMES_AMIGAVEIS.getOrDefault(entidade, entidade);
+        NotificacaoDTO notificacao = new NotificacaoDTO(tipo, entidadeAmigavel, mensagem, usuario);
         messagingTemplate.convertAndSend("/topic/notificacoes", notificacao);
     }
 

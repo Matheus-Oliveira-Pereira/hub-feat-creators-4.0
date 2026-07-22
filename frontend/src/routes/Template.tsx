@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
@@ -8,6 +8,7 @@ import Topbar from '../components/Topbar';
 import FormDialog from '../components/FormDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
 import BaseService from '../services/baseService';
+import { onApiForbidden } from '../services/api';
 
 const usuarioService = new BaseService('/usuarios');
 
@@ -15,6 +16,17 @@ function Template() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
+
+  useEffect(() => {
+    onApiForbidden((message) => {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Acesso Negado',
+        detail: message || 'Você não tem permissão para executar esta ação.',
+      });
+    });
+    return () => onApiForbidden(null);
+  }, []);
 
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);

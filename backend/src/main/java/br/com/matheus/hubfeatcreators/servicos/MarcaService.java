@@ -8,8 +8,8 @@ import br.com.matheus.hubfeatcreators.repositorios.MarcaRepository;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.MarcaDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.marca.MarcaDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class MarcaService extends EntidadeService<Marca, MarcaRepository> {
 
-    @Autowired
-    private MarcaDTORepository dtoRepository;
+    private final MarcaDTORepository dtoRepository;
 
     public PaginatedResponse<MarcaDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);

@@ -7,7 +7,7 @@ import br.com.matheus.hubfeatcreators.visoes.dtos.ImportacaoResultadoDTO;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.telas.contaemail.ContaEmailDTO;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +24,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/contas-email")
+@RequiredArgsConstructor
 public class ContaEmailController extends EntidadeController<ContaEmail, ContaEmailService> {
 
-    @Autowired
-    private ImportacaoContaEmailService importacaoService;
+    private final ImportacaoContaEmailService importacaoService;
 
     @Override
     public String getModulo() {

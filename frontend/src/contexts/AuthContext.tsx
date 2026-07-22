@@ -104,6 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  // Desloga proativamente quando o token expira com a aba aberta e ociosa (sem nenhuma
+  // chamada de API pra disparar o refresh reativo do interceptor).
+  useEffect(() => {
+    if (!token) return;
+    const decoded = decodeToken(token);
+    if (!decoded?.exp) return;
+    const msAteExpirar = decoded.exp * 1000 - Date.now();
+    if (msAteExpirar <= 0) return;
+    const timer = setTimeout(() => logout(), msAteExpirar);
+    return () => clearTimeout(timer);
+  }, [token, logout]);
+
   const value = useMemo(() => ({
     user, token, isAuthenticated, loading, login, logout,
   }), [user, token, isAuthenticated, loading, login, logout]);

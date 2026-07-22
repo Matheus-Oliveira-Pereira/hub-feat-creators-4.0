@@ -6,20 +6,19 @@ import br.com.matheus.hubfeatcreators.repositorios.UsuarioRepository;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.UsuarioDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.usuario.UsuarioDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class UsuarioService extends EntidadeService<Usuario, UsuarioRepository> {
 
-    @Autowired
-    private UsuarioDTORepository dtoRepository;
+    private final UsuarioDTORepository dtoRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public Usuario findByEmail(String email) {
         return repository.findByEmail(email)

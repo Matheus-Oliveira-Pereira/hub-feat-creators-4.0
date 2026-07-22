@@ -16,8 +16,8 @@ import br.com.matheus.hubfeatcreators.repositorios.PublicidadeRepository;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.PublicidadeDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.publicidade.PublicidadeDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,22 +27,18 @@ import java.util.ArrayList;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class PublicidadeService extends EntidadeService<Publicidade, PublicidadeRepository> {
 
-    @Autowired
-    private PublicidadeDTORepository dtoRepository;
+    private final PublicidadeDTORepository dtoRepository;
 
-    @Autowired
-    private ProspecaoService prospecaoService;
+    private final ProspecaoService prospecaoService;
 
-    @Autowired
-    private InfluenciadorRepository influenciadorRepository;
+    private final InfluenciadorRepository influenciadorRepository;
 
-    @Autowired
-    private MarcaRepository marcaRepository;
+    private final MarcaRepository marcaRepository;
 
-    @Autowired
-    private PublicidadeEntregaveisFormatoRepository formatoRepository;
+    private final PublicidadeEntregaveisFormatoRepository formatoRepository;
 
     public PaginatedResponse<PublicidadeDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);

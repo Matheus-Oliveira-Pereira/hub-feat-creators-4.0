@@ -17,8 +17,8 @@ import br.com.matheus.hubfeatcreators.repositorios.ProspecaoRepository;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.ProspecaoDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.prospecao.ProspecaoDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,19 +28,16 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ProspecaoService extends EntidadeService<Prospecao, ProspecaoRepository> {
 
-    @Autowired
-    private ProspecaoDTORepository dtoRepository;
+    private final ProspecaoDTORepository dtoRepository;
 
-    @Autowired
-    private EmailService emailService;
+    private final EmailService emailService;
 
-    @Autowired
-    private InfluenciadorRepository influenciadorRepository;
+    private final InfluenciadorRepository influenciadorRepository;
 
-    @Autowired
-    private MarcaRepository marcaRepository;
+    private final MarcaRepository marcaRepository;
 
     public PaginatedResponse<ProspecaoDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);

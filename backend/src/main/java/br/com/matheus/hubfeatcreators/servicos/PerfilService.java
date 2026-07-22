@@ -6,17 +6,17 @@ import br.com.matheus.hubfeatcreators.repositorios.PerfilRepository;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.PerfilDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.perfil.PerfilDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class PerfilService extends EntidadeService<Perfil, PerfilRepository> {
 
-    @Autowired
-    private PerfilDTORepository dtoRepository;
+    private final PerfilDTORepository dtoRepository;
 
     public PaginatedResponse<PerfilDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);

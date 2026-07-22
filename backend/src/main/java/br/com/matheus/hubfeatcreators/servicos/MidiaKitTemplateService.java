@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.MidiaKitTemplateDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.midiakit.MidiaKitTemplateDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,19 +22,16 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class MidiaKitTemplateService extends EntidadeService<MidiaKitTemplate, MidiaKitTemplateRepository> {
 
-    @Autowired
-    private MidiaKitTemplateDTORepository dtoRepository;
+    private final MidiaKitTemplateDTORepository dtoRepository;
 
-    @Autowired
-    private InfluenciadorRepository influenciadorRepository;
+    private final InfluenciadorRepository influenciadorRepository;
 
-    @Autowired
-    private ClaudeVisionService visionService;
+    private final ClaudeVisionService visionService;
 
-    @Autowired
-    private SessaoMidiaKitRepository sessaoRepository;
+    private final SessaoMidiaKitRepository sessaoRepository;
 
     private static final ObjectMapper JSON = new ObjectMapper();
 

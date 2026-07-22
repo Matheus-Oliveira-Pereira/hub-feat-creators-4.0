@@ -12,7 +12,7 @@ import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.dtos.RenderTemplateDTO;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.TemplateEmailDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.templateemail.TemplateEmailDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,15 +23,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class TemplateEmailService extends EntidadeService<TemplateEmail, TemplateEmailRepository> {
 
     private static final DateTimeFormatter DATA_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    @Autowired
-    private TemplateEmailDTORepository dtoRepository;
+    private final TemplateEmailDTORepository dtoRepository;
 
-    @Autowired
-    private ProspecaoRepository prospecaoRepository;
+    private final ProspecaoRepository prospecaoRepository;
 
     public PaginatedResponse<TemplateEmailDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);

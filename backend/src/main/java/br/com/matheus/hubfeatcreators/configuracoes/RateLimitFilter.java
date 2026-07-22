@@ -60,13 +60,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private Bucket createBucket(String path) {
         if (path.startsWith("/api/auth/login")) {
             return Bucket.builder()
-                    .addLimit(Bandwidth.simple(5, Duration.ofMinutes(1)))
-                    .addLimit(Bandwidth.simple(20, Duration.ofHours(1)))
+                    .addLimit(Bandwidth.builder().capacity(5).refillGreedy(5, Duration.ofMinutes(1)).build())
+                    .addLimit(Bandwidth.builder().capacity(20).refillGreedy(20, Duration.ofHours(1)).build())
                     .build();
         }
 
         return Bucket.builder()
-                .addLimit(Bandwidth.simple(10, Duration.ofMinutes(1)))
+                .addLimit(Bandwidth.builder().capacity(10).refillGreedy(10, Duration.ofMinutes(1)).build())
                 .build();
     }
 }

@@ -43,6 +43,14 @@ export function onApiTokenRefreshed(listener: TokenRefreshListener | null) {
   tokenRefreshListener = listener;
 }
 
+type ForbiddenListener = (message?: string) => void;
+let forbiddenListener: ForbiddenListener | null = null;
+
+/** Permite que código fora do axios (ex: Template) mostre um toast quando o backend devolver 403. */
+export function onApiForbidden(listener: ForbiddenListener | null) {
+  forbiddenListener = listener;
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -95,6 +103,10 @@ api.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+
+    if (error.response?.status === 403) {
+      forbiddenListener?.(error.response?.data?.message);
     }
 
     throw error;

@@ -16,9 +16,9 @@ import jakarta.mail.Store;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.angus.mail.imap.IMAPFolder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
@@ -30,14 +30,14 @@ import java.util.Properties;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ContaEmailService extends EntidadeService<ContaEmail, ContaEmailRepository> {
 
     /** Nomes comuns da pasta de enviados quando o servidor não anuncia special-use \Sent. */
     private static final List<String> NOMES_PASTA_ENVIADOS = List.of(
             "Sent", "Sent Items", "Sent Messages", "INBOX.Sent", "Enviados", "[Gmail]/Sent Mail");
 
-    @Autowired
-    private ContaEmailDTORepository dtoRepository;
+    private final ContaEmailDTORepository dtoRepository;
 
     public PaginatedResponse<ContaEmailDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);

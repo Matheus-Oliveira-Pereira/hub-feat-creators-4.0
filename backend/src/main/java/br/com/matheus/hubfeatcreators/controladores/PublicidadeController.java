@@ -7,7 +7,7 @@ import br.com.matheus.hubfeatcreators.servicos.PublicidadeService;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.telas.publicidade.PublicidadeDTO;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,10 +18,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/publicidades")
+@RequiredArgsConstructor
 public class PublicidadeController extends EntidadeController<Publicidade, PublicidadeService> {
 
-    @Autowired
-    private PublicidadeEntregaveisFormatoService formatoService;
+    private final PublicidadeEntregaveisFormatoService formatoService;
 
     @Override
     public String getModulo() {

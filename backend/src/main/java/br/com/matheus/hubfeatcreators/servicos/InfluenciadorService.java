@@ -9,7 +9,7 @@ import br.com.matheus.hubfeatcreators.exceptions.EntidadeNaoEncontradaException;
 import br.com.matheus.hubfeatcreators.visoes.dtos.PaginatedResponse;
 import br.com.matheus.hubfeatcreators.visoes.repositorios.InfluenciadorDTORepository;
 import br.com.matheus.hubfeatcreators.visoes.telas.influenciador.InfluenciadorDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,13 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class InfluenciadorService extends EntidadeService<Influenciador, InfluenciadorRepository> {
 
-    @Autowired
-    private InfluenciadorDTORepository dtoRepository;
+    private final InfluenciadorDTORepository dtoRepository;
 
-    @Autowired
-    private ContaEmailRepository contaEmailRepository;
+    private final ContaEmailRepository contaEmailRepository;
 
     public PaginatedResponse<InfluenciadorDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);
