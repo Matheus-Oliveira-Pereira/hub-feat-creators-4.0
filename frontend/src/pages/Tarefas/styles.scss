@@ -445,7 +445,26 @@
     align-items: center;
     margin-bottom: 0.6rem;
     span { font-weight: 700; font-size: 0.85rem; color: $gray-700; }
-    .btn-add-item { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+    .btn-add-item {
+      padding: 0.3rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: transparent !important;
+      border: 1px dashed $gray-300 !important;
+      color: $gray-600 !important;
+      box-shadow: none !important;
+      transition: all 0.15s;
+
+      .p-button-icon { font-size: 0.7rem; color: inherit !important; }
+
+      &:hover {
+        background: rgba($primary-color, 0.14) !important;
+        border-color: $primary-color !important;
+        border-style: solid !important;
+        color: $gray-800 !important;
+        transform: none;
+      }
+    }
   }
 
   .checklist-vazio { font-size: 0.8rem; color: $gray-500; font-style: italic; margin: 0; }
@@ -599,6 +618,16 @@
   .checklist-editor {
     border-color: #2e2e2e;
     .checklist-head span { color: #cbd5e1; }
+    .checklist-head .btn-add-item {
+      border-color: #3a3a3a !important;
+      color: #94a3b8 !important;
+
+      &:hover {
+        background: rgba($brand-lime, 0.12) !important;
+        border-color: $brand-lime !important;
+        color: $brand-lime-light !important;
+      }
+    }
     .checklist-linha .checklist-remover {
       background: #141414;
       border-color: #2e2e2e;
