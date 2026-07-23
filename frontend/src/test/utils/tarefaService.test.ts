@@ -17,6 +17,7 @@ function dto(partial: Partial<TarefaDTO>): TarefaDTO {
     previsaoTermino: null,
     dataConclusao: null,
     notificacaoAutomatica: false,
+    recorrencia: null,
     totalChecklist: 0,
     checklistConcluidos: 0,
     ativo: true,

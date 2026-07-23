@@ -121,7 +121,7 @@ function Tarefas() {
 
   const abrirHistorico = (row: TarefaDTO) => { setHistoryId(row.id); setHistoryVisible(true); };
 
-  const temFiltroAtivo = !!filtros.status?.length || !!filtros.prioridade?.length || !!filtros.marca || !!filtros.atrasadas;
+  const temFiltroAtivo = !!filtros.status?.length || !!filtros.prioridade?.length || !!filtros.marca || !!filtros.atrasadas || !!filtros.recorrentes;
 
   const crudHeader = (
     <CrudHeader searchValue={filtroGlobal} onSearchChange={setFiltroGlobal}
@@ -233,6 +233,11 @@ function Tarefas() {
           <Checkbox inputId="filter-atrasadas" checked={!!filtros.atrasadas}
             onChange={(e) => setFiltros({ ...filtros, atrasadas: e.checked || undefined })} />
           <label htmlFor="filter-atrasadas">Somente atrasadas</label>
+        </div>
+        <div className="form-field filtro-checkbox">
+          <Checkbox inputId="filter-recorrentes" checked={!!filtros.recorrentes}
+            onChange={(e) => setFiltros({ ...filtros, recorrentes: e.checked || undefined })} />
+          <label htmlFor="filter-recorrentes">Somente recorrentes</label>
         </div>
       </FilterSidebar>
     </div>

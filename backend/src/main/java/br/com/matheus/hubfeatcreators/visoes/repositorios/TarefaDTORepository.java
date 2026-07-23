@@ -35,7 +35,7 @@ public class TarefaDTORepository extends EntidadeDTORepository {
                 t.id, t.titulo, t.status, t.prioridade, t.tipoResponsavel,
                 ur.nome, ir.nome, i.nome, m.nome,
                 t.dataInicio, t.previsaoExecucao, t.previsaoTermino, t.dataConclusao,
-                t.notificacaoAutomatica,
+                t.notificacaoAutomatica, t.recorrencia,
                 (select count(c) from TarefaChecklistItem c where c.tarefa = t),
                 (select count(c2) from TarefaChecklistItem c2 where c2.tarefa = t and c2.concluido = true),
                 t.ativo
@@ -97,6 +97,10 @@ public class TarefaDTORepository extends EntidadeDTORepository {
         if (requestParams.containsKey("atrasadas")) {
             builder.append(" and t.previsaoTermino < current_date and t.status not in :statusFinalizados ");
             params.put("statusFinalizados", Arrays.asList(StatusTarefa.CONCLUIDA, StatusTarefa.CANCELADA));
+        }
+
+        if (requestParams.containsKey("recorrentes")) {
+            builder.append(" and t.recorrencia is not null ");
         }
 
         if (!requestParams.containsKey("mostrarInativos")) {

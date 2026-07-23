@@ -4,6 +4,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { MultiSelect } from 'primereact/multiselect';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
+import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
 import { SelectButton } from 'primereact/selectbutton';
 import { Calendar } from 'primereact/calendar';
@@ -18,11 +19,13 @@ import {
   PrioridadeTarefa,
   TipoResponsavelTarefa,
   TipoLembreteTarefa,
+  TipoRecorrenciaTarefa,
   ChecklistItem,
   STATUS_TAREFA_LABEL,
   PRIORIDADE_LABEL,
   TIPO_RESPONSAVEL_LABEL,
   LEMBRETE_LABEL,
+  RECORRENCIA_LABEL,
   isoToDate,
   dateToIso,
   formatarData,
@@ -45,6 +48,8 @@ const TIPO_RESPONSAVEL_OPTIONS = (Object.keys(TIPO_RESPONSAVEL_LABEL) as TipoRes
   .map((t) => ({ label: TIPO_RESPONSAVEL_LABEL[t], value: t }));
 const LEMBRETE_OPTIONS = (Object.keys(LEMBRETE_LABEL) as TipoLembreteTarefa[])
   .map((l) => ({ label: LEMBRETE_LABEL[l], value: l }));
+const RECORRENCIA_OPTIONS = (Object.keys(RECORRENCIA_LABEL) as TipoRecorrenciaTarefa[])
+  .map((r) => ({ label: RECORRENCIA_LABEL[r], value: r }));
 
 function TarefaDialog({ visible, onHide, onSaved, onToast, editando, inicial }: Readonly<Props>) {
   const [titulo, setTitulo] = useState('');
@@ -64,6 +69,9 @@ function TarefaDialog({ visible, onHide, onSaved, onToast, editando, inicial }: 
   const [notificacaoAutomatica, setNotificacaoAutomatica] = useState(false);
   const [lembretes, setLembretes] = useState<TipoLembreteTarefa[]>([]);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [recorrencia, setRecorrencia] = useState<TipoRecorrenciaTarefa | null>(null);
+  const [recorrenciaFim, setRecorrenciaFim] = useState<string | null>(null);
+  const [recorrenciaMax, setRecorrenciaMax] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const { data: usuarios = [] } = useQuery({
@@ -103,6 +111,9 @@ function TarefaDialog({ visible, onHide, onSaved, onToast, editando, inicial }: 
       setNotificacaoAutomatica(editando.notificacaoAutomatica);
       setLembretes(editando.lembretes ?? []);
       setChecklist(editando.checklist ?? []);
+      setRecorrencia(editando.recorrencia ?? null);
+      setRecorrenciaFim(editando.recorrenciaFim ?? null);
+      setRecorrenciaMax(editando.recorrenciaMaxOcorrencias ?? null);
     } else {
       setTitulo('');
       setDescricao(inicial?.descricao ?? '');
@@ -121,6 +132,9 @@ function TarefaDialog({ visible, onHide, onSaved, onToast, editando, inicial }: 
       setNotificacaoAutomatica(false);
       setLembretes([]);
       setChecklist([]);
+      setRecorrencia(null);
+      setRecorrenciaFim(null);
+      setRecorrenciaMax(null);
     }
   }, [visible, editando, inicial]);
 
@@ -146,6 +160,9 @@ function TarefaDialog({ visible, onHide, onSaved, onToast, editando, inicial }: 
         notificacaoAutomatica,
         lembretes,
         checklist: checklist.filter((c) => c.descricao.trim().length > 0),
+        recorrencia,
+        recorrenciaFim: recorrencia ? recorrenciaFim : null,
+        recorrenciaMaxOcorrencias: recorrencia ? recorrenciaMax : null,
       };
       return editando ? tarefaService.atualizar(editando.id, payload) : tarefaService.salvar(payload);
     },
@@ -172,6 +189,10 @@ function TarefaDialog({ visible, onHide, onSaved, onToast, editando, inicial }: 
       onToast('warn', tipoResponsavel === 'ASSESSORA'
         ? 'Informe o usuário responsável.'
         : 'Informe o influenciador responsável.');
+      return;
+    }
+    if (recorrencia && !previsaoTermino) {
+      onToast('warn', 'Tarefa recorrente exige previsão de término.');
       return;
     }
     salvarMutation.mutate();
@@ -276,6 +297,36 @@ function TarefaDialog({ visible, onHide, onSaved, onToast, editando, inicial }: 
           <i className="pi pi-check-circle" /> Concluída em {formatarData(editando.dataConclusao)}
         </p>
       )}
+
+      <div className="tarefa-recorrencia">
+        <div className="form-grid-2">
+          <div className="form-field">
+            <label htmlFor="tf-recorrencia">
+              Repetir
+              {editando && editando.recorrenciaOcorrencia > 1 && (
+                <span className="recorrencia-ocorrencia"> — ocorrência nº {editando.recorrenciaOcorrencia}</span>
+              )}
+            </label>
+            <Dropdown id="tf-recorrencia" value={recorrencia} options={RECORRENCIA_OPTIONS}
+              onChange={(e) => setRecorrencia(e.value ?? null)} placeholder="Não repete" showClear
+              className="w-full" baseZIndex={10000} />
+          </div>
+          {recorrencia && campoData('tf-recorrencia-fim', 'Repetir até (opcional)', recorrenciaFim, setRecorrenciaFim)}
+        </div>
+        {recorrencia && (
+          <>
+            <div className="form-field">
+              <label htmlFor="tf-recorrencia-max">Máx. de ocorrências (opcional)</label>
+              <InputNumber id="tf-recorrencia-max" value={recorrenciaMax}
+                onValueChange={(e) => setRecorrenciaMax(e.value ?? null)} min={1} showButtons
+                placeholder="Sem limite" className="w-full" />
+            </div>
+            <small className="recorrencia-hint">
+              <i className="pi pi-replay" /> A próxima ocorrência é criada ao concluir esta tarefa. Cancelar encerra a série.
+            </small>
+          </>
+        )}
+      </div>
 
       <div className="tarefa-notificacao">
         <div className="tarefa-notificacao-switch">

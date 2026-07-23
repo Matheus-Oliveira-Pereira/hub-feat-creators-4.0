@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
-import { TarefaDTO, PRIORIDADE_LABEL, estaAtrasada, formatarData, responsavelNome } from '../../service';
+import { TarefaDTO, PRIORIDADE_LABEL, RECORRENCIA_LABEL, estaAtrasada, formatarData, responsavelNome } from '../../service';
 
 interface Props {
   tarefa: TarefaDTO;
@@ -55,6 +55,11 @@ function KanbanCard({ tarefa, onEdit, onEmail, onHistorico, overlay }: Readonly<
         {tarefa.notificacaoAutomatica && (
           <span className="meta-chip" title="Notificações automáticas ativas">
             <i className="pi pi-bell" />
+          </span>
+        )}
+        {tarefa.recorrencia && (
+          <span className="meta-chip" title={`Recorrente — ${RECORRENCIA_LABEL[tarefa.recorrencia]}`}>
+            <i className="pi pi-replay" />
           </span>
         )}
       </div>

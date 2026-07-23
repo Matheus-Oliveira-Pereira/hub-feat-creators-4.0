@@ -10,6 +10,7 @@ import {
   TarefaFiltros,
   STATUS_TAREFA_LABEL,
   PRIORIDADE_LABEL,
+  RECORRENCIA_LABEL,
   estaAtrasada,
   formatarData,
   responsavelNome,
@@ -85,7 +86,14 @@ function ListaTarefas({ filtros, mostrarInativos, podeEditar, podeExcluir, heade
       emptyMessage={mostrarInativos ? 'Nenhum registro desativado' : 'Nenhuma tarefa encontrada'}
       stripedRows removableSort
     >
-      <Column field="titulo" header="Título" sortable />
+      <Column field="titulo" header="Título" sortable body={(r: TarefaDTO) => (
+        <span className="tarefa-titulo-cell">
+          {r.titulo}
+          {r.recorrencia && (
+            <i className="pi pi-replay tarefa-recorrente-icone" title={`Recorrente — ${RECORRENCIA_LABEL[r.recorrencia]}`} />
+          )}
+        </span>
+      )} />
       <Column header="Responsável" body={(r: TarefaDTO) => responsavelNome(r)} />
       <Column field="influenciadorNome" header="Influenciador" body={(r: TarefaDTO) => r.influenciadorNome ?? '—'} />
       <Column field="marcaNome" header="Marca" body={(r: TarefaDTO) => r.marcaNome ?? '—'} />

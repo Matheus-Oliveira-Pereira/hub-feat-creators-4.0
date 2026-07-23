@@ -5,6 +5,7 @@ export type StatusTarefa = 'A_FAZER' | 'EM_ANDAMENTO' | 'EM_REVISAO' | 'CONCLUID
 export type PrioridadeTarefa = 'BAIXA' | 'MEDIA' | 'ALTA';
 export type TipoResponsavelTarefa = 'ASSESSORA' | 'INFLUENCIADOR';
 export type TipoLembreteTarefa = 'UMA_SEMANA_ANTES' | 'UM_DIA_ANTES' | 'NO_DIA' | 'UM_DIA_ATRASO';
+export type TipoRecorrenciaTarefa = 'DIARIA' | 'SEMANAL' | 'QUINZENAL' | 'MENSAL' | 'TRIMESTRAL' | 'SEMESTRAL' | 'ANUAL';
 
 export const STATUS_TAREFA_LABEL: Record<StatusTarefa, string> = {
   A_FAZER: 'A Fazer',
@@ -30,6 +31,16 @@ export const LEMBRETE_LABEL: Record<TipoLembreteTarefa, string> = {
   UM_DIA_ANTES: '1 dia antes',
   NO_DIA: 'No dia',
   UM_DIA_ATRASO: '1 dia de atraso',
+};
+
+export const RECORRENCIA_LABEL: Record<TipoRecorrenciaTarefa, string> = {
+  DIARIA: 'Diária',
+  SEMANAL: 'Semanal',
+  QUINZENAL: 'Quinzenal',
+  MENSAL: 'Mensal',
+  TRIMESTRAL: 'Trimestral',
+  SEMESTRAL: 'Semestral',
+  ANUAL: 'Anual',
 };
 
 /** Colunas do kanban, na ordem; CANCELADA fica fora do quadro padrão. */
@@ -69,6 +80,10 @@ export interface Tarefa {
   notificacaoAutomatica: boolean;
   lembretes: TipoLembreteTarefa[];
   checklist: ChecklistItem[];
+  recorrencia: TipoRecorrenciaTarefa | null;
+  recorrenciaFim: string | null;
+  recorrenciaMaxOcorrencias: number | null;
+  recorrenciaOcorrencia: number;
   ativo: boolean;
 }
 
@@ -92,6 +107,9 @@ export interface TarefaForm {
   notificacaoAutomatica: boolean;
   lembretes: TipoLembreteTarefa[];
   checklist: ChecklistItem[];
+  recorrencia: TipoRecorrenciaTarefa | null;
+  recorrenciaFim: string | null;
+  recorrenciaMaxOcorrencias: number | null;
 }
 
 export interface TarefaDTO {
@@ -109,6 +127,7 @@ export interface TarefaDTO {
   previsaoTermino: string | null;
   dataConclusao: string | null;
   notificacaoAutomatica: boolean;
+  recorrencia: TipoRecorrenciaTarefa | null;
   totalChecklist: number;
   checklistConcluidos: number;
   ativo: boolean;
@@ -125,6 +144,7 @@ export interface TarefaFiltros {
   previsaoDe?: string;
   previsaoAte?: string;
   atrasadas?: boolean;
+  recorrentes?: boolean;
   mostrarInativos?: boolean;
 }
 
@@ -182,6 +202,7 @@ export function buildQuery(page: number, size: number, filtros: TarefaFiltros): 
   if (filtros.previsaoDe?.length) query.push(`previsaoDe=${filtros.previsaoDe}`);
   if (filtros.previsaoAte?.length) query.push(`previsaoAte=${filtros.previsaoAte}`);
   if (filtros.atrasadas) query.push('atrasadas=true');
+  if (filtros.recorrentes) query.push('recorrentes=true');
   if (filtros.mostrarInativos) query.push('mostrarInativos=true');
   return query;
 }

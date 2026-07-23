@@ -77,6 +77,8 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
   const [marcaDialogVisible, setMarcaDialogVisible] = useState(false);
   const [cropper, setCropper] = useState<{ src: string; alvo: number | null } | null>(null);
   const podeAddMarca = canAdd(authUser?.roles ?? [], MODULES.MARCAS.prefix);
+  // Seções iniciam recolhidas; estado local por card (preservado em reordenação de seções salvas).
+  const [expandida, setExpandida] = useState(false);
   const usaRecorte = sessao.tipo === 'CAPA' || sessao.tipo === 'SOBRE_INFLUENCIADOR';
   const isSobre = sessao.tipo === 'SOBRE_INFLUENCIADOR';
   const precisaPrint = requerPrint(sessao.tipo);
@@ -218,17 +220,19 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => { e.preventDefault(); onDropOn(); }}
     >
-      <div className="sessao-head">
+      <div className="sessao-head clicavel" onClick={() => setExpandida(!expandida)} title={expandida ? 'Recolher seção' : 'Expandir seção'}>
         <span
           className="sessao-arrastar"
           title="Arrastar para reordenar"
           draggable
+          onClick={(e) => e.stopPropagation()}
           onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
         >
           <i className="pi pi-bars" />
         </span>
+        <i className={`pi ${expandida ? 'pi-chevron-down' : 'pi-chevron-right'} sessao-chevron`} />
         <span className="sessao-tipo">{labelTipo(sessao.tipo)}</span>
-        <div className="sessao-head-right">
+        <div className="sessao-head-right" onClick={(e) => e.stopPropagation()}>
           <label className="sessao-switch" title="Mostrar no PDF">
             <InputSwitch checked={ativa} onChange={(e) => onPatch({ ativa: e.value })} />
           </label>
@@ -244,6 +248,7 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
 
       {vazia && <div className="sessao-aviso"><i className="pi pi-exclamation-triangle" /> Seção sem conteúdo — adicione texto, fotos ou analytics.</div>}
 
+      {expandida && (<>
       {sessao.tipo !== 'CAPA' && (
         <div className="form-field">
           <label>Título</label>
@@ -397,6 +402,7 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
           )}
         </div>
       )}
+      </>)}
 
       <EsteticaDialog
         visible={esteticaAberta}

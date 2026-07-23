@@ -4,6 +4,7 @@ import br.com.matheus.hubfeatcreators.entidades.Email;
 import br.com.matheus.hubfeatcreators.entidades.Influenciador;
 import br.com.matheus.hubfeatcreators.entidades.LogEmail;
 import br.com.matheus.hubfeatcreators.entidades.Tarefa;
+import br.com.matheus.hubfeatcreators.entidades.TarefaChecklistItem;
 import br.com.matheus.hubfeatcreators.enums.PrioridadeTarefa;
 import br.com.matheus.hubfeatcreators.enums.StatusTarefa;
 import br.com.matheus.hubfeatcreators.enums.TipoLembreteTarefa;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -51,6 +53,8 @@ public class TarefaService extends EntidadeService<Tarefa, TarefaRepository> {
 
     private final ProspecaoRepository prospecaoRepository;
 
+    private final NotificacaoService notificacaoService;
+
     public PaginatedResponse<TarefaDTO> listarDTO(Map<String, String[]> requestParams) {
         return dtoRepository.listar(requestParams);
     }
@@ -69,6 +73,12 @@ public class TarefaService extends EntidadeService<Tarefa, TarefaRepository> {
         if (entidade.getNotificacaoAutomatica() == null) {
             entidade.setNotificacaoAutomatica(false);
         }
+        if (entidade.getRecorrenciaOcorrencia() == null) {
+            entidade.setRecorrenciaOcorrencia(1);
+        }
+        if (entidade.getRecorrencia() != null && entidade.getPrevisaoTermino() == null) {
+            throw new RegraNegocioException("Tarefa recorrente exige previsão de término.");
+        }
 
         resolverReferencias(entidade);
         validarResponsavel(entidade);
@@ -82,12 +92,80 @@ public class TarefaService extends EntidadeService<Tarefa, TarefaRepository> {
 
         aplicarRegraConclusao(entidade);
 
+        // Transição para CONCLUIDA (statusAnterior vem do copyProperties no PUT; criação já concluída conta).
+        boolean concluiuAgora = entidade.getStatus() == StatusTarefa.CONCLUIDA
+                && (novo || entidade.getStatusAnterior() != StatusTarefa.CONCLUIDA);
+
         Tarefa salva = super.salvar(entidade);
 
         if ((novo || entidade.isResponsavelAlterado()) && Boolean.TRUE.equals(salva.getNotificacaoAutomatica())) {
             emailService.enviar(construirEmailAtribuicao(salva), influenciadorParaConta(salva));
         }
+        if (concluiuAgora && salva.getRecorrencia() != null) {
+            gerarProximaOcorrencia(salva);
+        }
         return salva;
+    }
+
+    /**
+     * Cria a próxima ocorrência da série ao concluir a atual: datas deslocadas pelo delta
+     * da previsão de término, checklist resetado, status A_FAZER. Respeita os limites
+     * de término (data fim e máximo de ocorrências). Cancelar a tarefa encerra a série.
+     */
+    private void gerarProximaOcorrencia(Tarefa concluida) {
+        LocalDate previsaoAtual = concluida.getPrevisaoTermino();
+        LocalDate novaPrevisao = concluida.getRecorrencia().proxima(previsaoAtual);
+
+        if (concluida.getRecorrenciaFim() != null && novaPrevisao.isAfter(concluida.getRecorrenciaFim())) {
+            return;
+        }
+        int ocorrencia = concluida.getRecorrenciaOcorrencia() != null ? concluida.getRecorrenciaOcorrencia() : 1;
+        if (concluida.getRecorrenciaMaxOcorrencias() != null && ocorrencia >= concluida.getRecorrenciaMaxOcorrencias()) {
+            return;
+        }
+
+        long delta = ChronoUnit.DAYS.between(previsaoAtual, novaPrevisao);
+
+        Tarefa nova = new Tarefa();
+        nova.setTitulo(concluida.getTitulo());
+        nova.setDescricao(concluida.getDescricao());
+        nova.setObservacoes(concluida.getObservacoes());
+        nova.setPrioridade(concluida.getPrioridade());
+        nova.setTipoResponsavel(concluida.getTipoResponsavel());
+        nova.setUsuarioResponsavel(concluida.getUsuarioResponsavel());
+        nova.setInfluenciadorResponsavel(concluida.getInfluenciadorResponsavel());
+        nova.setInfluenciador(concluida.getInfluenciador());
+        nova.setMarca(concluida.getMarca());
+        nova.setPublicidade(concluida.getPublicidade());
+        nova.setProspecao(concluida.getProspecao());
+        nova.setNotificacaoAutomatica(concluida.getNotificacaoAutomatica());
+        nova.getLembretes().addAll(concluida.getLembretes());
+
+        nova.setStatus(StatusTarefa.A_FAZER);
+        nova.setPrevisaoTermino(novaPrevisao);
+        nova.setDataInicio(concluida.getDataInicio() != null ? concluida.getDataInicio().plusDays(delta) : null);
+        nova.setPrevisaoExecucao(concluida.getPrevisaoExecucao() != null ? concluida.getPrevisaoExecucao().plusDays(delta) : null);
+
+        concluida.getChecklist().forEach(item -> {
+            TarefaChecklistItem copia = new TarefaChecklistItem();
+            copia.setTarefa(nova);
+            copia.setDescricao(item.getDescricao());
+            copia.setConcluido(false);
+            copia.setOrdem(item.getOrdem());
+            nova.getChecklist().add(copia);
+        });
+
+        nova.setRecorrencia(concluida.getRecorrencia());
+        nova.setRecorrenciaFim(concluida.getRecorrenciaFim());
+        nova.setRecorrenciaMaxOcorrencias(concluida.getRecorrenciaMaxOcorrencias());
+        nova.setRecorrenciaOcorrencia(ocorrencia + 1);
+        nova.setRecorrenciaAnteriorId(concluida.getId());
+
+        Tarefa criada = super.salvar(nova);
+        if (Boolean.TRUE.equals(criada.getNotificacaoAutomatica())) {
+            emailService.enviar(construirEmailAtribuicao(criada), influenciadorParaConta(criada));
+        }
+        notificacaoService.criacao(Tarefa.class.getSimpleName(), criada.getId().toString());
     }
 
     /** Conclusão: data automática ao entrar em CONCLUIDA; limpa ao sair (reabertura). */
@@ -155,9 +233,13 @@ public class TarefaService extends EntidadeService<Tarefa, TarefaRepository> {
         UUID usuarioDepois = source.getUsuarioResponsavel() != null ? source.getUsuarioResponsavel().getId() : null;
         UUID influDepois = source.getInfluenciadorResponsavel() != null ? source.getInfluenciadorResponsavel().getId() : null;
 
-        BeanUtils.copyProperties(source, target,
-                "id", "versao", "registro", "criadoPor", "checklist", "lembretes");
+        StatusTarefa statusAntes = target.getStatus();
 
+        BeanUtils.copyProperties(source, target,
+                "id", "versao", "registro", "criadoPor", "checklist", "lembretes",
+                "recorrenciaOcorrencia", "recorrenciaAnteriorId");
+
+        target.setStatusAnterior(statusAntes);
         target.setResponsavelAlterado(
                 !Objects.equals(usuarioAntes, usuarioDepois) || !Objects.equals(influAntes, influDepois));
 
@@ -177,9 +259,14 @@ public class TarefaService extends EntidadeService<Tarefa, TarefaRepository> {
             throw new RegraNegocioException("Informe o novo status da tarefa.");
         }
         Tarefa tarefa = buscar(id);
+        boolean concluiuAgora = novoStatus == StatusTarefa.CONCLUIDA && tarefa.getStatus() != StatusTarefa.CONCLUIDA;
         tarefa.setStatus(novoStatus);
         aplicarRegraConclusao(tarefa);
-        return super.salvar(tarefa);
+        Tarefa salva = super.salvar(tarefa);
+        if (concluiuAgora && salva.getRecorrencia() != null) {
+            gerarProximaOcorrencia(salva);
+        }
+        return salva;
     }
 
     /** Envio manual ao responsável, com assunto/corpo opcionais (defaults) e CC/BCC. */

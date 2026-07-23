@@ -406,8 +406,39 @@
   }
 }
 
+// Ícone de recorrência na listagem e agenda.
+.tarefa-titulo-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  .tarefa-recorrente-icone { font-size: 0.72rem; color: $gray-500; }
+}
+
+.agenda-chip-recorrente { font-size: 0.62rem; color: inherit; opacity: 0.7; }
+
 // ─── Dialog da tarefa ───
 .tarefa-dialog {
+  .tarefa-recorrencia {
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-md;
+    padding: 0.75rem 0.75rem 0.25rem;
+    margin-bottom: 1rem;
+    background: $gray-50;
+
+    .recorrencia-ocorrencia { font-weight: 400; color: $gray-500; }
+
+    .recorrencia-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: $gray-500;
+      font-size: 0.75rem;
+      margin-bottom: 0.5rem;
+      i { font-size: 0.7rem; }
+    }
+  }
+
   .tarefa-conclusao-info {
     color: $success-color;
     font-size: 0.85rem;
@@ -610,10 +641,13 @@
     }
   }
 
-  .tarefa-dialog .tarefa-notificacao {
+  .tarefa-dialog .tarefa-notificacao,
+  .tarefa-dialog .tarefa-recorrencia {
     background: #161616;
     border-color: #2e2e2e;
   }
+
+  .tarefa-titulo-cell .tarefa-recorrente-icone { color: #94a3b8; }
 
   .checklist-editor {
     border-color: #2e2e2e;

@@ -2,6 +2,7 @@ package br.com.matheus.hubfeatcreators.visoes.telas.tarefa;
 
 import br.com.matheus.hubfeatcreators.enums.PrioridadeTarefa;
 import br.com.matheus.hubfeatcreators.enums.StatusTarefa;
+import br.com.matheus.hubfeatcreators.enums.TipoRecorrenciaTarefa;
 import br.com.matheus.hubfeatcreators.enums.TipoResponsavelTarefa;
 import lombok.Data;
 
@@ -25,6 +26,7 @@ public class TarefaDTO {
     private LocalDate previsaoTermino;
     private LocalDate dataConclusao;
     private Boolean notificacaoAutomatica;
+    private TipoRecorrenciaTarefa recorrencia;
     private Long totalChecklist;
     private Long checklistConcluidos;
     private boolean ativo;
@@ -33,7 +35,7 @@ public class TarefaDTO {
                      TipoResponsavelTarefa tipoResponsavel, String usuarioResponsavelNome,
                      String influenciadorResponsavelNome, String influenciadorNome, String marcaNome,
                      LocalDate dataInicio, LocalDate previsaoExecucao, LocalDate previsaoTermino,
-                     LocalDate dataConclusao, Boolean notificacaoAutomatica,
+                     LocalDate dataConclusao, Boolean notificacaoAutomatica, TipoRecorrenciaTarefa recorrencia,
                      Long totalChecklist, Long checklistConcluidos, boolean ativo) {
         this.id = id;
         this.titulo = titulo;
@@ -49,6 +51,7 @@ public class TarefaDTO {
         this.previsaoTermino = previsaoTermino;
         this.dataConclusao = dataConclusao;
         this.notificacaoAutomatica = notificacaoAutomatica;
+        this.recorrencia = recorrencia;
         this.totalChecklist = totalChecklist;
         this.checklistConcluidos = checklistConcluidos;
         this.ativo = ativo;

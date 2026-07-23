@@ -42,6 +42,23 @@
     align-items: center;
     gap: 0.5rem;
 
+    &.clicavel {
+      cursor: pointer;
+      user-select: none;
+      margin: -0.35rem;
+      padding: 0.35rem;
+      border-radius: 6px;
+      transition: background 0.12s;
+
+      &:hover { background: rgba($primary-color, 0.08); }
+    }
+
+    .sessao-chevron {
+      font-size: 0.7rem;
+      color: $gray-500;
+      transition: transform 0.15s;
+    }
+
     .sessao-arrastar {
       display: inline-flex;
       align-items: center;

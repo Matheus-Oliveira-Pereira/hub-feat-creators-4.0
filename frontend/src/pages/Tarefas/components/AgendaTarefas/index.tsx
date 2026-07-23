@@ -106,6 +106,7 @@ function AgendaTarefas({ filtros, onEdit }: Readonly<Props>) {
       title={`${t.titulo} — ${responsavelNome(t)} (${STATUS_TAREFA_LABEL[t.status]}, prioridade ${PRIORIDADE_LABEL[t.prioridade]})`}
     >
       {estaAtrasada(t) && <span className="agenda-chip-dot" />}
+      {t.recorrencia && <i className="pi pi-replay agenda-chip-recorrente" />}
       <span className="agenda-chip-titulo">{t.titulo}</span>
       {detalhado && <span className="agenda-chip-resp">{responsavelNome(t)}</span>}
     </button>

@@ -4,6 +4,7 @@ import br.com.matheus.hubfeatcreators.entidades.superclasses.Entidade;
 import br.com.matheus.hubfeatcreators.enums.PrioridadeTarefa;
 import br.com.matheus.hubfeatcreators.enums.StatusTarefa;
 import br.com.matheus.hubfeatcreators.enums.TipoLembreteTarefa;
+import br.com.matheus.hubfeatcreators.enums.TipoRecorrenciaTarefa;
 import br.com.matheus.hubfeatcreators.enums.TipoResponsavelTarefa;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "TAREFA")
@@ -119,12 +121,33 @@ public class Tarefa extends Entidade implements br.com.matheus.hubfeatcreators.i
     @NotAudited
     private List<TarefaChecklistItem> checklist = new ArrayList<>();
 
+    /** Frequência de recorrência; null = não recorrente. Exige previsão de término. */
+    @Enumerated(EnumType.STRING)
+    private TipoRecorrenciaTarefa recorrencia;
+
+    /** Repetir até esta data (opcional). */
+    private LocalDate recorrenciaFim;
+
+    /** Número máximo de ocorrências da série (opcional). */
+    private Integer recorrenciaMaxOcorrencias;
+
+    /** Número desta ocorrência na série (1 = original). Gerenciado pelo sistema. */
+    private Integer recorrenciaOcorrencia = 1;
+
+    /** Ocorrência anterior que gerou esta (rastreabilidade). Gerenciado pelo sistema. */
+    private UUID recorrenciaAnteriorId;
+
     private boolean ativo = true;
 
     /** Flag interna: responsável mudou no update — dispara e-mail de atribuição quando automático. */
     @Transient
     @JsonIgnore
     private boolean responsavelAlterado;
+
+    /** Status antes do update genérico (PUT) — detecta transição para CONCLUIDA. */
+    @Transient
+    @JsonIgnore
+    private StatusTarefa statusAnterior;
 
     @Override
     public void desativar() {
