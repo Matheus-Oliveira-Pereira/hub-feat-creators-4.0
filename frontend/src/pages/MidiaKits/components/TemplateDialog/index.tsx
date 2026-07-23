@@ -6,6 +6,10 @@ import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { pdf } from '@react-pdf/renderer';
 import StatusDropdown from '../../../../components/StatusDropdown';
+import SelectComCadastro from '../../../../components/SelectComCadastro';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { canAdd, MODULES } from '../../../../utils/roles';
+import InfluenciadorFormDialog from '../../../Influenciadores/components/InfluenciadorFormDialog';
 import SessoesEditor, { sessaoVazia } from '../SessoesEditor';
 import MidiaKitDocument, { baixarPdf } from '../MidiaKitDocument';
 import { midiaKitService, MidiaKitTemplate, Sessao, InfluenciadorRef, sessoesPadrao, semearInfluenciador, TEMAS_TEMPLATE } from '../../service';
@@ -29,12 +33,15 @@ const VAZIO: FormState = { nome: '', influenciadorId: null, status: 'ATIVO', ses
 
 function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialogProps) {
   const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
   const editando = !!templateId;
   const [form, setForm] = useState<FormState>(VAZIO);
   const [submitted, setSubmitted] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [gerandoPreview, setGerandoPreview] = useState(false);
+  const [influDialogVisible, setInfluDialogVisible] = useState(false);
+  const podeAddInflu = canAdd(authUser?.roles ?? [], MODULES.INFLUENCIADORES.prefix);
 
   const { data: influenciadores = [] } = useQuery({
     queryKey: ['influenciadores-ativos'],
@@ -175,6 +182,7 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
   );
 
   return (
+    <>
     <Dialog visible={visible} onHide={onHide} header={header} footer={footer} style={{ width: '90vw', maxWidth: '1200px' }} modal draggable={false} className="template-dialog">
       <div className={`form-field ${submitted && !form.nome.trim() ? 'field-error' : ''}`}>
         <label htmlFor="nome">Nome do template <span className="required">*</span></label>
@@ -184,8 +192,10 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
       <div className="form-grid-2">
         <div className={`form-field ${submitted && !form.influenciadorId ? 'field-error' : ''}`}>
           <label htmlFor="influ">Influenciador <span className="required">*</span></label>
-          <Dropdown id="influ" value={form.influenciadorId} options={influenciadores} optionLabel="nome" optionValue="id"
-            onChange={(e) => selecionarInfluenciador(e.value)} placeholder="Selecione" filter className="w-full" baseZIndex={10000} />
+          <SelectComCadastro onAdd={() => setInfluDialogVisible(true)} visivel={podeAddInflu} title="Cadastrar novo influenciador">
+            <Dropdown id="influ" value={form.influenciadorId} options={influenciadores} optionLabel="nome" optionValue="id"
+              onChange={(e) => selecionarInfluenciador(e.value)} placeholder="Selecione" filter className="w-full" baseZIndex={10000} />
+          </SelectComCadastro>
         </div>
         <div className="form-field">
           <label htmlFor="status">Status <span className="required">*</span></label>
@@ -215,6 +225,16 @@ function TemplateDialog({ visible, templateId, onHide, onToast }: TemplateDialog
         {previewUrl && <iframe src={previewUrl} title="Preview do mídia kit" className="preview-pdf-frame" />}
       </Dialog>
     </Dialog>
+
+    <InfluenciadorFormDialog
+      visible={influDialogVisible}
+      onHide={() => setInfluDialogVisible(false)}
+      onSaved={(influ) => {
+        queryClient.invalidateQueries({ queryKey: ['influenciadores-ativos'] });
+        setForm((f) => ({ ...f, influenciadorId: influ.id }));
+      }}
+    />
+    </>
   );
 }
 

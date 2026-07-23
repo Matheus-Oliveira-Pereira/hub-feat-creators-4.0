@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -7,6 +7,10 @@ import { InputNumber } from 'primereact/inputnumber';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Calendar } from 'primereact/calendar';
 import FormDialog from '../../../../components/FormDialog';
+import SelectComCadastro from '../../../../components/SelectComCadastro';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { canAdd, MODULES } from '../../../../utils/roles';
+import MarcaFormDialog from '../../../Marcas/components/MarcaFormDialog';
 import {
   prospecaoService,
   Prospecao,
@@ -41,6 +45,10 @@ function dateToIso(d: Date | null | undefined): string | null {
 }
 
 function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, editando, marcas }: Readonly<Props>) {
+  const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
+  const [marcaDialogVisible, setMarcaDialogVisible] = useState(false);
+  const podeAddMarca = canAdd(authUser?.roles ?? [], MODULES.MARCAS.prefix);
   const [marcaId, setMarcaId] = useState<string | null>(null);
   const [contatoId, setContatoId] = useState<string | null>(null);
   const [contatos, setContatos] = useState<ContatoMarcaRef[]>([]);
@@ -151,6 +159,7 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
   }));
 
   return (
+    <>
     <FormDialog
       visible={visible}
       onHide={onHide}
@@ -172,16 +181,18 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
 
       <div className={`form-field ${submitted && !marcaId ? 'field-error' : ''}`}>
         <label htmlFor="marca">Marca <span className="required">*</span></label>
-        <Dropdown
-          id="marca"
-          value={marcaId}
-          options={marcas.map((m) => ({ label: m.nome, value: m.id }))}
-          onChange={(e) => { setMarcaId(e.value); setContatoId(null); }}
-          placeholder="Selecione a marca"
-          filter
-          className="w-full"
-          baseZIndex={10000}
-        />
+        <SelectComCadastro onAdd={() => setMarcaDialogVisible(true)} visivel={podeAddMarca} title="Cadastrar nova marca">
+          <Dropdown
+            id="marca"
+            value={marcaId}
+            options={marcas.map((m) => ({ label: m.nome, value: m.id }))}
+            onChange={(e) => { setMarcaId(e.value); setContatoId(null); }}
+            placeholder="Selecione a marca"
+            filter
+            className="w-full"
+            baseZIndex={10000}
+          />
+        </SelectComCadastro>
         {submitted && !marcaId && <small className="p-error"><i className="pi pi-exclamation-circle" /> Marca é obrigatória</small>}
       </div>
 
@@ -248,6 +259,13 @@ function ProspecaoDialog({ visible, onHide, onSaved, onToast, influenciador, edi
         </div>
       )}
     </FormDialog>
+
+    <MarcaFormDialog
+      visible={marcaDialogVisible}
+      onHide={() => setMarcaDialogVisible(false)}
+      onSaved={(marca) => { queryClient.invalidateQueries({ queryKey: ['prospecao-marcas'] }); setMarcaId(marca.id); setContatoId(null); }}
+    />
+    </>
   );
 }
 

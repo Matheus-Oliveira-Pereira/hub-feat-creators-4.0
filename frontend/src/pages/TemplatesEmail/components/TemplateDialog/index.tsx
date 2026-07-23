@@ -11,6 +11,7 @@ import VariaveisBar from '../VariaveisBar';
 import {
   templateEmailService,
   TemplateEmail,
+  TemplateEmailDTO,
   TemplateEmailForm,
   TipoTemplateEmail,
   TIPO_TEMPLATE_LABEL,
@@ -19,16 +20,18 @@ import {
 interface Props {
   visible: boolean;
   onHide: () => void;
-  onSaved: () => void;
+  onSaved: (saved?: TemplateEmailDTO) => void;
   onToast: (severity: 'success' | 'error' | 'warn', detail: string) => void;
   editando: TemplateEmail | null;
   copiando?: boolean;
+  /** Tipo inicial ao criar (usado no cadastro na hora a partir de outro modal). */
+  tipoInicial?: TipoTemplateEmail;
 }
 
 const TIPO_OPTIONS = (Object.keys(TIPO_TEMPLATE_LABEL) as TipoTemplateEmail[])
   .map((t) => ({ label: TIPO_TEMPLATE_LABEL[t], value: t }));
 
-function TemplateDialog({ visible, onHide, onSaved, onToast, editando, copiando = false }: Readonly<Props>) {
+function TemplateDialog({ visible, onHide, onSaved, onToast, editando, copiando = false, tipoInicial }: Readonly<Props>) {
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState<TipoTemplateEmail>('PROSPECAO');
   const [assunto, setAssunto] = useState('');
@@ -53,13 +56,13 @@ function TemplateDialog({ visible, onHide, onSaved, onToast, editando, copiando 
       setStatus(copiando ? 'ATIVO' : editando.status);
     } else {
       setNome('');
-      setTipo('PROSPECAO');
+      setTipo(tipoInicial ?? 'PROSPECAO');
       setAssunto('');
       setCorpo('');
       setPadrao(false);
       setStatus('ATIVO');
     }
-  }, [visible, editando, copiando]);
+  }, [visible, editando, copiando, tipoInicial]);
 
   const inserirVariavel = (token: string) => {
     if (lastFocus.current === 'assunto' && assuntoRef.current) {
@@ -93,12 +96,12 @@ function TemplateDialog({ visible, onHide, onSaved, onToast, editando, copiando 
       const payload: TemplateEmailForm = { nome: nome.trim(), tipo, assunto: assunto.trim(), corpo, padrao, status };
       return (editando && !copiando) ? templateEmailService.atualizar(editando.id, payload) : templateEmailService.salvar(payload);
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       let msg = 'Template criado';
       if (copiando) msg = 'Template copiado';
       else if (editando) msg = 'Template atualizado';
       onToast('success', msg);
-      onSaved();
+      onSaved(saved as TemplateEmailDTO);
       onHide();
     },
     onError: (err: unknown) => {

@@ -13,6 +13,10 @@ import {
 import { iaService } from '../../../../services/iaService';
 import AssistenteIa from '../../../../components/AssistenteIa';
 import ImageCropper from '../../../../components/ImageCropper';
+import SelectComCadastro from '../../../../components/SelectComCadastro';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { canAdd, MODULES } from '../../../../utils/roles';
+import MarcaFormDialog from '../../../Marcas/components/MarcaFormDialog';
 import EsteticaDialog from '../EsteticaDialog';
 import AnalyticsView from './AnalyticsView';
 import { CapaRedes, ContatoEditor } from './ConfigEditores';
@@ -52,6 +56,7 @@ export interface SessaoCardProps {
   templateId: string | null;
   influenciador: InfluenciadorRef | null;
   marcasDisponiveis: MarcaRef[];
+  recarregarMarcas: () => Promise<MarcaRef[]>;
   onPatch: (patch: Partial<Sessao>) => void;
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
@@ -61,14 +66,17 @@ export interface SessaoCardProps {
   onToast: (severity: 'success' | 'error' | 'warn', detail: string) => void;
 }
 
-function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDisponiveis, onPatch, onMove, onRemove, onDuplicate, onDragStart, onDropOn, onToast }: Readonly<SessaoCardProps>) {
+function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDisponiveis, recarregarMarcas, onPatch, onMove, onRemove, onDuplicate, onDragStart, onDropOn, onToast }: Readonly<SessaoCardProps>) {
+  const { user: authUser } = useAuth();
   const printRef = useRef<HTMLInputElement>(null);
   const fotoRef = useRef<HTMLInputElement>(null);
   const [prints, setPrints] = useState<File[]>([]);
   const [analisando, setAnalisando] = useState(false);
   const [gerandoSobre, setGerandoSobre] = useState(false);
   const [esteticaAberta, setEsteticaAberta] = useState(false);
+  const [marcaDialogVisible, setMarcaDialogVisible] = useState(false);
   const [cropper, setCropper] = useState<{ src: string; alvo: number | null } | null>(null);
+  const podeAddMarca = canAdd(authUser?.roles ?? [], MODULES.MARCAS.prefix);
   const usaRecorte = sessao.tipo === 'CAPA' || sessao.tipo === 'SOBRE_INFLUENCIADOR';
   const isSobre = sessao.tipo === 'SOBRE_INFLUENCIADOR';
   const precisaPrint = requerPrint(sessao.tipo);
@@ -266,14 +274,29 @@ function SessaoCard({ sessao, index, total, templateId, influenciador, marcasDis
       {isMarcas && (
         <div className="form-field">
           <label>Marcas cadastradas</label>
-          <MultiSelect
-            value={marcasSelecionadas.map((m) => m.id)} options={marcasDisponiveis}
-            optionLabel="nome" optionValue="id" filter display="chip"
-            onChange={(e) => setMarcas(e.value)} placeholder="Selecionar marcas..."
-            className="w-full" baseZIndex={10000}
-            emptyMessage="Nenhuma marca cadastrada"
-          />
+          <SelectComCadastro onAdd={() => setMarcaDialogVisible(true)} visivel={podeAddMarca} title="Cadastrar nova marca">
+            <MultiSelect
+              value={marcasSelecionadas.map((m) => m.id)} options={marcasDisponiveis}
+              optionLabel="nome" optionValue="id" filter display="chip"
+              onChange={(e) => setMarcas(e.value)} placeholder="Selecionar marcas..."
+              className="w-full" baseZIndex={10000}
+              emptyMessage="Nenhuma marca cadastrada"
+            />
+          </SelectComCadastro>
           <small className="campo-ajuda">Os logos das marcas selecionadas aparecem no PDF. Fotos abaixo são opcionais (extras).</small>
+          <MarcaFormDialog
+            visible={marcaDialogVisible}
+            onHide={() => setMarcaDialogVisible(false)}
+            onSaved={async (marca) => {
+              const lista = await recarregarMarcas();
+              const ids = [...marcasSelecionadas.map((m) => m.id), marca.id];
+              const snapshot = ids
+                .map((id) => lista.find((m) => m.id === id))
+                .filter((m): m is MarcaRef => !!m)
+                .map(({ id, nome, logotipo }) => ({ id, nome, logotipo }));
+              patchConfig({ marcas: snapshot });
+            }}
+          />
         </div>
       )}
 

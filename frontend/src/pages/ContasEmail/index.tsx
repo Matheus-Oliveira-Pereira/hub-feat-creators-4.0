@@ -3,9 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DataTable, DataTablePageEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
-import { InputNumber } from 'primereact/inputnumber';
-import { InputSwitch } from 'primereact/inputswitch';
-import { Chips } from 'primereact/chips';
 import { MultiSelect } from 'primereact/multiselect';
 import { Calendar } from 'primereact/calendar';
 import { Dialog } from 'primereact/dialog';
@@ -15,10 +12,9 @@ import { Tooltip } from 'primereact/tooltip';
 import { Toast } from 'primereact/toast';
 import PageHeader from '../../components/PageHeader';
 import CrudHeader from '../../components/CrudHeader';
-import FormDialog from '../../components/FormDialog';
 import FilterSidebar from '../../components/FilterSidebar';
 import StatusBadge from '../../components/StatusBadge';
-import StatusDropdown, { STATUS_OPTIONS } from '../../components/StatusDropdown';
+import { STATUS_OPTIONS } from '../../components/StatusDropdown';
 import TableActions from '../../components/TableActions';
 import HistoryDialog from '../../components/HistoryDialog';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -26,21 +22,9 @@ import DeleteDialog from '../../components/DeleteDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
 import ImportacaoDialog from './components/ImportacaoDialog';
-import { contaEmailService, ContaEmailDTO, ContaEmailForm, ContaEmailFiltros } from './service';
+import ContaEmailFormDialog from './components/ContaEmailFormDialog';
+import { contaEmailService, ContaEmailDTO, ContaEmailFiltros } from './service';
 import './styles.scss';
-
-interface FormErrors { nome?: string; host?: string; usuario?: string; senha?: string; }
-
-const FORM_VAZIO: ContaEmailForm = {
-  nome: '', host: '', porta: 587, usuario: '', remetenteNome: '', senha: '', tls: true,
-  imapHost: '', imapPorta: null, salvarEnviados: true, copiaOculta: '',
-  sistema: false, status: 'ATIVO',
-};
-
-/** CSV → chips e vice-versa (campo copiaOculta guarda string no backend). */
-const csvParaChips = (csv?: string | null): string[] =>
-  (csv ?? '').split(/[,;]/).map((s) => s.trim()).filter(Boolean);
-const chipsParaCsv = (chips: string[]): string => chips.map((s) => s.trim()).filter(Boolean).join(', ');
 
 function ContasEmail() {
   const queryClient = useQueryClient();
@@ -48,16 +32,11 @@ function ContasEmail() {
   const { user: authUser } = useAuth();
 
   const [dialogVisible, setDialogVisible] = useState(false);
-  const [editando, setEditando] = useState(false);
-  const [copiando, setCopiando] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [copyFromId, setCopyFromId] = useState<string | null>(null);
   const [filtroGlobal, setFiltroGlobal] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [filtros, setFiltros] = useState<ContaEmailFiltros>({ status: [] });
-  const [form, setForm] = useState<ContaEmailForm>(FORM_VAZIO);
-  const [formId, setFormId] = useState<string | null>(null);
-  const [senhaConfigurada, setSenhaConfigurada] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [submitted, setSubmitted] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -82,16 +61,6 @@ function ContasEmail() {
     queryClient.invalidateQueries({ queryKey: ['contas-email'] });
     queryClient.invalidateQueries({ queryKey: ['contas-email-options'] });
   };
-
-  const salvarMutation = useMutation({
-    mutationFn: async () => {
-      const payload: Partial<ContaEmailForm> = { ...form };
-      if (!payload.senha?.trim()) delete payload.senha;
-      return editando ? contaEmailService.atualizar(formId!, payload) : contaEmailService.salvar(payload);
-    },
-    onSuccess: () => { toast.current?.show({ severity: 'success', summary: 'Sucesso', detail: editando ? 'Conta atualizada' : 'Conta criada' }); setDialogVisible(false); invalidate(); },
-    onError: (err: unknown) => { const e = err as { response?: { data?: { message?: string } } }; toast.current?.show({ severity: 'error', summary: 'Erro', detail: e.response?.data?.message || 'Erro ao salvar' }); },
-  });
 
   const desativarMutation = useMutation({
     mutationFn: (id: string) => contaEmailService.desativar(id),
@@ -130,55 +99,9 @@ function ContasEmail() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [filtroGlobal]);
 
-  const validar = (): boolean => {
-    const errs: FormErrors = {};
-    if (!form.nome.trim()) errs.nome = 'Nome é obrigatório';
-    if (!form.host.trim()) errs.host = 'Servidor SMTP é obrigatório';
-    if (!form.usuario.trim()) errs.usuario = 'Usuário (e-mail) é obrigatório';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.usuario.trim())) errs.usuario = 'E-mail inválido';
-    if (copiando && !form.senha?.trim()) errs.senha = 'Informe a senha da nova conta';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const abrirNovo = () => { setForm(FORM_VAZIO); setFormId(null); setEditando(false); setCopiando(false); setSenhaConfigurada(false); setErrors({}); setSubmitted(false); setDialogVisible(true); };
-
-  const abrirEdicao = async (row: ContaEmailDTO) => {
-    try {
-      const data = await contaEmailService.buscar(row.id);
-      setForm({
-        nome: data.nome, host: data.host, porta: data.porta, usuario: data.usuario,
-        remetenteNome: data.remetenteNome ?? '', senha: '', tls: data.tls ?? true,
-        imapHost: data.imapHost ?? '', imapPorta: data.imapPorta,
-        salvarEnviados: data.salvarEnviados ?? true, copiaOculta: data.copiaOculta ?? '',
-        sistema: data.sistema, status: data.status,
-      });
-      setSenhaConfigurada(true);
-      setFormId(row.id); setEditando(true); setCopiando(false); setErrors({}); setSubmitted(false); setDialogVisible(true);
-    } catch { toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar conta' }); }
-  };
-
-  // Copia uma conta como nova: campos únicos (nome, usuário) e senha em branco para forçar troca.
-  const abrirCopia = async (row: ContaEmailDTO) => {
-    try {
-      const data = await contaEmailService.buscar(row.id);
-      setForm({
-        nome: '', host: data.host, porta: data.porta, usuario: '',
-        remetenteNome: data.remetenteNome ?? '', senha: '', tls: data.tls ?? true,
-        imapHost: data.imapHost ?? '', imapPorta: data.imapPorta,
-        salvarEnviados: data.salvarEnviados ?? true, copiaOculta: data.copiaOculta ?? '',
-        sistema: false, status: 'ATIVO',
-      });
-      setSenhaConfigurada(false);
-      setFormId(null); setEditando(false); setCopiando(true); setErrors({}); setSubmitted(false); setDialogVisible(true);
-    } catch { toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar conta' }); }
-  };
-
-  const salvar = () => {
-    setSubmitted(true);
-    if (!validar()) return;
-    salvarMutation.mutate();
-  };
+  const abrirNovo = () => { setEditId(null); setCopyFromId(null); setDialogVisible(true); };
+  const abrirEdicao = (row: ContaEmailDTO) => { setEditId(row.id); setCopyFromId(null); setDialogVisible(true); };
+  const abrirCopia = (row: ContaEmailDTO) => { setCopyFromId(row.id); setEditId(null); setDialogVisible(true); };
 
   const roles = authUser?.roles ?? [];
   const podeAdicionar = canAdd(roles, MODULES.CONTAS_EMAIL.prefix);
@@ -252,89 +175,7 @@ function ContasEmail() {
         </DataTable>
       </div>
 
-      <FormDialog visible={dialogVisible} onHide={() => setDialogVisible(false)} title={copiando ? 'Copiar Conta' : (editando ? 'Editar Conta' : 'Nova Conta')} icon={copiando ? 'pi pi-copy' : (editando ? 'pi pi-pencil' : 'pi pi-at')} onSave={salvar} loading={salvarMutation.isPending}>
-        {copiando && (
-          <div className="copia-hint">
-            <i className="pi pi-info-circle" /> Cópia de conta. Defina um <strong>nome</strong>, um <strong>usuário/e-mail</strong> e a <strong>senha</strong> próprios para a nova conta.
-          </div>
-        )}
-        <div className={`form-field ${submitted && errors.nome ? 'field-error' : ''}`}>
-          <label htmlFor="nome">Nome <span className="required">*</span></label>
-          <InputText id="nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="w-full" placeholder="Ex: Conta principal" />
-          {submitted && errors.nome && <small className="p-error"><i className="pi pi-exclamation-circle" />{errors.nome}</small>}
-        </div>
-        <div className="form-grid-2">
-          <div className={`form-field ${submitted && errors.host ? 'field-error' : ''}`}>
-            <label htmlFor="host">Servidor SMTP <span className="required">*</span></label>
-            <InputText id="host" value={form.host} onChange={(e) => setForm({ ...form, host: e.target.value })} className="w-full" placeholder="smtp.gmail.com" />
-            {submitted && errors.host && <small className="p-error"><i className="pi pi-exclamation-circle" />{errors.host}</small>}
-          </div>
-          <div className="form-field">
-            <label htmlFor="porta">Porta</label>
-            <InputNumber id="porta" value={form.porta} onValueChange={(e) => setForm({ ...form, porta: e.value ?? null })} useGrouping={false} className="w-full" placeholder="587" />
-          </div>
-        </div>
-        <div className={`form-field ${submitted && errors.usuario ? 'field-error' : ''}`}>
-          <label htmlFor="usuario">Usuário / E-mail remetente <span className="required">*</span></label>
-          <InputText id="usuario" type="email" value={form.usuario} onChange={(e) => setForm({ ...form, usuario: e.target.value })} className="w-full" placeholder="contato@empresa.com" autoComplete="off" />
-          {submitted && errors.usuario && <small className="p-error"><i className="pi pi-exclamation-circle" />{errors.usuario}</small>}
-        </div>
-        <div className="form-field">
-          <label htmlFor="remetenteNome">Nome do remetente</label>
-          <InputText id="remetenteNome" value={form.remetenteNome} onChange={(e) => setForm({ ...form, remetenteNome: e.target.value })} className="w-full" placeholder="Hub Feat Creators" />
-        </div>
-        <div className={`form-field ${submitted && errors.senha ? 'field-error' : ''}`}>
-          <label htmlFor="senha">Senha {copiando && <span className="required">*</span>}</label>
-          <InputText id="senha" type="password" value={form.senha ?? ''} onChange={(e) => setForm({ ...form, senha: e.target.value })} className="w-full"
-            placeholder={senhaConfigurada ? '•••••••••• (já configurada — preencha para alterar)' : 'Senha ou app password'} autoComplete="new-password" />
-          {submitted && errors.senha
-            ? <small className="p-error"><i className="pi pi-exclamation-circle" />{errors.senha}</small>
-            : <small className="config-hint">{senhaConfigurada ? 'Deixe em branco para manter a senha atual.' : 'Armazenada criptografada; nunca é exibida.'}</small>}
-        </div>
-        <div className="form-grid-2">
-          <div className="form-field switch-field">
-            <InputSwitch id="tls" checked={form.tls} onChange={(e) => setForm({ ...form, tls: !!e.value })} />
-            <label htmlFor="tls">Usar STARTTLS</label>
-          </div>
-          <div className="form-field switch-field">
-            <InputSwitch id="sistema" checked={form.sistema} onChange={(e) => setForm({ ...form, sistema: !!e.value })} />
-            <label htmlFor="sistema">Conta do sistema (padrão)</label>
-          </div>
-        </div>
-
-        <div className="bloco-avancado">
-          <span className="bloco-avancado-titulo"><i className="pi pi-inbox" /> Pasta Enviados e cópias</span>
-          <div className="form-field switch-field">
-            <InputSwitch id="salvarEnviados" checked={form.salvarEnviados} onChange={(e) => setForm({ ...form, salvarEnviados: !!e.value })} />
-            <label htmlFor="salvarEnviados">Salvar cópia na pasta Enviados (IMAP)</label>
-          </div>
-          <small className="config-hint">Gmail/Google Workspace já salvam automaticamente — desative para evitar duplicados.</small>
-          {form.salvarEnviados && (
-            <div className="form-grid-2">
-              <div className="form-field">
-                <label htmlFor="imapHost">Servidor IMAP</label>
-                <InputText id="imapHost" value={form.imapHost} onChange={(e) => setForm({ ...form, imapHost: e.target.value })} className="w-full"
-                  placeholder={form.host.trim() ? `auto: ${form.host.trim().toLowerCase().startsWith('smtp.') ? 'imap.' + form.host.trim().slice(5) : 'imap.' + form.host.trim()}` : 'auto (derivado do SMTP)'} />
-              </div>
-              <div className="form-field">
-                <label htmlFor="imapPorta">Porta IMAP</label>
-                <InputNumber id="imapPorta" value={form.imapPorta} onValueChange={(e) => setForm({ ...form, imapPorta: e.value ?? null })} useGrouping={false} className="w-full" placeholder="993" />
-              </div>
-            </div>
-          )}
-          <div className="form-field">
-            <label htmlFor="copiaOculta">Cópia oculta automática (CCO)</label>
-            <Chips id="copiaOculta" value={csvParaChips(form.copiaOculta)} onChange={(e) => setForm({ ...form, copiaOculta: chipsParaCsv(e.value ?? []) })}
-              separator="," className="w-full" placeholder="Digite o e-mail e Enter" />
-            <small className="config-hint">Todo e-mail enviado por esta conta copia oculto estes endereços.</small>
-          </div>
-        </div>
-
-        <div className="form-field">
-          <label htmlFor="status">Status <span className="required">*</span></label>
-          <StatusDropdown id="status" value={form.status} onChange={(e) => setForm({ ...form, status: e.value })} className="w-full" baseZIndex={10000} />
-        </div>
-      </FormDialog>
+      <ContaEmailFormDialog visible={dialogVisible} onHide={() => setDialogVisible(false)} editId={editId} copyFromId={copyFromId} />
 
       <Dialog header="Enviar e-mail de teste" visible={!!testeTarget} onHide={() => setTesteTarget(null)} style={{ width: '420px' }} modal>
         <div className="form-field">

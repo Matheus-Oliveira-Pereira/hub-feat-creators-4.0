@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -7,6 +7,11 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Calendar } from 'primereact/calendar';
 import FormDialog from '../../../../components/FormDialog';
 import ConfirmDialog from '../../../../components/ConfirmDialog';
+import SelectComCadastro from '../../../../components/SelectComCadastro';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { canAdd, MODULES } from '../../../../utils/roles';
+import MarcaFormDialog from '../../../Marcas/components/MarcaFormDialog';
+import InfluenciadorFormDialog from '../../../Influenciadores/components/InfluenciadorFormDialog';
 import EntregaveisEditor from '../EntregaveisEditor';
 import {
   publicidadeService,
@@ -66,6 +71,8 @@ function isoToDate(v: string | null): Date | null {
 }
 
 function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editando }: Readonly<Props>) {
+  const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
   const [marcaId, setMarcaId] = useState<string | null>(null);
   const [influId, setInfluId] = useState<string | null>(null);
   const [parceiro, setParceiro] = useState('');
@@ -76,8 +83,12 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
   const [entregaveis, setEntregaveis] = useState<Entregavel[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [marcaDialogVisible, setMarcaDialogVisible] = useState(false);
+  const [influDialogVisible, setInfluDialogVisible] = useState(false);
 
   const travado = !!inicial; // marca/influ vêm da prospecção fechada
+  const podeAddMarca = canAdd(authUser?.roles ?? [], MODULES.MARCAS.prefix);
+  const podeAddInflu = canAdd(authUser?.roles ?? [], MODULES.INFLUENCIADORES.prefix);
 
   const { data: marcas = [] } = useQuery({ queryKey: ['publi-marcas'], queryFn: publicidadeService.listarMarcasAtivas, enabled: visible });
   const { data: influenciadores = [] } = useQuery({ queryKey: ['publi-influ'], queryFn: publicidadeService.listarInfluenciadoresAtivos, enabled: visible });
@@ -191,13 +202,21 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
           <label htmlFor="p-marca">Marca <span className="required">*</span></label>
           {travado
             ? <InputText value={inicial?.marca.nome ?? ''} disabled className="w-full" />
-            : <Dropdown id="p-marca" value={marcaId} options={marcas.map((m) => ({ label: m.nome, value: m.id }))} onChange={(e) => setMarcaId(e.value)} placeholder="Marca" filter className="w-full" baseZIndex={10000} />}
+            : (
+              <SelectComCadastro onAdd={() => setMarcaDialogVisible(true)} visivel={podeAddMarca} title="Cadastrar nova marca">
+                <Dropdown id="p-marca" value={marcaId} options={marcas.map((m) => ({ label: m.nome, value: m.id }))} onChange={(e) => setMarcaId(e.value)} placeholder="Marca" filter className="w-full" baseZIndex={10000} />
+              </SelectComCadastro>
+            )}
         </div>
         <div className={`form-field ${submitted && !influId ? 'field-error' : ''}`} style={{ flex: 1 }}>
           <label htmlFor="p-influ">Influenciador <span className="required">*</span></label>
           {travado
             ? <InputText value={inicial?.influenciador.nome ?? ''} disabled className="w-full" />
-            : <Dropdown id="p-influ" value={influId} options={influenciadores.map((i) => ({ label: i.nome, value: i.id }))} onChange={(e) => setInfluId(e.value)} placeholder="Influenciador" filter className="w-full" baseZIndex={10000} />}
+            : (
+              <SelectComCadastro onAdd={() => setInfluDialogVisible(true)} visivel={podeAddInflu} title="Cadastrar novo influenciador">
+                <Dropdown id="p-influ" value={influId} options={influenciadores.map((i) => ({ label: i.nome, value: i.id }))} onChange={(e) => setInfluId(e.value)} placeholder="Influenciador" filter className="w-full" baseZIndex={10000} />
+              </SelectComCadastro>
+            )}
         </div>
       </div>
 
@@ -296,6 +315,17 @@ function PublicidadeDialog({ visible, onHide, onSaved, onToast, inicial, editand
       confirmLabel="Salvar"
       confirmIcon="pi pi-check"
       confirmSeverity="success"
+    />
+
+    <MarcaFormDialog
+      visible={marcaDialogVisible}
+      onHide={() => setMarcaDialogVisible(false)}
+      onSaved={(marca) => { queryClient.invalidateQueries({ queryKey: ['publi-marcas'] }); setMarcaId(marca.id); }}
+    />
+    <InfluenciadorFormDialog
+      visible={influDialogVisible}
+      onHide={() => setInfluDialogVisible(false)}
+      onSaved={(influ) => { queryClient.invalidateQueries({ queryKey: ['publi-influ'] }); setInfluId(influ.id); }}
     />
     </>
   );

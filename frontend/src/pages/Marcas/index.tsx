@@ -8,23 +8,19 @@ import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
 import PageHeader from '../../components/PageHeader';
 import CrudHeader from '../../components/CrudHeader';
-import FormDialog from '../../components/FormDialog';
 import FilterSidebar from '../../components/FilterSidebar';
 import StatusBadge from '../../components/StatusBadge';
-import StatusDropdown, { STATUS_OPTIONS } from '../../components/StatusDropdown';
+import { STATUS_OPTIONS } from '../../components/StatusDropdown';
 import TableActions from '../../components/TableActions';
 import HistoryDialog from '../../components/HistoryDialog';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import DeleteDialog from '../../components/DeleteDialog';
-import ContatosEditor from './components/ContatosEditor';
+import MarcaFormDialog from './components/MarcaFormDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificacoes } from '../../contexts/WebSocketContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
-import { marcaService, MarcaDTO, MarcaForm, MarcaFiltros, Contato, contatoVazio, contatoInvalido } from './service';
-import { comprimirImagem } from '../../utils/imagem';
+import { marcaService, MarcaDTO, MarcaFiltros } from './service';
 import './styles.scss';
-
-const FORM_VAZIO: MarcaForm = { nome: '', status: 'ATIVO', logotipo: '', linkFormulario: '', siteMarca: '', contatos: [] };
 
 function Marcas() {
   const queryClient = useQueryClient();
@@ -33,13 +29,10 @@ function Marcas() {
   const { user: authUser } = useAuth();
 
   const [dialogVisible, setDialogVisible] = useState(false);
-  const [editando, setEditando] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [filtroGlobal, setFiltroGlobal] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [filtros, setFiltros] = useState<MarcaFiltros>({ status: [] });
-  const [form, setForm] = useState<MarcaForm>(FORM_VAZIO);
-  const [formId, setFormId] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -49,18 +42,6 @@ function Marcas() {
   const [deactivateTarget, setDeactivateTarget] = useState<MarcaDTO | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MarcaDTO | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const logoRef = useRef<HTMLInputElement>(null);
-
-  const carregarLogotipo = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    try {
-      const dataUrl = await comprimirImagem(files[0]);
-      setForm((f) => ({ ...f, logotipo: dataUrl }));
-    } catch {
-      toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar o logotipo' });
-    }
-    if (logoRef.current) logoRef.current.value = '';
-  };
 
   const queryFiltros: MarcaFiltros = { ...filtros, textoDeBusca: debouncedBusca || undefined, mostrarInativos };
 
@@ -70,15 +51,6 @@ function Marcas() {
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['marcas'] });
-
-  const salvarMutation = useMutation({
-    mutationFn: () => {
-      const payload: MarcaForm = { ...form, contatos: form.contatos.filter((c) => !contatoVazio(c)) };
-      return editando ? marcaService.atualizar(formId!, payload) : marcaService.salvar(payload);
-    },
-    onSuccess: () => { toast.current?.show({ severity: 'success', summary: 'Sucesso', detail: editando ? 'Marca atualizada' : 'Marca criada' }); setDialogVisible(false); invalidate(); },
-    onError: (err: unknown) => { const e = err as { response?: { data?: { message?: string } } }; toast.current?.show({ severity: 'error', summary: 'Erro', detail: e.response?.data?.message || 'Erro ao salvar' }); },
-  });
 
   const desativarMutation = useMutation({
     mutationFn: (id: string) => marcaService.desativar(id),
@@ -109,36 +81,8 @@ function Marcas() {
     return unsub;
   }, [subscribe, queryClient]);
 
-  const validar = (): boolean => {
-    if (!form.nome.trim()) return false;
-    return !form.contatos.some(contatoInvalido);
-  };
-
-  const abrirNovo = () => { setForm(FORM_VAZIO); setFormId(null); setEditando(false); setSubmitted(false); setDialogVisible(true); };
-
-  const abrirEdicao = async (row: MarcaDTO) => {
-    try {
-      const data = await marcaService.buscar(row.id);
-      setForm({
-        nome: data.nome,
-        status: data.status,
-        logotipo: data.logotipo ?? '',
-        linkFormulario: data.linkFormulario ?? '',
-        siteMarca: data.siteMarca ?? '',
-        contatos: (data.contatos || []).map((c) => ({ id: c.id, nome: c.nome ?? '', email: c.email ?? '', telefone: c.telefone ?? '' })),
-      });
-      setFormId(row.id); setEditando(true); setSubmitted(false); setDialogVisible(true);
-    } catch { toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar marca' }); }
-  };
-
-  const salvar = () => {
-    setSubmitted(true);
-    if (!validar()) {
-      toast.current?.show({ severity: 'warn', summary: 'Atenção', detail: 'Verifique o nome e os contatos.' });
-      return;
-    }
-    salvarMutation.mutate();
-  };
+  const abrirNovo = () => { setEditId(null); setDialogVisible(true); };
+  const abrirEdicao = (row: MarcaDTO) => { setEditId(row.id); setDialogVisible(true); };
 
   const roles = authUser?.roles ?? [];
   const podeAdicionar = canAdd(roles, MODULES.MARCAS.prefix);
@@ -194,46 +138,7 @@ function Marcas() {
         </DataTable>
       </div>
 
-      <FormDialog visible={dialogVisible} onHide={() => setDialogVisible(false)} title={editando ? 'Editar Marca' : 'Nova Marca'} icon={editando ? 'pi pi-pencil' : 'pi pi-plus'} onSave={salvar} loading={salvarMutation.isPending} width="640px">
-        <div className={`form-field ${submitted && !form.nome.trim() ? 'field-error' : ''}`}>
-          <label htmlFor="nome">Nome <span className="required">*</span></label>
-          <InputText id="nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} className="w-full" />
-          {submitted && !form.nome.trim() && <small className="p-error"><i className="pi pi-exclamation-circle" />Nome é obrigatório</small>}
-        </div>
-        <div className="form-field">
-          <label htmlFor="logotipo">Logotipo</label>
-          <div className="logo-upload">
-            {form.logotipo
-              ? (
-                <div className="logo-preview">
-                  <img src={form.logotipo} alt="Logotipo" />
-                  <button type="button" onClick={() => setForm({ ...form, logotipo: '' })} title="Remover"><i className="pi pi-times" /></button>
-                </div>
-              )
-              : (
-                <label className="logo-add">
-                  <i className="pi pi-upload" /> Enviar imagem
-                  <input ref={logoRef} id="logotipo" type="file" accept="image/*" onChange={(e) => carregarLogotipo(e.target.files)} />
-                </label>
-              )}
-          </div>
-        </div>
-        <div className="form-field">
-          <label htmlFor="linkFormulario">Link do formulário</label>
-          <InputText id="linkFormulario" value={form.linkFormulario ?? ''} onChange={(e) => setForm({ ...form, linkFormulario: e.target.value })} className="w-full" placeholder="https://..." />
-        </div>
-        <div className="form-field">
-          <label htmlFor="siteMarca">Site da marca</label>
-          <InputText id="siteMarca" value={form.siteMarca ?? ''} onChange={(e) => setForm({ ...form, siteMarca: e.target.value })} className="w-full" placeholder="https://..." />
-        </div>
-        <div className="form-field">
-          <ContatosEditor contatos={form.contatos} onChange={(contatos: Contato[]) => setForm({ ...form, contatos })} submitted={submitted} />
-        </div>
-        <div className="form-field">
-          <label htmlFor="status">Status <span className="required">*</span></label>
-          <StatusDropdown id="status" value={form.status} onChange={(e) => setForm({ ...form, status: e.value })} className="w-full" baseZIndex={10000} />
-        </div>
-      </FormDialog>
+      <MarcaFormDialog visible={dialogVisible} onHide={() => setDialogVisible(false)} editId={editId} />
 
       <ConfirmDialog visible={!!deactivateTarget} onHide={() => setDeactivateTarget(null)} onConfirm={() => deactivateTarget && desativarMutation.mutate(deactivateTarget.id)}
         title="Desativar Marca" icon="pi pi-ban" message={`Deseja desativar a marca "${deactivateTarget?.nome}"? O registro poderá ser restaurado posteriormente.`}

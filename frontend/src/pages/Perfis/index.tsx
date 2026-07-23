@@ -8,22 +8,19 @@ import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
 import PageHeader from '../../components/PageHeader';
 import CrudHeader from '../../components/CrudHeader';
-import FormDialog from '../../components/FormDialog';
 import FilterSidebar from '../../components/FilterSidebar';
 import StatusBadge from '../../components/StatusBadge';
-import StatusDropdown, { STATUS_OPTIONS } from '../../components/StatusDropdown';
+import { STATUS_OPTIONS } from '../../components/StatusDropdown';
 import TableActions from '../../components/TableActions';
 import HistoryDialog from '../../components/HistoryDialog';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import DeleteDialog from '../../components/DeleteDialog';
-import RoleBoards from './components/RoleBoards';
+import PerfilFormDialog from './components/PerfilFormDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificacoes } from '../../contexts/WebSocketContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
-import { perfilService, PerfilDTO, PerfilForm, PerfilFiltros } from './service';
+import { perfilService, PerfilDTO, PerfilFiltros } from './service';
 import './styles.scss';
-
-interface FormErrors { descricao?: string; }
 
 function Perfis() {
   const queryClient = useQueryClient();
@@ -32,14 +29,10 @@ function Perfis() {
   const { user: authUser } = useAuth();
 
   const [dialogVisible, setDialogVisible] = useState(false);
-  const [editando, setEditando] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [filtroGlobal, setFiltroGlobal] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const [filtros, setFiltros] = useState<PerfilFiltros>({ status: [], role: [] });
-  const [form, setForm] = useState<PerfilForm>({ descricao: '', status: 'ATIVO', roles: [] });
-  const [formId, setFormId] = useState<string | null>(null);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [submitted, setSubmitted] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -58,12 +51,6 @@ function Perfis() {
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['perfis'] });
-
-  const salvarMutation = useMutation({
-    mutationFn: async () => editando ? perfilService.atualizar(formId!, form) : perfilService.salvar(form),
-    onSuccess: () => { toast.current?.show({ severity: 'success', summary: 'Sucesso', detail: editando ? 'Perfil atualizado' : 'Perfil criado' }); setDialogVisible(false); invalidate(); },
-    onError: (err: unknown) => { const e = err as { response?: { data?: { message?: string } } }; toast.current?.show({ severity: 'error', summary: 'Erro', detail: e.response?.data?.message || 'Erro ao salvar' }); },
-  });
 
   const desativarMutation = useMutation({
     mutationFn: (id: string) => perfilService.desativar(id),
@@ -94,25 +81,8 @@ function Perfis() {
     return unsub;
   }, [subscribe, queryClient]);
 
-  const validar = (): boolean => {
-    const errs: FormErrors = {};
-    if (!form.descricao.trim()) errs.descricao = 'Descrição é obrigatória';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const abrirNovo = () => { setForm({ descricao: '', status: 'ATIVO', roles: [] }); setFormId(null); setEditando(false); setErrors({}); setSubmitted(false); setDialogVisible(true); };
-
-  const abrirEdicao = async (row: PerfilDTO) => {
-    try {
-      const data = await perfilService.buscar(row.id);
-      const rolesArr = Array.isArray(data.roles) ? data.roles.map((r: unknown) => typeof r === 'string' ? r : (r as { name?: string }).name || String(r)) : [];
-      setForm({ descricao: data.descricao, status: data.status, roles: rolesArr });
-      setFormId(row.id); setEditando(true); setErrors({}); setSubmitted(false); setDialogVisible(true);
-    } catch { toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar perfil' }); }
-  };
-
-  const salvar = () => { setSubmitted(true); if (!validar()) return; salvarMutation.mutate(); };
+  const abrirNovo = () => { setEditId(null); setDialogVisible(true); };
+  const abrirEdicao = (row: PerfilDTO) => { setEditId(row.id); setDialogVisible(true); };
 
   const rolesTemplate = (rowData: PerfilDTO) => {
     if (!rowData.roles?.length) return <span className="text-muted">&mdash;</span>;
@@ -174,18 +144,7 @@ function Perfis() {
         </DataTable>
       </div>
 
-      <FormDialog visible={dialogVisible} onHide={() => setDialogVisible(false)} title={editando ? 'Editar Perfil' : 'Novo Perfil'} icon={editando ? 'pi pi-shield' : 'pi pi-plus-circle'} onSave={salvar} loading={salvarMutation.isPending} width="600px">
-        <div className={`form-field ${submitted && errors.descricao ? 'field-error' : ''}`}>
-          <label htmlFor="descricao">Descrição <span className="required">*</span></label>
-          <InputText id="descricao" value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} className="w-full" />
-          {submitted && errors.descricao && <small className="p-error"><i className="pi pi-exclamation-circle" />{errors.descricao}</small>}
-        </div>
-        <div className="form-field">
-          <label htmlFor="status">Status <span className="required">*</span></label>
-          <StatusDropdown id="status" value={form.status} onChange={(e) => setForm({ ...form, status: e.value })} className="w-full" baseZIndex={10000} />
-        </div>
-        <RoleBoards selectedRoles={form.roles} onChange={(r) => setForm({ ...form, roles: r })} />
-      </FormDialog>
+      <PerfilFormDialog visible={dialogVisible} onHide={() => setDialogVisible(false)} editId={editId} />
 
       <ConfirmDialog visible={!!deactivateTarget} onHide={() => setDeactivateTarget(null)} onConfirm={() => deactivateTarget && desativarMutation.mutate(deactivateTarget.id)}
         title="Desativar Registro" icon="pi pi-ban" message={`Deseja desativar o perfil "${deactivateTarget?.descricao}"? O registro poderá ser restaurado posteriormente.`}

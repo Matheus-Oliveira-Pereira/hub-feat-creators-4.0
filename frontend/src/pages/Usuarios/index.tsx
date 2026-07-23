@@ -20,6 +20,8 @@ import DeleteDialog from '../../components/DeleteDialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotificacoes } from '../../contexts/WebSocketContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
+import SelectComCadastro from '../../components/SelectComCadastro';
+import PerfilFormDialog from '../Perfis/components/PerfilFormDialog';
 import { usuarioService, UsuarioDTO, UsuarioForm, UsuarioFiltros, Perfil } from './service';
 import './styles.scss';
 
@@ -49,6 +51,7 @@ function Usuarios() {
   const [mostrarInativos, setMostrarInativos] = useState(false);
   const [deactivateTarget, setDeactivateTarget] = useState<UsuarioDTO | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UsuarioDTO | null>(null);
+  const [perfilDialogVisible, setPerfilDialogVisible] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryFiltros: UsuarioFiltros = { ...filtros, textoDeBusca: debouncedBusca || undefined, mostrarInativos };
@@ -146,6 +149,7 @@ function Usuarios() {
   const podeAdicionar = canAdd(roles, MODULES.USUARIOS.prefix);
   const podeEditar = canChange(roles, MODULES.USUARIOS.prefix);
   const podeExcluir = canDelete(roles, MODULES.USUARIOS.prefix);
+  const podeAddPerfil = canAdd(roles, MODULES.PERFIS.prefix);
 
   const statusTemplate = (rowData: UsuarioDTO) => <StatusBadge status={rowData.status} />;
   const acoesTemplate = (rowData: UsuarioDTO) => (
@@ -218,9 +222,21 @@ function Usuarios() {
         </div>
         <div className="form-field">
           <label htmlFor="perfis">Perfis</label>
-          <MultiSelect id="perfis" value={form.perfis} options={perfisOptions} onChange={(e) => setForm({ ...form, perfis: e.value })} optionLabel="descricao" placeholder="Selecione os perfis" className="w-full" display="chip" baseZIndex={10000} />
+          <SelectComCadastro onAdd={() => setPerfilDialogVisible(true)} visivel={podeAddPerfil} title="Cadastrar novo perfil">
+            <MultiSelect id="perfis" value={form.perfis} options={perfisOptions} onChange={(e) => setForm({ ...form, perfis: e.value })} optionLabel="descricao" dataKey="id" placeholder="Selecione os perfis" className="w-full" display="chip" baseZIndex={10000} />
+          </SelectComCadastro>
         </div>
       </FormDialog>
+
+      <PerfilFormDialog
+        visible={perfilDialogVisible}
+        onHide={() => setPerfilDialogVisible(false)}
+        onSaved={(perfil) => {
+          queryClient.invalidateQueries({ queryKey: ['perfis-options'] });
+          const novo: Perfil = { id: perfil.id, descricao: perfil.descricao, status: perfil.status, roles: perfil.roles };
+          setForm((f) => ({ ...f, perfis: [...f.perfis, novo] }));
+        }}
+      />
 
       <ConfirmDialog visible={!!deactivateTarget} onHide={() => setDeactivateTarget(null)} onConfirm={() => deactivateTarget && desativarMutation.mutate(deactivateTarget.id)}
         title="Desativar Registro" icon="pi pi-ban" message={`Deseja desativar o usuário "${deactivateTarget?.nome}"? O registro poderá ser restaurado posteriormente.`}

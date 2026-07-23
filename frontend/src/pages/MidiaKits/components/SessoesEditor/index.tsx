@@ -24,6 +24,18 @@ function SessoesEditor({ sessoes, onChange, templateId, influenciador, onToast }
   const [marcasDisponiveis, setMarcasDisponiveis] = useState<MarcaRef[]>([]);
   const dragIndex = useRef<number | null>(null);
 
+  /** Recarrega a lista de marcas disponíveis (usado após cadastrar uma marca na hora). */
+  const recarregarMarcas = async (): Promise<MarcaRef[]> => {
+    try {
+      const m = await midiaKitService.listarMarcas();
+      setMarcasDisponiveis(m);
+      return m;
+    } catch {
+      onToast('error', 'Falha ao carregar marcas cadastradas');
+      return [];
+    }
+  };
+
   useEffect(() => {
     let ativo = true;
     midiaKitService.listarMarcas()
@@ -92,7 +104,7 @@ function SessoesEditor({ sessoes, onChange, templateId, influenciador, onToast }
 
       {sessoes.map((s, i) => (
         <SessaoCard key={s.id ?? `nova-${i}`} sessao={s} index={i} total={sessoes.length} templateId={templateId} influenciador={influenciador}
-          marcasDisponiveis={marcasDisponiveis}
+          marcasDisponiveis={marcasDisponiveis} recarregarMarcas={recarregarMarcas}
           onPatch={(p) => patch(i, p)} onMove={(d) => mover(i, d)} onRemove={() => remover(i)}
           onDuplicate={() => duplicar(i)}
           onDragStart={() => { dragIndex.current = i; }}
