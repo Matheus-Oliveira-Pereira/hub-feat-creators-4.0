@@ -1,0 +1,608 @@
+@use '../../styles/variables' as *;
+@use 'sass:color';
+
+.tarefas-page {
+  display: flex;
+  flex-direction: column;
+
+  .tarefas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+
+    .tarefas-view-toggle .p-button { padding: 0.5rem 0.9rem; }
+  }
+
+  .tarefas-toolbar { margin-bottom: 1rem; }
+
+  .tarefas-loading { color: $gray-500; padding: 1rem; }
+
+  // Linha atrasada na listagem.
+  .tarefa-linha-atrasada > td { background: rgba($danger-color, 0.06) !important; }
+  .previsao-atrasada { color: $danger-color; font-weight: 600; }
+
+  .tarefa-acoes {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    .acao-email {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid $gray-200;
+      background: $gray-50;
+      border-radius: 6px;
+      cursor: pointer;
+      color: $gray-600;
+      transition: all 0.12s;
+      &:hover { background: $primary-color; color: $on-lime; border-color: $primary-color; }
+    }
+  }
+}
+
+// ─── Badges de status/prioridade ───
+.tarefa-status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: $border-radius-full;
+  white-space: nowrap;
+
+  &.st-a_fazer { background: rgba(#64748b, 0.15); color: #475569; }
+  &.st-em_andamento { background: rgba(#3b82f6, 0.15); color: #2563eb; }
+  &.st-em_revisao { background: rgba(#a855f7, 0.15); color: #9333ea; }
+  &.st-concluida { background: rgba($success-color, 0.15); color: color.adjust($success-color, $lightness: -8%); }
+  &.st-cancelada { background: rgba($danger-color, 0.12); color: $danger-color; }
+}
+
+.prioridade-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 0.12rem 0.45rem;
+  border-radius: 4px;
+  white-space: nowrap;
+
+  &.prio-baixa { background: rgba(#64748b, 0.15); color: #64748b; }
+  &.prio-media { background: rgba(#f59e0b, 0.18); color: #b45309; }
+  &.prio-alta { background: rgba($danger-color, 0.15); color: $danger-color; }
+}
+
+// ─── Kanban (base compartilhada com Prospecção, adaptada) ───
+.tarefas-page .kanban-board {
+  display: flex;
+  gap: 0.85rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  align-items: flex-start;
+
+  .kanban-column {
+    flex: 0 0 260px;
+    background: $gray-100;
+    border-radius: $border-radius-lg;
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+    max-height: calc(100vh - 280px);
+    border: 1.5px solid $gray-300;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+
+    &.over {
+      border-color: $primary-color;
+      background: rgba($primary-color, 0.1);
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+    }
+
+    &.col-cancelada { opacity: 0.75; }
+
+    .kanban-column-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.7rem 0.85rem;
+      position: sticky;
+      top: 0;
+
+      .kanban-column-title {
+        font-weight: 700;
+        font-size: 0.78rem;
+        color: $gray-700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .kanban-column-count {
+        background: $white;
+        color: $gray-600;
+        border-radius: $border-radius-full;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        min-width: 22px;
+        text-align: center;
+      }
+    }
+
+    .kanban-column-body {
+      padding: 0 0.55rem 0.55rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      overflow-y: auto;
+      min-height: 60px;
+    }
+  }
+
+  .kanban-card {
+    background: $white;
+    border: 1px solid $gray-200;
+    border-left: 3px solid $primary-color;
+    border-radius: $border-radius-md;
+    padding: 0.7rem;
+    cursor: grab;
+    box-shadow: $shadow-sm;
+    transition: box-shadow 0.15s, transform 0.1s;
+
+    &:hover { box-shadow: $shadow-md; transform: translateY(-1px); }
+    &:active { cursor: grabbing; }
+
+    &.overlay {
+      cursor: grabbing;
+      box-shadow: $shadow-lg;
+      transform: rotate(2deg);
+    }
+
+    &.prioridade-alta { border-left-color: $danger-color; }
+    &.prioridade-baixa { border-left-color: $gray-400; }
+
+    &.tarefa-atrasada {
+      box-shadow: 0 0 0 1px rgba($danger-color, 0.35), $shadow-sm;
+    }
+
+    .kanban-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+
+      .kanban-card-titulo { font-weight: 700; font-size: 0.9rem; color: $gray-900; line-height: 1.25; }
+    }
+
+    .kanban-card-sub {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      margin-bottom: 0.45rem;
+      font-size: 0.74rem;
+      color: $gray-600;
+
+      span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        i { font-size: 0.68rem; color: $gray-500; }
+      }
+      .kanban-card-responsavel { font-weight: 600; color: $gray-700; }
+    }
+
+    .kanban-card-meta {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.55rem;
+      flex-wrap: wrap;
+
+      .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: $gray-500;
+        background: $gray-100;
+        border-radius: $border-radius-full;
+        padding: 0.12rem 0.5rem;
+        i { font-size: 0.65rem; }
+
+        &.alerta { background: rgba($danger-color, 0.15); color: $danger-color; }
+      }
+    }
+
+    .kanban-card-actions {
+      display: flex;
+      gap: 0.35rem;
+      justify-content: flex-end;
+
+      button {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid $gray-200;
+        background: $gray-50;
+        border-radius: 6px;
+        cursor: pointer;
+        color: $gray-600;
+        transition: all 0.12s;
+
+        &:hover { background: $primary-color; color: $on-lime; border-color: $primary-color; }
+      }
+    }
+  }
+}
+
+// ─── Agenda ───
+.agenda-tarefas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .agenda-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .agenda-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+
+      .agenda-periodo {
+        margin-left: 0.6rem;
+        font-weight: 700;
+        color: $gray-700;
+        text-transform: capitalize;
+      }
+    }
+  }
+
+  .agenda-hint { font-size: 0.75rem; color: $gray-500; font-style: italic; }
+  .agenda-vazio { color: $gray-500; font-style: italic; padding: 1rem 0; }
+
+  .agenda-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: rgba($primary-color, 0.14);
+    color: $gray-800;
+    border-left: 3px solid $primary-color;
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s;
+
+    &:hover { background: rgba($primary-color, 0.28); }
+
+    &.prio-alta { border-left-color: $danger-color; background: rgba($danger-color, 0.1); &:hover { background: rgba($danger-color, 0.2); } }
+    &.prio-baixa { border-left-color: $gray-400; background: $gray-100; &:hover { background: $gray-200; } }
+    &.concluida .agenda-chip-titulo { text-decoration: line-through; opacity: 0.6; }
+
+    .agenda-chip-dot {
+      width: 7px;
+      height: 7px;
+      min-width: 7px;
+      border-radius: 50%;
+      background: $danger-color;
+    }
+    .agenda-chip-titulo {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .agenda-chip-resp {
+      margin-left: auto;
+      font-weight: 400;
+      color: $gray-500;
+      font-size: 0.68rem;
+      white-space: nowrap;
+    }
+  }
+
+  .agenda-mes {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: $gray-200;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-md;
+    overflow: hidden;
+
+    .agenda-mes-cabecalho {
+      background: $gray-100;
+      padding: 0.45rem;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: $gray-600;
+      text-transform: uppercase;
+    }
+
+    .agenda-mes-celula {
+      background: $white;
+      min-height: 105px;
+      padding: 0.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      &.fora-mes { background: $gray-50; .agenda-mes-dia { opacity: 0.35; } }
+      &.hoje {
+        background: rgba($primary-color, 0.06);
+        .agenda-mes-dia {
+          background: $primary-color;
+          color: $on-lime;
+          border-radius: 50%;
+          width: 22px;
+          height: 22px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+
+      .agenda-mes-dia { font-size: 0.75rem; font-weight: 700; color: $gray-700; }
+      .agenda-mes-chips { display: flex; flex-direction: column; gap: 0.2rem; }
+      .agenda-mais { font-size: 0.68rem; font-weight: 700; color: $gray-500; padding-left: 0.2rem; }
+    }
+  }
+
+  .agenda-semana {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+
+    .agenda-semana-coluna {
+      background: $gray-100;
+      border: 1.5px solid $gray-300;
+      border-radius: $border-radius-md;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+
+      &.hoje { border-color: $primary-color; }
+
+      .agenda-semana-cabecalho {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: $gray-700;
+        text-transform: uppercase;
+
+        .agenda-semana-data { color: $gray-500; font-weight: 600; }
+      }
+
+      .agenda-semana-corpo {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        padding: 0 0.4rem 0.4rem;
+        overflow-y: auto;
+      }
+    }
+  }
+
+  .agenda-dia {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-width: 640px;
+
+    .agenda-chip { padding: 0.5rem 0.6rem; font-size: 0.82rem; }
+  }
+}
+
+// ─── Dialog da tarefa ───
+.tarefa-dialog {
+  .tarefa-conclusao-info {
+    color: $success-color;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0.25rem 0 0.75rem;
+    i { margin-right: 0.3rem; }
+  }
+
+  .tarefa-notificacao {
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-md;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    background: $gray-50;
+
+    .tarefa-notificacao-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.6rem;
+      label { font-weight: 600; font-size: 0.85rem; }
+    }
+  }
+}
+
+.checklist-editor {
+  border: 1px solid $gray-200;
+  border-radius: $border-radius-md;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+
+  .checklist-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+    span { font-weight: 700; font-size: 0.85rem; color: $gray-700; }
+    .btn-add-item { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+  }
+
+  .checklist-vazio { font-size: 0.8rem; color: $gray-500; font-style: italic; margin: 0; }
+
+  .checklist-linha {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+
+    .checklist-in { flex: 1; &.concluido input { text-decoration: line-through; color: $gray-500; } }
+    .checklist-in.concluido { text-decoration: line-through; color: $gray-500; }
+
+    .checklist-remover {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid $gray-200;
+      background: $gray-50;
+      border-radius: 6px;
+      cursor: pointer;
+      color: $gray-500;
+      &:hover { color: $danger-color; border-color: $danger-color; }
+    }
+  }
+}
+
+.filtro-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  label { margin: 0; cursor: pointer; }
+}
+
+// ─── Dark Theme ───
+[data-theme="dark"] {
+  .tarefas-page {
+    .tarefa-linha-atrasada > td { background: rgba($danger-color, 0.1) !important; }
+    .tarefa-acoes .acao-email {
+      background: #141414;
+      border-color: #2e2e2e;
+      color: #94a3b8;
+      &:hover { background: $brand-lime; color: $brand-black; border-color: $brand-lime; }
+    }
+  }
+
+  .tarefa-status-badge {
+    &.st-a_fazer { background: rgba(#94a3b8, 0.18); color: #cbd5e1; }
+    &.st-em_andamento { background: rgba(#3b82f6, 0.22); color: #93c5fd; }
+    &.st-em_revisao { background: rgba(#a855f7, 0.22); color: #d8b4fe; }
+    &.st-concluida { background: rgba($success-color, 0.2); color: #86efac; }
+    &.st-cancelada { background: rgba($danger-color, 0.2); color: #fca5a5; }
+  }
+
+  .prioridade-badge {
+    &.prio-baixa { background: rgba(#94a3b8, 0.18); color: #94a3b8; }
+    &.prio-media { background: rgba(#f59e0b, 0.2); color: #fcd34d; }
+    &.prio-alta { background: rgba($danger-color, 0.2); color: #fca5a5; }
+  }
+
+  .tarefas-page .kanban-board {
+    .kanban-column {
+      background: #161616;
+      border-color: #2e2e2e;
+
+      &.over {
+        border-color: $brand-lime;
+        background: rgba($brand-lime, 0.08);
+        box-shadow: 0 0 0 3px rgba($brand-lime, 0.12);
+      }
+
+      .kanban-column-head {
+        .kanban-column-title { color: #cbd5e1; }
+        .kanban-column-count { background: #262626; color: #cbd5e1; }
+      }
+    }
+
+    .kanban-card {
+      background: #1d1d1d;
+      border-color: #2e2e2e;
+      border-left-color: $brand-lime;
+      box-shadow: none;
+
+      &:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
+      &.overlay { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6); }
+      &.prioridade-alta { border-left-color: $danger-color; }
+      &.prioridade-baixa { border-left-color: #475569; }
+
+      .kanban-card-head .kanban-card-titulo { color: #f1f5f9; }
+      .kanban-card-sub { color: #94a3b8; .kanban-card-responsavel { color: #cbd5e1; } i { color: #64748b; } }
+
+      .kanban-card-meta .meta-chip {
+        background: #262626;
+        color: #94a3b8;
+        &.alerta { background: rgba($danger-color, 0.2); color: #fca5a5; }
+      }
+
+      .kanban-card-actions button {
+        background: #141414;
+        border-color: #2e2e2e;
+        color: #94a3b8;
+        &:hover { background: $brand-lime; color: $brand-black; border-color: $brand-lime; }
+      }
+    }
+  }
+
+  .agenda-tarefas {
+    .agenda-periodo { color: #cbd5e1; }
+
+    .agenda-chip {
+      background: rgba($brand-lime, 0.12);
+      color: #e2e8f0;
+      border-left-color: $brand-lime;
+      &:hover { background: rgba($brand-lime, 0.22); }
+      &.prio-alta { background: rgba($danger-color, 0.15); }
+      &.prio-baixa { background: #262626; border-left-color: #475569; &:hover { background: #333; } }
+      .agenda-chip-resp { color: #94a3b8; }
+    }
+
+    .agenda-mes {
+      background: #2e2e2e;
+      border-color: #2e2e2e;
+
+      .agenda-mes-cabecalho { background: #161616; color: #94a3b8; }
+      .agenda-mes-celula {
+        background: #1d1d1d;
+        &.fora-mes { background: #161616; }
+        &.hoje {
+          background: rgba($brand-lime, 0.07);
+          .agenda-mes-dia { background: $brand-lime; color: $brand-black; }
+        }
+        .agenda-mes-dia { color: #cbd5e1; }
+      }
+    }
+
+    .agenda-semana .agenda-semana-coluna {
+      background: #161616;
+      border-color: #2e2e2e;
+      &.hoje { border-color: $brand-lime; }
+      .agenda-semana-cabecalho { color: #cbd5e1; .agenda-semana-data { color: #64748b; } }
+    }
+  }
+
+  .tarefa-dialog .tarefa-notificacao {
+    background: #161616;
+    border-color: #2e2e2e;
+  }
+
+  .checklist-editor {
+    border-color: #2e2e2e;
+    .checklist-head span { color: #cbd5e1; }
+    .checklist-linha .checklist-remover {
+      background: #141414;
+      border-color: #2e2e2e;
+      color: #94a3b8;
+    }
+  }
+}

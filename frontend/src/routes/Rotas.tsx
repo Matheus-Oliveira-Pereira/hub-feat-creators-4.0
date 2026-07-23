@@ -11,6 +11,7 @@ import ContasEmail from '../pages/ContasEmail';
 import EmailLogs from '../pages/EmailLogs';
 import Prospecao from '../pages/Prospecao';
 import Publicidade from '../pages/Publicidade';
+import Tarefas from '../pages/Tarefas';
 import TemplatesEmail from '../pages/TemplatesEmail';
 import Metricas from '../pages/Metricas';
 import AcessoNegado from '../pages/AcessoNegado';
@@ -32,6 +33,7 @@ function Rotas() {
           <Route path="midia-kits" element={<RequireRole role="MDKB"><MidiaKits /></RequireRole>} />
           <Route path="prospecao" element={<RequireRole role="PSPB"><Prospecao /></RequireRole>} />
           <Route path="publicidade" element={<RequireRole role="PUBB"><Publicidade /></RequireRole>} />
+          <Route path="tarefas" element={<RequireRole role="TARB"><Tarefas /></RequireRole>} />
           <Route path="metricas" element={<RequireRole role="METB"><Metricas /></RequireRole>} />
           <Route path="configuracoes" element={<RequireRole role="CFGB"><Configuracoes /></RequireRole>} />
           <Route path="contas-email" element={<RequireRole role="CTEB"><ContasEmail /></RequireRole>} />

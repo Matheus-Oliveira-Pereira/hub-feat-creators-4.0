@@ -23,7 +23,8 @@ public class NotificacaoService {
             "Prospecao", "Prospecção",
             "Publicidade", "Publicidade",
             "TemplateEmail", "Template de E-mail",
-            "ContaEmail", "Conta de E-mail"
+            "ContaEmail", "Conta de E-mail",
+            "Tarefa", "Tarefa"
     );
 
     private final SimpMessagingTemplate messagingTemplate;

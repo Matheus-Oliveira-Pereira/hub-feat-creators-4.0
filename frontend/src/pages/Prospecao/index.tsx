@@ -25,6 +25,8 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import ProspecaoReportDocument from './components/ProspecaoReportDocument';
 import ProspecaoDetalheReportDocument from './components/ProspecaoDetalheReportDocument';
 import PublicidadeDialog, { PublicidadeInicial } from '../Publicidade/components/PublicidadeDialog';
+import TarefaDialog from '../Tarefas/components/TarefaDialog';
+import { TarefaInicial } from '../Tarefas/service';
 import './styles.scss';
 
 /** Monta payload de atualização: escalares completos + relações reduzidas a {id}. */
@@ -47,6 +49,7 @@ function ProspecaoPage() {
   const roles = user?.roles ?? [];
   const podeAdicionar = canAdd(roles, MODULES.PROSPECAO.prefix);
   const podeEditar = canChange(roles, MODULES.PROSPECAO.prefix);
+  const podeCriarTarefa = canAdd(roles, MODULES.TAREFAS.prefix);
 
   const [influId, setInfluId] = useState<string | null>(() => localStorage.getItem('prospecao:influId'));
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -57,6 +60,7 @@ function ProspecaoPage() {
   const [historicoAlvo, setHistoricoAlvo] = useState<Prospecao | null>(null);
   const [reativarAlvo, setReativarAlvo] = useState<{ card: Prospecao; novoStatus: StatusProspecao } | null>(null);
   const [publiInicial, setPubliInicial] = useState<PublicidadeInicial | null>(null);
+  const [tarefaInicial, setTarefaInicial] = useState<TarefaInicial | null>(null);
   const [exportando, setExportando] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -162,6 +166,12 @@ function ProspecaoPage() {
 
   const abrirNovo = () => { setEditando(null); setDialogVisible(true); };
   const abrirEdicao = (p: Prospecao) => { setEditando(p); setDialogVisible(true); };
+  const abrirTarefa = (p: Prospecao) => setTarefaInicial({
+    prospecaoId: p.id,
+    influenciador: { id: p.influenciador.id, nome: p.influenciador.nome },
+    marca: { id: p.marca.id, nome: p.marca.nome },
+    descricao: p.descricao,
+  });
 
   const exportarPdf = async () => {
     if (!influSelecionado) return;
@@ -231,7 +241,7 @@ function ProspecaoPage() {
             {STATUS_ORDEM.map((status) => (
               <KanbanColumn key={status} status={status} quantidade={porStatus(status).length}>
                 {porStatus(status).map((p) => (
-                  <KanbanCard key={p.id} prospecao={p} onEdit={abrirEdicao} onFollowUp={setFollowUpAlvo} onReport={gerarRelatorioProspecao} onHistorico={setHistoricoAlvo} />
+                  <KanbanCard key={p.id} prospecao={p} onEdit={abrirEdicao} onFollowUp={setFollowUpAlvo} onReport={gerarRelatorioProspecao} onHistorico={setHistoricoAlvo} onCriarTarefa={podeCriarTarefa ? abrirTarefa : undefined} />
                 ))}
               </KanbanColumn>
             ))}
@@ -311,6 +321,15 @@ function ProspecaoPage() {
         onToast={showToast}
         inicial={publiInicial}
         editando={null}
+      />
+
+      <TarefaDialog
+        visible={!!tarefaInicial}
+        onHide={() => setTarefaInicial(null)}
+        onSaved={() => setTarefaInicial(null)}
+        onToast={showToast}
+        editando={null}
+        inicial={tarefaInicial}
       />
     </div>
   );

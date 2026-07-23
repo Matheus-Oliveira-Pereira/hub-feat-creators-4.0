@@ -17,6 +17,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotificacoes } from '../../contexts/WebSocketContext';
 import { canAdd, canChange, canDelete, MODULES } from '../../utils/roles';
 import PublicidadeDialog from './components/PublicidadeDialog';
+import TarefaDialog from '../Tarefas/components/TarefaDialog';
+import { TarefaInicial } from '../Tarefas/service';
 import {
   publicidadeService,
   PublicidadeDTO,
@@ -58,6 +60,7 @@ function Publicidade() {
   const podeAdicionar = canAdd(roles, MODULES.PUBLICIDADE.prefix);
   const podeEditar = canChange(roles, MODULES.PUBLICIDADE.prefix);
   const podeExcluir = canDelete(roles, MODULES.PUBLICIDADE.prefix);
+  const podeCriarTarefa = canAdd(roles, MODULES.TAREFAS.prefix);
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editando, setEditando] = useState<PublicidadeEntity | null>(null);
@@ -72,6 +75,7 @@ function Publicidade() {
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<PublicidadeDTO | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PublicidadeDTO | null>(null);
+  const [tarefaInicial, setTarefaInicial] = useState<TarefaInicial | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryFiltros: PublicidadeFiltros = { ...filtros, textoDeBusca: debouncedBusca || undefined, mostrarInativos };
@@ -154,19 +158,40 @@ function Publicidade() {
   const valorTemplate = (row: PublicidadeDTO) => formatarMoeda(row.valorTotal, row.moeda);
   const entregaveisTemplate = (row: PublicidadeDTO) => <span className="qtd-badge">{row.qtdEntregaveis} entreg.</span>;
 
+  const abrirTarefa = async (row: PublicidadeDTO) => {
+    try {
+      const full = await publicidadeService.buscar(row.id);
+      setTarefaInicial({
+        publicidadeId: full.id,
+        influenciador: full.influenciador,
+        marca: full.marca,
+        descricao: full.descricao,
+      });
+    } catch {
+      showToast('error', 'Erro ao carregar publicidade');
+    }
+  };
+
   const acoesTemplate = (row: PublicidadeDTO) => (
-    <TableActions
-      onHistory={() => { setHistoryId(row.id); setHistoryVisible(true); }}
-      onEdit={() => abrirEdicao(row)}
-      onDeactivate={() => setDeactivateTarget(row)}
-      onRestore={() => restaurarMutation.mutate(row.id)}
-      onDelete={() => setDeleteTarget(row)}
-      showHistory
-      showEdit={podeEditar && row.ativo}
-      showDeactivate={podeExcluir && row.ativo}
-      showRestore={!row.ativo}
-      showDelete={podeExcluir && !row.ativo}
-    />
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+      {podeCriarTarefa && row.ativo && (
+        <button type="button" className="acao-criar-tarefa" onClick={() => abrirTarefa(row)} title="Criar tarefa desta publicidade">
+          <i className="pi pi-check-square" />
+        </button>
+      )}
+      <TableActions
+        onHistory={() => { setHistoryId(row.id); setHistoryVisible(true); }}
+        onEdit={() => abrirEdicao(row)}
+        onDeactivate={() => setDeactivateTarget(row)}
+        onRestore={() => restaurarMutation.mutate(row.id)}
+        onDelete={() => setDeleteTarget(row)}
+        showHistory
+        showEdit={podeEditar && row.ativo}
+        showDeactivate={podeExcluir && row.ativo}
+        showRestore={!row.ativo}
+        showDelete={podeExcluir && !row.ativo}
+      />
+    </div>
   );
 
   const temFiltroAtivo = !!filtros.statusNota?.length || !!filtros.statusPagamento?.length || !!filtros.marca || !!filtros.parceiro;
@@ -219,6 +244,15 @@ function Publicidade() {
         loading={excluirMutation.isPending} entityName={deleteTarget?.marcaNome} />
 
       <HistoryDialog visible={historyVisible} onHide={() => setHistoryVisible(false)} entityId={historyId} servicePath="/publicidades" />
+
+      <TarefaDialog
+        visible={!!tarefaInicial}
+        onHide={() => setTarefaInicial(null)}
+        onSaved={() => setTarefaInicial(null)}
+        onToast={showToast}
+        editando={null}
+        inicial={tarefaInicial}
+      />
 
       <FilterSidebar visible={filterVisible} onHide={() => setFilterVisible(false)} onClear={() => { setFiltros({ statusNota: [], statusPagamento: [] }); setCurrentPage(0); }} clearDisabled={!temFiltroAtivo}>
         <div className="form-field">

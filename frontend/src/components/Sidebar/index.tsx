@@ -25,6 +25,7 @@ const menuItems: MenuItem[] = [
   { section: 'Comercial' },
   { label: 'Prospecção', icon: 'pi pi-sitemap', path: '/prospecao' },
   { label: 'Publicidade', icon: 'pi pi-megaphone', path: '/publicidade' },
+  { label: 'Tarefas', icon: 'pi pi-check-square', path: '/tarefas' },
   { label: 'Métricas', icon: 'pi pi-chart-bar', path: '/metricas' },
   { section: 'Sistema' },
   { label: 'Configurações', icon: 'pi pi-cog', path: '/configuracoes' },

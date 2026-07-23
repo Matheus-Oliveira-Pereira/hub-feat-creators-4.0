@@ -16,6 +16,7 @@ export const MODULES = {
   EMAIL_LOGS: { prefix: 'EML', path: '/email-logs' },
   PROSPECAO: { prefix: 'PSP', path: '/prospecao' },
   PUBLICIDADE: { prefix: 'PUB', path: '/publicidade' },
+  TAREFAS: { prefix: 'TAR', path: '/tarefas' },
   TEMPLATES_EMAIL: { prefix: 'TME', path: '/templates-email' },
   METRICAS: { prefix: 'MET', path: '/metricas' },
 } as const;

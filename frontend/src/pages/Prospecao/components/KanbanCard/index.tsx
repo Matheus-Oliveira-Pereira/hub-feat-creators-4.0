@@ -7,6 +7,7 @@ interface Props {
   onFollowUp: (p: Prospecao) => void;
   onReport: (p: Prospecao) => void;
   onHistorico: (p: Prospecao) => void;
+  onCriarTarefa?: (p: Prospecao) => void;
   overlay?: boolean;
 }
 
@@ -21,7 +22,7 @@ function diasParado(iso?: string): number | null {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function KanbanCard({ prospecao, onEdit, onFollowUp, onReport, onHistorico, overlay }: Readonly<Props>) {
+function KanbanCard({ prospecao, onEdit, onFollowUp, onReport, onHistorico, onCriarTarefa, overlay }: Readonly<Props>) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: prospecao.id });
   const dias = diasParado(prospecao.ultimaModificacao);
   const qtdFollowUp = prospecao.followUps?.length ?? 0;
@@ -94,6 +95,9 @@ function KanbanCard({ prospecao, onEdit, onFollowUp, onReport, onHistorico, over
           <button type="button" onClick={() => onFollowUp(prospecao)} title="Follow-up"><i className="pi pi-send" /></button>
         )}
         <button type="button" onClick={() => onReport(prospecao)} title="Relatório desta prospecção"><i className="pi pi-file-pdf" /></button>
+        {onCriarTarefa && (
+          <button type="button" onClick={() => onCriarTarefa(prospecao)} title="Criar tarefa desta prospecção"><i className="pi pi-check-square" /></button>
+        )}
       </div>
     </div>
   );

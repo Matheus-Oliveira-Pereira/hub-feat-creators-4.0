@@ -52,3 +52,27 @@
     padding: 0 0.4rem;
   }
 }
+
+.acao-criar-tarefa {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid $gray-200;
+  background: $gray-50;
+  border-radius: 6px;
+  cursor: pointer;
+  color: $gray-600;
+  transition: all 0.12s;
+
+  &:hover { background: $primary-color; color: $on-lime; border-color: $primary-color; }
+}
+
+[data-theme="dark"] .acao-criar-tarefa {
+  background: #141414;
+  border-color: #2e2e2e;
+  color: #94a3b8;
+
+  &:hover { background: $brand-lime; color: $brand-black; border-color: $brand-lime; }
+}
